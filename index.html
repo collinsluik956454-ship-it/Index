@@ -501,6 +501,7 @@ window.addEventListener('load', ()=>{
   <div class="date-banner" id="dateBanner">
     <span class="db-dag" id="dbDag">—</span>
     <span class="db-datum" id="dbDatum">—</span>
+    <span id="dbTijd" style="margin-left:auto;font-size:12px;opacity:.85;font-weight:700;white-space:nowrap"></span>
   </div>
 </header>
 <main id="main"></main>
@@ -1715,8 +1716,8 @@ function updateDateBanner(){
   const banner = document.getElementById('dateBanner');
   const dag = document.getElementById('dbDag');
   const datum = document.getElementById('dbDatum');
+  const tijdEl = document.getElementById('dbTijd');
   if(!banner) return;
-  // Verberg in home (daar staat de datum al groot in de welkomst-balk)
   if(view.mode === 'home'){
     banner.style.display = 'none';
     return;
@@ -1724,6 +1725,33 @@ function updateDateBanner(){
   banner.style.display = 'flex';
   dag.textContent = dagVanLooplijst();
   datum.textContent = meta.date || '';
+
+  // Tijdindicatie uit tijdregistratie
+  if(tijdEl){
+    try {
+      const td = tijdLaadData();
+      const s = td.huidig;
+      const fmt = ts => new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+      if(s && !s.eind){
+        // Bezig
+        const isPauze = !!s.pauzeStart;
+        tijdEl.textContent = '▶ '+fmt(s.start)+(isPauze?' ⏸':'');
+        tijdEl.style.color = isPauze ? '#ffb74d' : '#a5d6a7';
+      } else if(td.sessies && td.sessies.length>0){
+        // Laatste sessie vandaag tonen
+        const vandaag = new Date().toDateString();
+        const laatste = td.sessies.find(s2=> new Date(s2.start).toDateString()===vandaag);
+        if(laatste){
+          tijdEl.textContent = fmt(laatste.start)+' – '+fmt(laatste.eind);
+          tijdEl.style.color = 'rgba(255,255,255,.75)';
+        } else {
+          tijdEl.textContent = '';
+        }
+      } else {
+        tijdEl.textContent = '';
+      }
+    } catch(e){ tijdEl.textContent = ''; }
+  }
 }
 
 function updateBackKnop(){
@@ -3040,6 +3068,80 @@ function renderHome(){
     '<div class="home-progress"><div class="home-progress-fill" style="width:'+pct+'%"></div></div>'+
     '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
   main.appendChild(welk);
+
+  // Weekagenda met tijdregistratie per dag
+  const agenda = document.createElement('div');
+  agenda.style.cssText = 'background:#fff;border-radius:18px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+
+  const agHead = document.createElement('div');
+  agHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px';
+  agHead.innerHTML = '<div style="font-size:13px;font-weight:800;color:var(--ink)">📅 Agenda</div>';
+  agenda.appendChild(agHead);
+
+  // Bouw week (ma t/m za)
+  const td2 = tijdLaadData();
+  const nu = new Date();
+  const dagNamen = ['Zo','Ma','Di','Wo','Do','Vr','Za'];
+  const dagRij = document.createElement('div');
+  dagRij.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 10px 12px';
+
+  for(let i=1; i<=6; i++){
+    // Huidige week: ma=1 t/m za=6
+    const d = new Date(nu);
+    const dag2 = nu.getDay(); // 0=zo
+    const diff = i - (dag2===0?7:dag2);
+    d.setDate(nu.getDate()+diff);
+    const datumStr = d.toDateString();
+    const isVandaag = datumStr===nu.toDateString();
+
+    // Zoek sessie van deze dag
+    const sessie = td2.sessies?.find(s2=> new Date(s2.start).toDateString()===datumStr);
+    const huidigVandaag = (td2.huidig && new Date(td2.huidig.start).toDateString()===datumStr) ? td2.huidig : null;
+
+    const fmt2 = ts=> new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+
+    const dagKnop = document.createElement('button');
+    dagKnop.style.cssText =
+      'display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:12px;border:2px solid '+(isVandaag?'var(--green)':'var(--line)')+';'+
+      'background:'+(isVandaag?'#e8f0fe':huidigVandaag?'#fff9e6':sessie?'#f0faf4':'#fff')+';cursor:pointer;gap:2px';
+
+    const dagNaamEl = document.createElement('div');
+    dagNaamEl.style.cssText = 'font-size:11px;font-weight:800;color:'+(isVandaag?'var(--green)':'var(--muted)');
+    dagNaamEl.textContent = dagNamen[i];
+
+    const dagNrEl = document.createElement('div');
+    dagNrEl.style.cssText = 'font-size:16px;font-weight:900;color:var(--ink)';
+    dagNrEl.textContent = d.getDate();
+
+    const tijdEl2 = document.createElement('div');
+    tijdEl2.style.cssText = 'font-size:9px;font-weight:700;text-align:center;line-height:1.3;margin-top:2px';
+
+    if(huidigVandaag){
+      tijdEl2.style.color = '#f57c00';
+      tijdEl2.textContent = '▶'+fmt2(huidigVandaag.start);
+    } else if(sessie){
+      tijdEl2.style.color = '#43a047';
+      tijdEl2.textContent = fmt2(sessie.start)+'\n'+fmt2(sessie.eind);
+      tijdEl2.style.whiteSpace = 'pre';
+    } else {
+      tijdEl2.style.color = 'var(--muted)';
+      tijdEl2.textContent = '—';
+    }
+
+    dagKnop.appendChild(dagNaamEl);
+    dagKnop.appendChild(dagNrEl);
+    dagKnop.appendChild(tijdEl2);
+
+    dagKnop.onclick = ()=>{
+      // Ga naar tijdregistratie voor deze dag
+      view={mode:'tijd'};
+      render();
+    };
+
+    dagRij.appendChild(dagKnop);
+  }
+  agenda.appendChild(dagRij);
+  main.appendChild(agenda);
 
   // 4 grote keuze-kaarten
   const grid = document.createElement('div');
