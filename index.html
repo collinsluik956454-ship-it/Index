@@ -11,7 +11,9 @@
 <meta name="application-name" content="Looplijst">
 <title>Looplijst Charlotte</title>
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Looplijst%20Charlotte%22%2C%22short_name%22%3A%22Looplijst%22%2C%22description%22%3A%22DPG%20Media%20bezorg-app%20Oldenzaal%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1b3e%22%2C%22theme_color%22%3A%22%230d1b3e%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJyBmaWxsPScjMGQxYjNlJy8%2BPHRleHQgeT0nLjllbScgZm9udC1zaXplPSc3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgeD0nNTAlJyBkeT0nLjNlbScgZmlsbD0nd2hpdGUnPvCfk408L3RleHQ%2BPC9zdmc%2B%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<script>
+<!-- Firebase SDK — geladen vóór app-script -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 // Service Worker registreren voor offline gebruik + installatie
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
@@ -493,6 +495,7 @@ window.addEventListener('load', ()=>{
       <h1 id="title">—</h1>
     </div>
     <button class="menu" id="menuBtn" aria-label="Menu">⋮</button>
+    <span id="fbSyncDot" title="Firebase sync" style="width:8px;height:8px;border-radius:50%;background:#888;display:inline-block;margin-left:6px;flex:0 0 auto"></span>
   </div>
   <div class="progress-wrap">
     <div class="pbar"><div class="pfill" id="pfill"></div></div>
@@ -3421,7 +3424,70 @@ function renderTijd(){
     knoppen.appendChild(btnStop);
     wrap.appendChild(knoppen);
 
-    // Samenvatting huidige/laatste sessie
+    // Handmatig tijd invullen
+    const handmatigBtn = document.createElement('button');
+    handmatigBtn.style.cssText = 'width:100%;padding:12px;background:#fff;border:2px dashed var(--line);border-radius:14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:14px';
+    handmatigBtn.textContent = '✏️ Tijd handmatig invullen';
+    handmatigBtn.onclick = ()=>{
+      handmatigForm.style.display = handmatigForm.style.display==='none'?'block':'none';
+    };
+    wrap.appendChild(handmatigBtn);
+
+    // Handmatig invullen formulier
+    const handmatigForm = document.createElement('div');
+    handmatigForm.style.cssText = 'display:none;background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)';
+
+    const vandaag = new Date();
+    const datumVal = vandaag.toISOString().slice(0,10);
+    const nu2 = vandaag.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}).replace(':',':');
+
+    handmatigForm.innerHTML =
+      '<div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:12px">Tijd handmatig invoeren</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+        '<div>'+
+          '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">DATUM</label>'+
+          '<input type="date" id="hmDatum" value="'+datumVal+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
+        '</div>'+
+        '<div></div>'+
+        '<div>'+
+          '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">STARTTIJD</label>'+
+          '<input type="time" id="hmStart" value="06:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
+        '</div>'+
+        '<div>'+
+          '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">EINDTIJD</label>'+
+          '<input type="time" id="hmEind" value="09:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
+        '</div>'+
+      '</div>'+
+      '<button id="hmOpslaan" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">Opslaan</button>';
+
+    wrap.appendChild(handmatigForm);
+
+    document.addEventListener('click', function hmHandler(e){
+      if(e.target && e.target.id==='hmOpslaan'){
+        const datum = document.getElementById('hmDatum')?.value;
+        const startT = document.getElementById('hmStart')?.value;
+        const eindT = document.getElementById('hmEind')?.value;
+        if(!datum||!startT||!eindT){ toast('Vul alle velden in',true); return; }
+        const startTs = new Date(datum+'T'+startT).getTime();
+        const eindTs = new Date(datum+'T'+eindT).getTime();
+        if(eindTs<=startTs){ toast('Eindtijd moet na starttijd zijn',true); return; }
+        const d = tijdLaadData();
+        d.sessies = d.sessies||[];
+        const nieuweSessie = {
+          start:startTs, eind:eindTs, pauzes:[], pauzeStart:null,
+          nettoMs: eindTs-startTs, handmatig:true
+        };
+        // Voeg in op juiste chronologische positie
+        const idx2 = d.sessies.findIndex(s2=>s2.start<startTs);
+        if(idx2===-1) d.sessies.push(nieuweSessie);
+        else d.sessies.splice(idx2,0,nieuweSessie);
+        tijdSlaOp(d);
+        document.removeEventListener('click',hmHandler);
+        toast('✓ Tijd opgeslagen');
+        herrender();
+      }
+    });
+
     if(s){
       const sum = document.createElement('div');
       sum.className = 'tijd-samenvatting';
@@ -4002,8 +4068,11 @@ const STRAAT_COORDS = {
 };
 
 async function geocodeAdres(straat, nr, city='Oldenzaal'){
-  // Normaliseer huisnummer: neem alleen het eerste getal (26 B → 26, 34 AP11 → 34)
-  const nrClean = (nr+'').trim().split(/[\s\-]/)[0].replace(/[^0-9]/g,'') || '1';
+  // Normaliseer huisnummer: bewaar toevoeging (26 B → 26B, 34 AP11 → 34, 34 01 → 34-1)
+  // Nominatim begrijpt "26B" en "34-1" maar niet "34 AP11" — we houden het simpel: getal + letter-toevoeging
+  const nrStr = (nr+'').trim();
+  const match = nrStr.match(/^(\d+)\s*([A-Za-z]{0,2})?/);
+  const nrClean = match ? (match[1] + (match[2]?match[2].toUpperCase():'')).trim() : nrStr.replace(/\s+/g,'').slice(0,8);
   const key = (straat+' '+nrClean).toLowerCase().trim();
   if(geocache[key]) return geocache[key];
 
@@ -4208,7 +4277,9 @@ async function renderKaart(){
     const allAdressen = [];
     const gezienKeys = new Set();
     DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
-      const nrClean = (a.nr+'').trim().split(/[\s\-]/)[0].replace(/[^0-9]/g,'') || '1';
+      const nrStr = (a.nr+'').trim();
+      const m2 = nrStr.match(/^(\d+)\s*([A-Za-z]{0,2})?/);
+      const nrClean = m2 ? (m2[1]+(m2[2]?m2[2].toUpperCase():'')).trim() : nrStr.slice(0,8);
       const dedupKey = s.naam.toLowerCase()+'|'+nrClean;
       if(gezienKeys.has(dedupKey)) return;
       gezienKeys.add(dedupKey);
@@ -7924,6 +7995,76 @@ function toonStraatToewijzing(parsed, onbekende){
 
 syncToggle();
 render();
+
+// ===== Firebase sync (na app initialisatie) =====
+try {
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfi-AR_-drU1SHUo1UxkRyNAUrgweGqrE",
+    authDomain: "looplijst.firebaseapp.com",
+    databaseURL: "https://looplijst-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "looplijst",
+    storageBucket: "looplijst.firebasestorage.app",
+    messagingSenderId: "590935233124",
+    appId: "1:590935233124:web:fbfba35f2aa96239a88571"
+  };
+  if(typeof firebase !== 'undefined'){
+    firebase.initializeApp(firebaseConfig);
+    const fbDb = firebase.database();
+
+    const FB_SYNC_KEYS = [
+      'looplijst_v23_done','looplijst_v23_volgorde','looplijst_v23_data',
+      'looplijst_v23_meta','looplijst_v23_tijd','looplijst_v23_seg_done',
+      'looplijst_v23_vergoeding',
+    ];
+
+    let _fbPaused = false;
+
+    // Upload naar Firebase
+    function fbSet(key, val){
+      try{
+        const k = key.replace(/[.#$\[\]]/g,'_');
+        fbDb.ref('data/'+k).set(val===null?null:JSON.parse(val));
+      }catch(e){}
+    }
+
+    // Ontvang wijzigingen van andere apparaten
+    FB_SYNC_KEYS.forEach(key=>{
+      const k = key.replace(/[.#$\[\]]/g,'_');
+      fbDb.ref('data/'+k).on('value', snap=>{
+        if(_fbPaused) return;
+        const val = snap.val();
+        if(val===null) return;
+        const nieuw = JSON.stringify(val);
+        if(localStorage.getItem(key)!==nieuw){
+          _fbPaused=true;
+          localStorage.setItem(key,nieuw);
+          _fbPaused=false;
+          try{
+            if(key==='looplijst_v23_done'||key==='looplijst_v23_volgorde'){
+              laadOpgeslagenData(); render();
+            }
+            if(key==='looplijst_v23_tijd' && view?.mode==='tijd') renderTijd();
+          }catch(e){}
+        }
+      });
+    });
+
+    // Onderschep localStorage schrijfacties
+    const _orig = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key,val){
+      _orig(key,val);
+      if(!_fbPaused && FB_SYNC_KEYS.includes(key)) fbSet(key,val);
+    };
+
+    // Verbindingsindicator
+    fbDb.ref('.info/connected').on('value', snap=>{
+      const el = document.getElementById('fbSyncDot');
+      if(el) el.style.background = snap.val() ? '#43a047' : '#e53935';
+    });
+
+    console.log('✓ Firebase sync actief');
+  }
+} catch(e){ console.warn('Firebase init mislukt:', e); }
 </script>
 </body>
 </html>
