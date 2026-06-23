@@ -11,28 +11,7 @@
 <meta name="application-name" content="Looplijst">
 <title>Looplijst Charlotte</title>
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Looplijst%20Charlotte%22%2C%22short_name%22%3A%22Looplijst%22%2C%22description%22%3A%22DPG%20Media%20bezorg-app%20Oldenzaal%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1b3e%22%2C%22theme_color%22%3A%22%230d1b3e%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJyBmaWxsPScjMGQxYjNlJy8%2BPHRleHQgeT0nLjllbScgZm9udC1zaXplPSc3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgeD0nNTAlJyBkeT0nLjNlbScgZmlsbD0nd2hpdGUnPvCfk408L3RleHQ%2BPC9zdmc%2B%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-// Vang alle JS fouten op en toon ze op scherm
-window.onerror = function(msg, src, line, col, err){
-  var d = document.getElementById('_errbox');
-  if(!d){
-    d = document.createElement('div');
-    d.id = '_errbox';
-    d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c00;color:#fff;font-size:13px;padding:10px;white-space:pre-wrap;max-height:50vh;overflow:auto';
-    document.body.appendChild(d);
-  }
-  d.textContent += '❌ '+msg+'\nRegel '+line+': '+src+'\n\n';
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e){
-  var d = document.getElementById('_errbox');
-  if(!d){
-    d = document.createElement('div');
-    d.id = '_errbox';
-    d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c00;color:#fff;font-size:13px;padding:10px;white-space:pre-wrap;max-height:50vh;overflow:auto';
-    document.body.appendChild(d);
-  }
-  d.textContent += '❌ Promise fout: '+(e.reason||e)+'\n\n';
-});
+
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.getRegistrations().then(regs=>{
@@ -503,6 +482,7 @@ window.addEventListener('load', ()=>{
       <h1 id="title">—</h1>
     </div>
     <button class="menu" id="menuBtn" aria-label="Menu">⋮</button>
+    <span id="fbSyncDot" title="Firebase sync" style="width:8px;height:8px;border-radius:50%;background:#888;display:inline-block;margin-left:4px;flex:0 0 auto"></span>
   </div>
   <div class="progress-wrap">
     <div class="pbar"><div class="pfill" id="pfill"></div></div>
@@ -8002,6 +7982,85 @@ function toonStraatToewijzing(parsed, onbekende){
 
 syncToggle();
 render();
+
+// ===== Firebase sync =====
+const FB_SYNC_KEYS = [
+  'looplijst_v23_done','looplijst_v23_volgorde','looplijst_v23_data',
+  'looplijst_v23_meta','looplijst_v23_tijd','looplijst_v23_seg_done',
+  'looplijst_v23_vergoeding',
+];
+
+function _startFirebase(){
+  try{
+    firebase.initializeApp({
+      apiKey: "AIzaSyAfi-AR_-drU1SHUo1UxkRyNAUrgweGqrE",
+      authDomain: "looplijst.firebaseapp.com",
+      databaseURL: "https://looplijst-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "looplijst",
+      storageBucket: "looplijst.firebasestorage.app",
+      messagingSenderId: "590935233124",
+      appId: "1:590935233124:web:fbfba35f2aa96239a88571"
+    });
+    const db = firebase.database();
+    let _paused = false;
+
+    function fbSet(key, val){
+      try{
+        const k = key.replace(/[.#$[\]]/g,'_');
+        db.ref('data/'+k).set(val===null?null:JSON.parse(val));
+      }catch(e){}
+    }
+
+    FB_SYNC_KEYS.forEach(key=>{
+      const k = key.replace(/[.#$[\]]/g,'_');
+      db.ref('data/'+k).on('value', snap=>{
+        if(_paused) return;
+        const val = snap.val();
+        if(val===null) return;
+        const nieuw = JSON.stringify(val);
+        if(localStorage.getItem(key)!==nieuw){
+          _paused=true;
+          localStorage.setItem(key,nieuw);
+          _paused=false;
+          try{
+            if(key==='looplijst_v23_done'||key==='looplijst_v23_volgorde'){
+              laadOpgeslagenData(); render();
+            }
+            if(key==='looplijst_v23_tijd' && view?.mode==='tijd') renderTijd();
+          }catch(e){}
+        }
+      });
+    });
+
+    const _orig = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key,val){
+      _orig(key,val);
+      if(!_paused && FB_SYNC_KEYS.includes(key)) fbSet(key,val);
+    };
+
+    db.ref('.info/connected').on('value', snap=>{
+      const el = document.getElementById('fbSyncDot');
+      if(el) el.style.background = snap.val() ? '#43a047' : '#e53935';
+    });
+
+    console.log('Firebase sync actief');
+  }catch(e){ console.warn('Firebase init mislukt:', e); }
+}
+
+(function(){
+  function loadScript(src, cb){
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = cb;
+    s.onerror = function(){ console.warn('Firebase kon niet laden'); };
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function(){
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js', function(){
+      _startFirebase();
+    });
+  });
+})();
 </script>
 </body>
 </html>
