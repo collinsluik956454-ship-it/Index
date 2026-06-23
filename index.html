@@ -53,60 +53,8 @@ if('serviceWorker' in navigator){
   });
 }
 
-// Installeer-prompt bewaren voor later
-let _pwaPrompt = null;
-window.addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault();
-  _pwaPrompt = e;
-  // Toon installeer-banner na 2 seconden als nog niet geïnstalleerd
-  setTimeout(()=>{
-    if(_pwaPrompt && !window.matchMedia('(display-mode: standalone)').matches){
-      toonInstalleerBanner();
-    }
-  }, 2000);
-});
-
-function toonInstalleerBanner(){
-  if(document.getElementById('pwaBanner')) return;
-  const b = document.createElement('div');
-  b.id = 'pwaBanner';
-  b.style.cssText = 'position:fixed;bottom:80px;left:12px;right:12px;background:#1565c0;color:#fff;border-radius:14px;padding:14px 16px;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,.35)';
-  b.innerHTML =
-    '<span style="font-size:28px">📋</span>'+
-    '<div style="flex:1">'+
-      '<div style="font-weight:800;font-size:14px">Installeer als app</div>'+
-      '<div style="font-size:12px;opacity:.85;margin-top:2px">Voeg toe aan startscherm voor snelle toegang</div>'+
-    '</div>'+
-    '<div style="display:flex;flex-direction:column;gap:6px">'+
-      '<button id="pwaInstallBtn" style="background:#fff;color:#1565c0;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer">Installeer</button>'+
-      '<button id="pwaSluitBtn" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer">Niet nu</button>'+
-    '</div>';
-  document.body.appendChild(b);
-  document.getElementById('pwaInstallBtn').onclick = async ()=>{
-    if(_pwaPrompt){ _pwaPrompt.prompt(); const r = await _pwaPrompt.userChoice; _pwaPrompt=null; }
-    b.remove();
-  };
-  document.getElementById('pwaSluitBtn').onclick = ()=> b.remove();
-}
-
-// iOS: toon handmatige instructie
-window.addEventListener('load', ()=>{
-  const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if(isIos && !isStandalone){
-    setTimeout(()=>{
-      if(document.getElementById('pwaBanner')) return;
-      const b = document.createElement('div');
-      b.id = 'pwaBanner';
-      b.style.cssText = 'position:fixed;bottom:80px;left:12px;right:12px;background:#1565c0;color:#fff;border-radius:14px;padding:14px 16px;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.35)';
-      b.innerHTML =
-        '<div style="font-weight:800;font-size:14px;margin-bottom:6px">📋 Installeer als app (iOS)</div>'+
-        '<div style="font-size:12px;opacity:.9;line-height:1.6">1. Tik op <b>Delen</b> ↑ onderaan Safari<br>2. Kies <b>"Zet op beginscherm"</b><br>3. Tik <b>Voeg toe</b></div>'+
-        '<button onclick="this.parentElement.remove()" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;width:100%">Sluiten</button>';
-      document.body.appendChild(b);
-    }, 2500);
-  }
-});
+// PWA installeer-prompt uitgeschakeld
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 </script>
 <style>
   :root{
