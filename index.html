@@ -415,7 +415,38 @@ window.addEventListener('load', ()=>{
   .kaart-nav-bar .nav-maps-btn{flex:0 0 auto;padding:10px 14px;background:var(--accent);color:#0d1b3e;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer}
   .kaart-nav-bar .nav-prev,.kaart-nav-bar .nav-next{flex:0 0 auto;padding:10px 12px;background:var(--line);border:none;border-radius:12px;font-size:16px;cursor:pointer;color:var(--ink)}
   .kaart-nav-bar .nav-prev:disabled,.kaart-nav-bar .nav-next:disabled{opacity:.3}
-  /* ===== Segment-module ===== */
+  /* ===== Tijdregistratie ===== */
+  .tijd-page{padding:14px 14px 100px}
+  .tijd-klok{background:var(--bg2);border-radius:20px;padding:28px 20px;text-align:center;margin-bottom:14px}
+  .tijd-klok-tijd{font-size:52px;font-weight:900;color:#fff;letter-spacing:.04em;font-variant-numeric:tabular-nums;line-height:1}
+  .tijd-klok-datum{font-size:13px;color:rgba(255,255,255,.65);margin-top:6px;font-weight:600}
+  .tijd-klok-status{display:inline-block;margin-top:10px;padding:4px 14px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.04em}
+  .tijd-klok-status.actief{background:#43a047;color:#fff}
+  .tijd-klok-status.pauze{background:#f57c00;color:#fff}
+  .tijd-klok-status.gestopt{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
+  .tijd-knoppen{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .tijd-btn{padding:16px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .tijd-btn-start{background:#43a047;color:#fff}
+  .tijd-btn-stop{background:#e53935;color:#fff}
+  .tijd-btn-pauze{background:#f57c00;color:#fff}
+  .tijd-btn-pauze.actief{background:#1565c0}
+  .tijd-btn:disabled{opacity:.35;pointer-events:none}
+  .tijd-pauzes{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .tijd-pauzes h3{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+  .tijd-pauze-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .tijd-pauze-item:last-child{border-bottom:none}
+  .tijd-samenvatting{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .tijd-samenvatting-rij{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .tijd-samenvatting-rij:last-child{border-bottom:none;font-weight:800;font-size:15px}
+  .tijd-samenvatting-rij span:last-child{font-weight:700;color:var(--green)}
+  .tijd-geschiedenis{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .tijd-gesch-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .tijd-gesch-header h3{font-size:14px;font-weight:800;color:var(--ink);margin:0}
+  .tijd-gesch-item{padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+  .tijd-gesch-item:last-child{border-bottom:none}
+  .tijd-gesch-datum{font-size:13px;font-weight:800;color:var(--ink)}
+  .tijd-gesch-detail{font-size:12px;color:var(--muted);margin-top:3px}
+  .tijd-gesch-duur{font-size:14px;font-weight:900;color:var(--green)}
   .seg-page{padding:12px 12px 100px}
   .seg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px}
   .seg-topbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
@@ -1744,6 +1775,7 @@ function render(){
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
+  if(view.mode==='tijd') return renderTijd();
   if(view.mode==='vergoeding') return renderVergoeding();
   if(view.mode==='order' && view.level==='bezorg') return renderBezorg();
   if(view.mode==='order') return renderOrder();
@@ -3145,9 +3177,250 @@ function renderHome(){
   cardSeg.onclick = ()=>{ view={mode:'segment', level:null}; render(); };
   grid.appendChild(cardSeg);
 
+  // Tijdregistratie
+  const tijdSessie = tijdLaadHuidigeSessie();
+  const cardTijd = document.createElement('button');
+  cardTijd.className = 'home-card full';
+  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
+    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
+    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
+    : 'Tik om te starten';
+  cardTijd.innerHTML =
+    '<div class="hc-ic">⏱</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Tijdregistratie</div>'+
+      '<div class="hc-sub">'+tijdStatus+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
+  grid.appendChild(cardTijd);
+
   main.appendChild(grid);
   updateHeaderProgress();
 }
+
+// ===== Tijdregistratie =====
+const STORAGE_TIJD = 'looplijst_v23_tijd';
+let _tijdTimer = null;
+
+function tijdLaadData(){ try{ return JSON.parse(localStorage.getItem(STORAGE_TIJD))||{sessies:[],huidig:null}; }catch(e){ return {sessies:[],huidig:null}; } }
+function tijdSlaOp(data){ try{ localStorage.setItem(STORAGE_TIJD,JSON.stringify(data)); }catch(e){} }
+function tijdLaadHuidigeSessie(){ return tijdLaadData().huidig; }
+
+function tijdFormatTijd(ms){
+  const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return (h>0?h+'u ':'')+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s';
+}
+function tijdFormatDuur(ms){ return tijdFormatTijd(ms); }
+function tijdFormatKlok(ms){
+  const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function tijdFormatDatumTijd(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})+' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+}
+function tijdNettoMs(sessie){
+  const nu = Date.now();
+  const eind = sessie.eind || (sessie.pauzeStart ? sessie.pauzeStart : nu);
+  const bruto = eind - sessie.start;
+  const pauzeMs = (sessie.pauzes||[]).reduce((s,p)=>s+(p.eind-p.start),0) +
+    (sessie.pauzeStart ? (nu - sessie.pauzeStart) : 0);
+  return Math.max(0, bruto - pauzeMs);
+}
+
+function renderTijd(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Tijdregistratie';
+  document.getElementById('title').textContent = 'Mijn tijd';
+  main.innerHTML = '';
+  if(_tijdTimer){ clearInterval(_tijdTimer); _tijdTimer=null; }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tijd-page';
+  main.appendChild(wrap);
+
+  function herrender(){ if(view.mode==='tijd') renderTijd(); }
+
+  function bouwScherm(){
+    wrap.innerHTML = '';
+    const data = tijdLaadData();
+    const s = data.huidig;
+    const isBezig = s && !s.eind;
+    const isPauze = isBezig && !!s.pauzeStart;
+    const isKlaar = s && !!s.eind;
+
+    // Klok
+    const klokDiv = document.createElement('div');
+    klokDiv.className = 'tijd-klok';
+    const verstreken = s ? tijdNettoMs(s) : 0;
+    klokDiv.innerHTML =
+      '<div class="tijd-klok-tijd" id="tijdKlokDisplay">'+tijdFormatKlok(verstreken)+'</div>'+
+      '<div class="tijd-klok-datum">'+new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+'</div>'+
+      '<span class="tijd-klok-status '+(isBezig&&!isPauze?'actief':isPauze?'pauze':'gestopt')+'">'+
+        (isBezig&&!isPauze?'● BEZIG':isPauze?'⏸ PAUZE':'■ GESTOPT')+
+      '</span>';
+    wrap.appendChild(klokDiv);
+
+    // Knoppen
+    const knoppen = document.createElement('div');
+    knoppen.className = 'tijd-knoppen';
+
+    const btnStart = document.createElement('button');
+    btnStart.className = 'tijd-btn tijd-btn-start';
+    btnStart.innerHTML = '▶ Start';
+    btnStart.disabled = isBezig || isKlaar;
+    btnStart.onclick = ()=>{
+      const d = tijdLaadData();
+      d.huidig = {start:Date.now(), pauzes:[], pauzeStart:null, eind:null};
+      tijdSlaOp(d);
+      herrender();
+    };
+
+    const btnPauze = document.createElement('button');
+    btnPauze.className = 'tijd-btn tijd-btn-pauze'+(isPauze?' actief':'');
+    btnPauze.innerHTML = isPauze ? '▶ Hervat' : '⏸ Pauze';
+    btnPauze.disabled = !isBezig;
+    btnPauze.onclick = ()=>{
+      const d = tijdLaadData();
+      if(d.huidig.pauzeStart){
+        d.huidig.pauzes.push({start:d.huidig.pauzeStart, eind:Date.now()});
+        d.huidig.pauzeStart = null;
+      } else {
+        d.huidig.pauzeStart = Date.now();
+      }
+      tijdSlaOp(d);
+      herrender();
+    };
+
+    const btnStop = document.createElement('button');
+    btnStop.className = 'tijd-btn tijd-btn-stop';
+    btnStop.innerHTML = '■ Stop';
+    btnStop.style.gridColumn = '1/-1';
+    btnStop.disabled = !isBezig;
+    btnStop.onclick = ()=>{
+      const d = tijdLaadData();
+      if(d.huidig.pauzeStart){
+        d.huidig.pauzes.push({start:d.huidig.pauzeStart, eind:Date.now()});
+        d.huidig.pauzeStart = null;
+      }
+      d.huidig.eind = Date.now();
+      d.huidig.nettoMs = tijdNettoMs(d.huidig);
+      d.sessies = d.sessies||[];
+      d.sessies.unshift({...d.huidig});
+      d.huidig = null;
+      tijdSlaOp(d);
+      herrender();
+    };
+
+    knoppen.appendChild(btnStart);
+    knoppen.appendChild(btnPauze);
+    knoppen.appendChild(btnStop);
+    wrap.appendChild(knoppen);
+
+    // Samenvatting huidige/laatste sessie
+    if(s){
+      const sum = document.createElement('div');
+      sum.className = 'tijd-samenvatting';
+      const startStr = tijdFormatDatumTijd(s.start);
+      const eindStr = s.eind ? tijdFormatDatumTijd(s.eind) : 'Nog bezig';
+      const pauzeMs = (s.pauzes||[]).reduce((t,p)=>t+(p.eind-p.start),0);
+      const nettoMs = isKlaar ? s.nettoMs : tijdNettoMs(s);
+      sum.innerHTML =
+        '<div class="tijd-samenvatting-rij"><span>Gestart</span><span>'+startStr+'</span></div>'+
+        '<div class="tijd-samenvatting-rij"><span>Gestopt</span><span>'+eindStr+'</span></div>'+
+        '<div class="tijd-samenvatting-rij"><span>Pauzetijd</span><span>'+tijdFormatDuur(pauzeMs)+'</span></div>'+
+        '<div class="tijd-samenvatting-rij"><span>Netto werktijd</span><span>'+tijdFormatDuur(nettoMs)+'</span></div>';
+      wrap.appendChild(sum);
+
+      // Pauzes detail
+      if(s.pauzes && s.pauzes.length>0){
+        const pd = document.createElement('div');
+        pd.className = 'tijd-pauzes';
+        pd.innerHTML = '<h3>Pauzes</h3>';
+        s.pauzes.forEach((p,i)=>{
+          const d2 = document.createElement('div');
+          d2.className = 'tijd-pauze-item';
+          d2.innerHTML =
+            '<span>Pauze '+(i+1)+'</span>'+
+            '<span style="color:var(--muted);font-size:12px">'+
+              new Date(p.start).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
+              ' – '+new Date(p.eind).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
+            '</span>'+
+            '<span style="font-weight:700">'+tijdFormatDuur(p.eind-p.start)+'</span>';
+          pd.appendChild(d2);
+        });
+        wrap.appendChild(pd);
+      }
+    }
+
+    // Nieuwe ronde starten als vorige klaar is
+    if(isKlaar){
+      const nieuwBtn = document.createElement('button');
+      nieuwBtn.style.cssText = 'width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:14px';
+      nieuwBtn.textContent = '+ Nieuwe ronde starten';
+      nieuwBtn.onclick = ()=>{
+        const d = tijdLaadData();
+        d.huidig = {start:Date.now(), pauzes:[], pauzeStart:null, eind:null};
+        tijdSlaOp(d);
+        herrender();
+      };
+      wrap.appendChild(nieuwBtn);
+    }
+
+    // Geschiedenis
+    const data2 = tijdLaadData();
+    if(data2.sessies && data2.sessies.length>0){
+      const gesch = document.createElement('div');
+      gesch.className = 'tijd-geschiedenis';
+      const gHead = document.createElement('div');
+      gHead.className = 'tijd-gesch-header';
+      gHead.innerHTML = '<h3>Geschiedenis</h3>'+
+        '<button onclick="tijdWisGeschiedenis()" style="background:none;border:none;color:#e53935;font-size:12px;font-weight:700;cursor:pointer">Wis alles</button>';
+      gesch.appendChild(gHead);
+      data2.sessies.forEach((sess,i)=>{
+        const item = document.createElement('div');
+        item.className = 'tijd-gesch-item';
+        const pMs = (sess.pauzes||[]).reduce((t,p)=>t+(p.eind-p.start),0);
+        item.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center">'+
+            '<div>'+
+              '<div class="tijd-gesch-datum">'+tijdFormatDatumTijd(sess.start)+'</div>'+
+              '<div class="tijd-gesch-detail">'+
+                new Date(sess.start).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
+                ' – '+new Date(sess.eind).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
+                (pMs>0?' · '+sess.pauzes.length+' pauze(s)':'')+
+              '</div>'+
+            '</div>'+
+            '<div class="tijd-gesch-duur">'+tijdFormatDuur(sess.nettoMs||sess.eind-sess.start)+'</div>'+
+          '</div>';
+        gesch.appendChild(item);
+      });
+      wrap.appendChild(gesch);
+    }
+
+    // Lopende klok updaten
+    if(isBezig && !isPauze){
+      _tijdTimer = setInterval(()=>{
+        const el = document.getElementById('tijdKlokDisplay');
+        if(!el){ clearInterval(_tijdTimer); return; }
+        const d3 = tijdLaadData();
+        if(d3.huidig) el.textContent = tijdFormatKlok(tijdNettoMs(d3.huidig));
+      }, 1000);
+    }
+  }
+
+  bouwScherm();
+}
+
+window.tijdWisGeschiedenis = function(){
+  if(!confirm('Alle geschiedenis wissen?')) return;
+  const d = tijdLaadData();
+  d.sessies = [];
+  tijdSlaOp(d);
+  renderTijd();
+};
 
 // ===== Segment-module =====
 // Vaste wijkindeling uit LOOPLIJST_WIJKEN.docx
@@ -7551,4 +7824,4 @@ syncToggle();
 render();
 </script>
 </body>
-</html>
+        </html>
