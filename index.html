@@ -3770,10 +3770,10 @@ function renderTijd(){
     knoppen.appendChild(btnStop);
     wrap.appendChild(knoppen);
 
-    // Handmatig tijd invullen
+    // Handmatig sessie toevoegen (terugwerkse kracht)
     const handmatigBtn = document.createElement('button');
     handmatigBtn.style.cssText = 'width:100%;padding:12px;background:#fff;border:2px dashed var(--line);border-radius:14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:14px';
-    handmatigBtn.textContent = '✏️ Tijd handmatig invullen';
+    handmatigBtn.textContent = '✏️ Sessie toevoegen (ook terugwerkse kracht)';
     handmatigBtn.onclick = ()=>{
       handmatigForm.style.display = handmatigForm.style.display==='none'?'block':'none';
     };
@@ -3785,26 +3785,74 @@ function renderTijd(){
 
     const vandaag = new Date();
     const datumVal = vandaag.toISOString().slice(0,10);
-    const nu2 = vandaag.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}).replace(':',':');
 
     handmatigForm.innerHTML =
-      '<div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:12px">Tijd handmatig invoeren</div>'+
+      '<div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:12px">📅 Sessie invoeren</div>'+
+      '<div style="margin-bottom:10px">'+
+        '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">DATUM</label>'+
+        '<input type="date" id="hmDatum" value="'+datumVal+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+      '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
         '<div>'+
-          '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">DATUM</label>'+
-          '<input type="date" id="hmDatum" value="'+datumVal+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
-        '</div>'+
-        '<div></div>'+
-        '<div>'+
           '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">STARTTIJD</label>'+
-          '<input type="time" id="hmStart" value="06:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
+          '<input type="time" id="hmStart" value="06:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
         '</div>'+
         '<div>'+
           '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">EINDTIJD</label>'+
-          '<input type="time" id="hmEind" value="09:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink)">'+
+          '<input type="time" id="hmEind" value="08:30" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
         '</div>'+
       '</div>'+
-      '<button id="hmOpslaan" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">Opslaan</button>';
+      '<div style="margin-bottom:14px">'+
+        '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">PAUZE (minuten, optioneel)</label>'+
+        '<input type="number" id="hmPauze" value="0" min="0" max="120" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+      '</div>'+
+      '<button id="hmOpslaan" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">✓ Opslaan</button>'+
+      '<div id="hmFout" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;color:#c62828;border-radius:8px;font-size:12px;font-weight:700"></div>';
+
+    // Opslaan handler
+    handmatigForm.querySelector && setTimeout(()=>{
+      const opslaanBtn = document.getElementById('hmOpslaan');
+      if(opslaanBtn) opslaanBtn.onclick = ()=>{
+        const datum = document.getElementById('hmDatum').value;
+        const startTijd = document.getElementById('hmStart').value;
+        const eindTijd = document.getElementById('hmEind').value;
+        const pauzeMin = parseInt(document.getElementById('hmPauze').value)||0;
+        const foutEl = document.getElementById('hmFout');
+
+        if(!datum||!startTijd||!eindTijd){ foutEl.textContent='Vul datum, start en eindtijd in.'; foutEl.style.display='block'; return; }
+
+        const startMs = new Date(datum+'T'+startTijd).getTime();
+        const eindMs = new Date(datum+'T'+eindTijd).getTime();
+
+        if(eindMs <= startMs){ foutEl.textContent='Eindtijd moet na starttijd liggen.'; foutEl.style.display='block'; return; }
+        if(pauzeMin*60000 >= (eindMs-startMs)){ foutEl.textContent='Pauze kan niet langer zijn dan de sessie.'; foutEl.style.display='block'; return; }
+
+        foutEl.style.display='none';
+        const pauzeMs = pauzeMin*60000;
+        const pauzeStart = eindMs - pauzeMs;
+        const nieuweSessie = {
+          start: startMs,
+          eind: eindMs,
+          nettoMs: eindMs - startMs - pauzeMs,
+          pauzes: pauzeMin>0 ? [{start: pauzeStart, eind: eindMs - 1}] : [],
+          handmatig: true
+        };
+
+        const d = tijdLaadData();
+        d.sessies = d.sessies||[];
+        // Voeg in op de juiste chronologische positie
+        let ingevoegd = false;
+        for(let i=0; i<d.sessies.length; i++){
+          if(d.sessies[i].start < startMs){ d.sessies.splice(i,0,nieuweSessie); ingevoegd=true; break; }
+        }
+        if(!ingevoegd) d.sessies.push(nieuweSessie);
+        tijdSlaOp(d);
+
+        toast('✓ Sessie toegevoegd: '+datum+' '+startTijd+'–'+eindTijd+(pauzeMin>0?' ('+pauzeMin+'m pauze)':''));
+        handmatigForm.style.display='none';
+        herrender();
+      };
+    }, 50);
 
     wrap.appendChild(handmatigForm);
 
