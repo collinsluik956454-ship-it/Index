@@ -1039,7 +1039,16 @@ function registreerWeek(weekNr){
     const huidigeWeken = vergoedingOpgebouwd.huidige.weken.map(w=>w.nr);
     const laatsteWeek = huidigeWeken.length ? Math.max(...huidigeWeken) : 0;
     if(weekNr === 1 && laatsteWeek >= 4){
-      vergoedingOpgebouwd.archief.unshift({...vergoedingOpgebouwd.huidige});
+      // Bereken totale nettotijd van deze periode voor archief
+      const _periodeStart = parseInt(localStorage.getItem('looplijst_v23_nieuwePeriodeSinds')||'0');
+      const _td = tijdLaadData();
+      const _sessies = [...(_td.sessies||[])];
+      const _totMs = _sessies.filter(s=>s.start>=_periodeStart).reduce((som,s)=>{
+        const e=s.eind||s.start; const p=(s.pauzes||[]).reduce((t,p)=>t+(p.eind-p.start),0);
+        return som+Math.max(0,(e-s.start)-p);
+      },0);
+      const archiefEntry = {...vergoedingOpgebouwd.huidige, totaal_tijd_ms: _totMs};
+      vergoedingOpgebouwd.archief.unshift(archiefEntry);
       if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
       vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, weken: []};
       localStorage.setItem('looplijst_v23_nieuwePeriodeSinds', String(Date.now()));
@@ -3318,6 +3327,95 @@ function renderHome(){
     '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
   main.appendChild(welk);
 
+  // ===== Periode-tijd + uurloon kaart =====
+  const periodeKaart = document.createElement('div');
+  periodeKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+
+  // Bereken totale netto tijd van alle sessies deze periode
+  const tijdData = tijdLaadData();
+  const alleSessies = [...(tijdData.sessies||[])];
+  if(tijdData.huidig?.start) alleSessies.push(tijdData.huidig);
+
+  // Huidige periode label bepalen
+  const periodeLabel = vergoedingPeriode?.label || null;
+  const periodeSinds = localStorage.getItem('looplijst_v23_nieuwePeriodeSinds');
+
+  // Filter sessies op huidige periode (na periodeSinds of alles als geen reset)
+  const periodeStart = periodeSinds ? parseInt(periodeSinds) : 0;
+  const periodeSessies = alleSessies.filter(s=> s.start >= periodeStart);
+
+  let totaalMs = periodeSessies.reduce((som, s)=>{
+    const nu = Date.now();
+    const eind = s.eind || (s.pauzeStart ? s.pauzeStart : nu);
+    const bruto = eind - s.start;
+    const pauzeMs = (s.pauzes||[]).reduce((t,p)=>t+(p.eind-p.start),0) +
+      (s.pauzeStart ? (nu - s.pauzeStart) : 0);
+    return som + Math.max(0, bruto - pauzeMs);
+  }, 0);
+
+  const totaalUren = totaalMs / 3600000;
+  const hh = Math.floor(totaalMs/3600000);
+  const mm = Math.floor((totaalMs%3600000)/60000);
+  const tijdTekst = hh > 0 ? hh+'u '+String(mm).padStart(2,'0')+'m' : mm+'m';
+
+  // Vergoeding totaal berekenen
+  const looplijstSegSet = new Set();
+  if(meta.bezorgwijken){
+    Object.values(meta.bezorgwijken).forEach(lijst=>lijst.forEach(b=>looplijstSegSet.add(b.segment)));
+  }
+  const vergTotaal = looplijstSegSet.size > 0
+    ? Object.values(vergoedingsdata).filter(v=>looplijstSegSet.has(v.segment)).reduce((s,v)=>s+v.totaal,0)
+    : Object.values(vergoedingsdata).reduce((s,v)=>s+v.totaal,0);
+
+  const uurloon = totaalUren > 0 ? vergTotaal/totaalUren : 0;
+
+  // Bouw kaart HTML
+  let kaartHtml = '<div style="display:flex;align-items:flex-start;gap:12px">';
+  kaartHtml += '<div style="flex:1">';
+  kaartHtml += '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">⏱ Tijd deze periode'+(periodeLabel?' · '+periodeLabel:'')+'</div>';
+  kaartHtml += '<div style="font-size:28px;font-weight:900;color:#1a1a2e;line-height:1">'+(totaalMs>0?tijdTekst:'—')+'</div>';
+  if(periodeSessies.length>0) kaartHtml += '<div style="font-size:11px;color:#6b7280;margin-top:3px;font-weight:600">'+periodeSessies.length+' bezorgdagen</div>';
+  kaartHtml += '</div>';
+
+  if(uurloon>0){
+    kaartHtml += '<div style="text-align:right">';
+    kaartHtml += '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Per uur</div>';
+    kaartHtml += '<div style="font-size:22px;font-weight:900;color:#2e7d32;line-height:1">€'+uurloon.toFixed(2).replace(".",",")+' </div>';
+    kaartHtml += '<div style="font-size:10px;color:#6b7280;margin-top:3px;font-weight:600">€'+vergTotaal.toFixed(2).replace(".",",")+'÷'+tijdTekst+'</div>';
+    kaartHtml += '</div>';
+  }
+  kaartHtml += '</div>';
+
+  // Archief periodes tonen
+  const archief = vergoedingOpgebouwd?.archief||[];
+  if(archief.length>0){
+    kaartHtml += '<div style="border-top:1px solid #e5e7eb;margin-top:12px;padding-top:10px">';
+    kaartHtml += '<div style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Vorige periodes</div>';
+    archief.slice().reverse().slice(0,3).forEach(a=>{
+      const aVerg = a.totaal_verwacht||0;
+      const aTijd = a.totaal_tijd_ms||0;
+      const aUur = aTijd>0 ? aVerg/(aTijd/3600000) : 0;
+      const aH = Math.floor(aTijd/3600000);
+      const aM = Math.floor((aTijd%3600000)/60000);
+      const aTijdTekst = aH>0?aH+'u '+String(aM).padStart(2,'0')+'m':aM+'m';
+      kaartHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px">';
+      kaartHtml += '<div><span style="font-weight:700;color:#374151">'+(a.periode_label||'?')+'</span>';
+      if(aTijd>0) kaartHtml += '<span style="color:#6b7280;margin-left:8px">'+aTijdTekst+'</span>';
+      kaartHtml += '</div>';
+      if(aVerg>0){
+        kaartHtml += '<div style="text-align:right"><span style="font-weight:800;color:#1976d2">€'+aVerg.toFixed(2).replace(".",",")+'</span>';
+        if(aUur>0) kaartHtml += '<span style="font-size:10px;color:#6b7280;margin-left:6px">€'+aUur.toFixed(2).replace(".",",")+'/u</span>';
+        kaartHtml += '</div>';
+      }
+      kaartHtml += '</div>';
+    });
+    kaartHtml += '</div>';
+  }
+
+  periodeKaart.innerHTML = kaartHtml;
+  main.appendChild(periodeKaart);
+
+
   // Weekagenda met tijdregistratie per dag
   const agenda = document.createElement('div');
   agenda.style.cssText = 'background:#fff;border-radius:18px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)';
@@ -3547,6 +3645,8 @@ function renderHome(){
   grid.appendChild(cardTijd);
 
   main.appendChild(grid);
+
+
   updateHeaderProgress();
 }
 
