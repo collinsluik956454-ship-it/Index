@@ -3654,8 +3654,42 @@ function renderHome(){
 const STORAGE_TIJD = 'looplijst_v23_tijd';
 let _tijdTimer = null;
 
+function tijdCleanDuplicaten(){
+  // Verwijder bestaande duplicaten uit localStorage
+  try{
+    const raw = localStorage.getItem(STORAGE_TIJD);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(!d.sessies) return;
+    const gezien = new Set();
+    const voor = d.sessies.length;
+    d.sessies = d.sessies.filter(s=>{
+      const k = new Date(s.start).toDateString();
+      if(gezien.has(k)) return false;
+      gezien.add(k); return true;
+    });
+    if(d.sessies.length < voor){
+      localStorage.setItem(STORAGE_TIJD, JSON.stringify(d));
+      console.log('Opgeruimd: '+(voor-d.sessies.length)+' duplicaten verwijderd');
+    }
+  }catch(e){}
+}
+tijdCleanDuplicaten(); // Direct uitvoeren bij laden
+
 function tijdLaadData(){ try{ return JSON.parse(localStorage.getItem(STORAGE_TIJD))||{sessies:[],huidig:null}; }catch(e){ return {sessies:[],huidig:null}; } }
-function tijdSlaOp(data){ try{ localStorage.setItem(STORAGE_TIJD,JSON.stringify(data)); }catch(e){} }
+function tijdSlaOp(data){
+  // Verwijder duplicaten op basis van datum (zelfde dag = zelfde sessie bewaren)
+  if(data.sessies){
+    const gezien = new Set();
+    data.sessies = data.sessies.filter(s=>{
+      const dagKey = new Date(s.start).toDateString();
+      if(gezien.has(dagKey)) return false;
+      gezien.add(dagKey);
+      return true;
+    });
+  }
+  try{ localStorage.setItem(STORAGE_TIJD,JSON.stringify(data)); }catch(e){}
+}
 function tijdLaadHuidigeSessie(){ return tijdLaadData().huidig; }
 
 function tijdFormatTijd(ms){
@@ -3829,11 +3863,20 @@ function renderTijd(){
 
         // Check of er al een sessie op deze datum bestaat
         const d0 = tijdLaadData();
+        const doelDag = new Date(startMs).toDateString();
+        const vandaagDag = new Date().toDateString();
         const bestaatAl = [...(d0.sessies||[]), ...(d0.huidig?[d0.huidig]:[])].some(s=>{
-          return new Date(s.start).toDateString() === new Date(startMs).toDateString();
+          return new Date(s.start).toDateString() === doelDag;
         });
         if(bestaatAl){
-          foutEl.textContent='Er staat al een sessie op '+new Date(startMs).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})+'. Verwijder die eerst.';
+          const datumTekst = new Date(startMs).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+          foutEl.textContent='Er staat al een sessie op '+datumTekst+'. Verwijder die eerst via "Wis" in de geschiedenis.';
+          foutEl.style.display='block';
+          return;
+        }
+        // Blokkeer ook vandaag als er een lopende sessie is
+        if(doelDag === vandaagDag && d0.huidig?.start){
+          foutEl.textContent='Vandaag loopt al een actieve sessie. Stop die eerst.';
           foutEl.style.display='block';
           return;
         }
