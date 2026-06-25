@@ -3827,6 +3827,17 @@ function renderTijd(){
         if(eindMs <= startMs){ foutEl.textContent='Eindtijd moet na starttijd liggen.'; foutEl.style.display='block'; return; }
         if(pauzeMin*60000 >= (eindMs-startMs)){ foutEl.textContent='Pauze kan niet langer zijn dan de sessie.'; foutEl.style.display='block'; return; }
 
+        // Check of er al een sessie op deze datum bestaat
+        const d0 = tijdLaadData();
+        const bestaatAl = [...(d0.sessies||[]), ...(d0.huidig?[d0.huidig]:[])].some(s=>{
+          return new Date(s.start).toDateString() === new Date(startMs).toDateString();
+        });
+        if(bestaatAl){
+          foutEl.textContent='Er staat al een sessie op '+new Date(startMs).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})+'. Verwijder die eerst.';
+          foutEl.style.display='block';
+          return;
+        }
+
         foutEl.style.display='none';
         const pauzeMs = pauzeMin*60000;
         const pauzeStart = eindMs - pauzeMs;
