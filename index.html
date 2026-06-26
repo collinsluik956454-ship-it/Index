@@ -3843,15 +3843,17 @@ function renderTijd(){
       '<button id="hmOpslaan" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">✓ Opslaan</button>'+
       '<div id="hmFout" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;color:#c62828;border-radius:8px;font-size:12px;font-weight:700"></div>';
 
-    // Opslaan handler
-    handmatigForm.querySelector && setTimeout(()=>{
-      const opslaanBtn = document.getElementById('hmOpslaan');
+    // Opslaan handler — direct op het form element, geen setTimeout
+    (()=>{
+      const opslaanBtn = handmatigForm.querySelector('#hmOpslaan');
+      let _bezig = false;
       if(opslaanBtn) opslaanBtn.onclick = ()=>{
-        const datum = document.getElementById('hmDatum').value;
-        const startTijd = document.getElementById('hmStart').value;
-        const eindTijd = document.getElementById('hmEind').value;
-        const pauzeMin = parseInt(document.getElementById('hmPauze').value)||0;
-        const foutEl = document.getElementById('hmFout');
+        if(_bezig) return; _bezig = true; setTimeout(()=>{ _bezig=false; }, 2000);
+        const datum = handmatigForm.querySelector('#hmDatum').value;
+        const startTijd = handmatigForm.querySelector('#hmStart').value;
+        const eindTijd = handmatigForm.querySelector('#hmEind').value;
+        const pauzeMin = parseInt(handmatigForm.querySelector('#hmPauze').value)||0;
+        const foutEl = handmatigForm.querySelector('#hmFout');
 
         if(!datum||!startTijd||!eindTijd){ foutEl.textContent='Vul datum, start en eindtijd in.'; foutEl.style.display='block'; return; }
 
@@ -3894,7 +3896,9 @@ function renderTijd(){
 
         const d = tijdLaadData();
         d.sessies = d.sessies||[];
-        // Voeg in op de juiste chronologische positie
+        // Verwijder eventuele bestaande sessie op deze dag (veiligheidsnet)
+        d.sessies = d.sessies.filter(s=> new Date(s.start).toDateString() !== doelDag);
+        // Voeg in op de juiste chronologische positie (nieuwste eerst)
         let ingevoegd = false;
         for(let i=0; i<d.sessies.length; i++){
           if(d.sessies[i].start < startMs){ d.sessies.splice(i,0,nieuweSessie); ingevoegd=true; break; }
@@ -3906,7 +3910,7 @@ function renderTijd(){
         handmatigForm.style.display='none';
         herrender();
       };
-    }, 50);
+    })();
 
     wrap.appendChild(handmatigForm);
 
