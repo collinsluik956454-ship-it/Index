@@ -3808,12 +3808,7 @@ function renderTijd(){
     const handmatigBtn = document.createElement('button');
     handmatigBtn.style.cssText = 'width:100%;padding:12px;background:#fff;border:2px dashed var(--line);border-radius:14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:14px';
     handmatigBtn.textContent = '✏️ Sessie toevoegen (ook terugwerkse kracht)';
-    handmatigBtn.onclick = ()=>{
-      handmatigForm.style.display = handmatigForm.style.display==='none'?'block':'none';
-    };
-    wrap.appendChild(handmatigBtn);
 
-    // Handmatig invullen formulier
     const handmatigForm = document.createElement('div');
     handmatigForm.style.cssText = 'display:none;background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)';
 
@@ -3824,94 +3819,95 @@ function renderTijd(){
       '<div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:12px">📅 Sessie invoeren</div>'+
       '<div style="margin-bottom:10px">'+
         '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">DATUM</label>'+
-        '<input type="date" id="hmDatum" value="'+datumVal+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+        '<input type="date" class="hm-datum" value="'+datumVal+'" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
         '<div>'+
           '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">STARTTIJD</label>'+
-          '<input type="time" id="hmStart" value="06:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+          '<input type="time" class="hm-start" value="06:00" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
         '</div>'+
         '<div>'+
           '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">EINDTIJD</label>'+
-          '<input type="time" id="hmEind" value="08:30" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+          '<input type="time" class="hm-eind" value="08:30" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
         '</div>'+
       '</div>'+
       '<div style="margin-bottom:14px">'+
         '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">PAUZE (minuten, optioneel)</label>'+
-        '<input type="number" id="hmPauze" value="0" min="0" max="120" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
+        '<input type="number" class="hm-pauze" value="0" min="0" max="120" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
       '</div>'+
-      '<button id="hmOpslaan" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">✓ Opslaan</button>'+
-      '<div id="hmFout" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;color:#c62828;border-radius:8px;font-size:12px;font-weight:700"></div>';
+      '<button class="hm-opslaan" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">✓ Opslaan</button>'+
+      '<div class="hm-fout" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;color:#c62828;border-radius:8px;font-size:12px;font-weight:700"></div>';
 
-    // Opslaan handler — direct op het form element, geen setTimeout
-    (()=>{
-      const opslaanBtn = handmatigForm.querySelector('#hmOpslaan');
-      let _bezig = false;
-      if(opslaanBtn) opslaanBtn.onclick = ()=>{
-        if(_bezig) return; _bezig = true; setTimeout(()=>{ _bezig=false; }, 2000);
-        const datum = handmatigForm.querySelector('#hmDatum').value;
-        const startTijd = handmatigForm.querySelector('#hmStart').value;
-        const eindTijd = handmatigForm.querySelector('#hmEind').value;
-        const pauzeMin = parseInt(handmatigForm.querySelector('#hmPauze').value)||0;
-        const foutEl = handmatigForm.querySelector('#hmFout');
+    // Knop toggle
+    handmatigBtn.onclick = ()=>{
+      handmatigForm.style.display = handmatigForm.style.display==='none' ? 'block' : 'none';
+    };
 
-        if(!datum||!startTijd||!eindTijd){ foutEl.textContent='Vul datum, start en eindtijd in.'; foutEl.style.display='block'; return; }
+    // Opslaan — gebruik .querySelector op handmatigForm (niet document.getElementById!)
+    const _hmOpslaan = handmatigForm.querySelector('.hm-opslaan');
+    _hmOpslaan.addEventListener('click', function hmOpslaanHandler(){
+      const foutEl = handmatigForm.querySelector('.hm-fout');
+      const datum = handmatigForm.querySelector('.hm-datum').value;
+      const startTijd = handmatigForm.querySelector('.hm-start').value;
+      const eindTijd = handmatigForm.querySelector('.hm-eind').value;
+      const pauzeMin = parseInt(handmatigForm.querySelector('.hm-pauze').value)||0;
 
-        const startMs = new Date(datum+'T'+startTijd).getTime();
-        const eindMs = new Date(datum+'T'+eindTijd).getTime();
+      foutEl.style.display='none';
 
-        if(eindMs <= startMs){ foutEl.textContent='Eindtijd moet na starttijd liggen.'; foutEl.style.display='block'; return; }
-        if(pauzeMin*60000 >= (eindMs-startMs)){ foutEl.textContent='Pauze kan niet langer zijn dan de sessie.'; foutEl.style.display='block'; return; }
+      if(!datum||!startTijd||!eindTijd){
+        foutEl.textContent='Vul datum, start en eindtijd in.';
+        foutEl.style.display='block'; return;
+      }
 
-        // Check of er al een sessie op deze datum bestaat
-        const d0 = tijdLaadData();
-        const doelDag = new Date(startMs).toDateString();
-        const vandaagDag = new Date().toDateString();
-        const bestaatAl = [...(d0.sessies||[]), ...(d0.huidig?[d0.huidig]:[])].some(s=>{
-          return new Date(s.start).toDateString() === doelDag;
-        });
-        if(bestaatAl){
-          const datumTekst = new Date(startMs).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
-          foutEl.textContent='Er staat al een sessie op '+datumTekst+'. Verwijder die eerst via "Wis" in de geschiedenis.';
-          foutEl.style.display='block';
-          return;
-        }
-        // Blokkeer ook vandaag als er een lopende sessie is
-        if(doelDag === vandaagDag && d0.huidig?.start){
-          foutEl.textContent='Vandaag loopt al een actieve sessie. Stop die eerst.';
-          foutEl.style.display='block';
-          return;
-        }
+      const startMs = new Date(datum+'T'+startTijd).getTime();
+      const eindMs  = new Date(datum+'T'+eindTijd).getTime();
 
-        foutEl.style.display='none';
-        const pauzeMs = pauzeMin*60000;
-        const pauzeStart = eindMs - pauzeMs;
-        const nieuweSessie = {
-          start: startMs,
-          eind: eindMs,
-          nettoMs: eindMs - startMs - pauzeMs,
-          pauzes: pauzeMin>0 ? [{start: pauzeStart, eind: eindMs - 1}] : [],
-          handmatig: true
-        };
+      if(eindMs <= startMs){
+        foutEl.textContent='Eindtijd moet na starttijd liggen.';
+        foutEl.style.display='block'; return;
+      }
+      if(pauzeMin*60000 >= (eindMs-startMs)){
+        foutEl.textContent='Pauze kan niet langer zijn dan de sessie.';
+        foutEl.style.display='block'; return;
+      }
 
-        const d = tijdLaadData();
-        d.sessies = d.sessies||[];
-        // Verwijder eventuele bestaande sessie op deze dag (veiligheidsnet)
-        d.sessies = d.sessies.filter(s=> new Date(s.start).toDateString() !== doelDag);
-        // Voeg in op de juiste chronologische positie (nieuwste eerst)
-        let ingevoegd = false;
-        for(let i=0; i<d.sessies.length; i++){
-          if(d.sessies[i].start < startMs){ d.sessies.splice(i,0,nieuweSessie); ingevoegd=true; break; }
-        }
-        if(!ingevoegd) d.sessies.push(nieuweSessie);
-        tijdSlaOp(d);
+      const doelDag = new Date(startMs).toDateString();
 
-        toast('✓ Sessie toegevoegd: '+datum+' '+startTijd+'–'+eindTijd+(pauzeMin>0?' ('+pauzeMin+'m pauze)':''));
-        handmatigForm.style.display='none';
-        herrender();
+      // Check lopende sessie vandaag
+      const d = tijdLaadData();
+      if(d.huidig?.start && new Date(d.huidig.start).toDateString()===doelDag){
+        foutEl.textContent='Er loopt al een actieve sessie op die dag. Stop die eerst.';
+        foutEl.style.display='block'; return;
+      }
+
+      // Verwijder eventuele bestaande sessie op die dag en voeg nieuwe toe
+      d.sessies = (d.sessies||[]).filter(s=> new Date(s.start).toDateString() !== doelDag);
+
+      const pauzeMs = pauzeMin*60000;
+      const nieuweSessie = {
+        start: startMs,
+        eind: eindMs,
+        nettoMs: eindMs - startMs - pauzeMs,
+        pauzes: pauzeMin>0 ? [{start: eindMs-pauzeMs, eind: eindMs-1}] : [],
+        handmatig: true
       };
-    })();
 
+      // Invoegen op chronologische positie (nieuwste eerst)
+      let ingevoegd = false;
+      for(let i=0; i<d.sessies.length; i++){
+        if(d.sessies[i].start < startMs){ d.sessies.splice(i,0,nieuweSessie); ingevoegd=true; break; }
+      }
+      if(!ingevoegd) d.sessies.push(nieuweSessie);
+
+      tijdSlaOp(d);
+
+      const datumTekst = new Date(startMs).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+      toast('✓ Sessie toegevoegd: '+datumTekst+' '+startTijd+'–'+eindTijd+(pauzeMin>0?' ('+pauzeMin+'m pauze)':''));
+      handmatigForm.style.display='none';
+      herrender();
+    }, {once: false});
+
+    wrap.appendChild(handmatigBtn);
     wrap.appendChild(handmatigForm);
 
     document.addEventListener('click', function hmHandler(e){
