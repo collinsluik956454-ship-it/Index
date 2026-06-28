@@ -3422,72 +3422,119 @@ function renderHome(){
 
   const agHead = document.createElement('div');
   agHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px';
-  agHead.innerHTML = '<div style="font-size:13px;font-weight:800;color:var(--ink)">📅 Agenda</div>';
+  agHead.innerHTML = '<div style="display:flex;align-items:center;gap:6px"><div style="font-size:13px;font-weight:800;color:var(--ink)">📅 Agenda · Weken</div></div>';
   agenda.appendChild(agHead);
 
-  // Bouw week (ma t/m za)
+  // Bouw 4-weken overzicht
+  // Bepaal maandag van de huidige looplijst-week (of kalenderweek als geen datum)
   const td2 = tijdLaadData();
   const nu = new Date();
-  const dagNamen = ['Zo','Ma','Di','Wo','Do','Vr','Za'];
-  const dagRij = document.createElement('div');
-  dagRij.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 10px 12px';
+  const huidigePW = vergoedingWeek || 1;
+  const vorigeWeekOud = parseInt(localStorage.getItem('looplijst_v23_vorigeWeek')||'0');
+  const toonVorigeW4 = (huidigePW === 1 && vorigeWeekOud >= 4);
 
-  for(let i=1; i<=6; i++){
-    // Huidige week: ma=1 t/m za=6
-    const d = new Date(nu);
-    const dag2 = nu.getDay(); // 0=zo
-    const diff = i - (dag2===0?7:dag2);
-    d.setDate(nu.getDate()+diff);
-    const datumStr = d.toDateString();
-    const isVandaag = datumStr===nu.toDateString();
+  // Bereken maandag van huidige kalenderweek
+  const dagVdWeek = nu.getDay() === 0 ? 7 : nu.getDay();
+  const maandagHuidig = new Date(nu);
+  maandagHuidig.setDate(nu.getDate() - dagVdWeek + 1);
+  maandagHuidig.setHours(0,0,0,0);
 
-    // Zoek sessie van deze dag
-    const sessie = td2.sessies?.find(s2=> new Date(s2.start).toDateString()===datumStr);
-    const huidigVandaag = (td2.huidig && new Date(td2.huidig.start).toDateString()===datumStr) ? td2.huidig : null;
+  // Bouw weken: huidige week + komende weken t/m W4, daarna weer W1 etc.
+  // Weken worden getoond in volgorde: W(huidig), W(huidig+1), ..., terug naar W1 na W4
+  const aantalWeken = toonVorigeW4 ? 5 : 4; // 4 weken + evt. vorige W4
+  const weekBlokken = [];
 
-    const fmt2 = ts=> new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  for(let offset = 0; offset < aantalWeken; offset++){
+    const weekNr = toonVorigeW4 && offset === aantalWeken-1
+      ? 4  // vorige W4 onderaan
+      : ((huidigePW - 1 + offset) % 4) + 1;
+    const isHuidig = offset === 0;
+    const isVorigeW4 = toonVorigeW4 && offset === aantalWeken-1;
 
-    const dagKnop = document.createElement('button');
-    dagKnop.style.cssText =
-      'display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:12px;border:2px solid '+(isVandaag?'var(--green)':'var(--line)')+';'+
-      'background:'+(isVandaag?'#e8f0fe':huidigVandaag?'#fff9e6':sessie?'#f0faf4':'#fff')+';cursor:pointer;gap:2px';
+    // Maandag van deze week (offset weken vanaf nu)
+    const maandag = new Date(maandagHuidig);
+    maandag.setDate(maandagHuidig.getDate() + (isVorigeW4 ? -7 : offset * 7));
 
-    const dagNaamEl = document.createElement('div');
-    dagNaamEl.style.cssText = 'font-size:11px;font-weight:800;color:'+(isVandaag?'var(--green)':'var(--muted)');
-    dagNaamEl.textContent = dagNamen[i];
+    weekBlokken.push({ weekNr, isHuidig, isVorigeW4, maandag });
+  }
 
-    const dagNrEl = document.createElement('div');
-    dagNrEl.style.cssText = 'font-size:16px;font-weight:900;color:var(--ink)';
-    dagNrEl.textContent = d.getDate();
+  const dagNamen = ['','Ma','Di','Wo','Do','Vr','Za'];
+  const fmt2 = ts => new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  const fmtDatum = d => d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
 
-    const tijdEl2 = document.createElement('div');
-    tijdEl2.style.cssText = 'font-size:9px;font-weight:700;text-align:center;line-height:1.3;margin-top:2px';
+  weekBlokken.forEach(({weekNr, isHuidig, isVorigeW4, maandag})=>{
+    // Week label rij
+    const weekLabelDiv = document.createElement('div');
+    weekLabelDiv.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px 4px';
+    const kleur = isVorigeW4 ? '#92400e' : isHuidig ? '#1565c0' : '#374151';
+    const bg = isVorigeW4 ? '#fef3c7' : isHuidig ? '#e3f2fd' : '#f3f4f6';
+    const label = isVorigeW4 ? 'W4 · vorige periode' : (isHuidig ? 'W'+weekNr+' · deze week' : 'W'+weekNr);
+    weekLabelDiv.innerHTML =
+      '<span style="background:'+bg+';color:'+kleur+';padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800">'+label+'</span>'+
+      '<span style="font-size:11px;color:var(--muted);font-weight:600">'+fmtDatum(maandag)+' – '+fmtDatum(new Date(maandag.getTime()+5*86400000))+'</span>';
+    agenda.appendChild(weekLabelDiv);
 
-    if(huidigVandaag){
-      tijdEl2.style.color = '#f57c00';
-      tijdEl2.textContent = '▶'+fmt2(huidigVandaag.start);
-    } else if(sessie){
-      tijdEl2.style.color = '#43a047';
-      tijdEl2.textContent = fmt2(sessie.start)+'\n'+fmt2(sessie.eind);
-      tijdEl2.style.whiteSpace = 'pre';
-    } else {
-      tijdEl2.style.color = 'var(--muted)';
-      tijdEl2.textContent = '—';
+    // Dag-rij (ma t/m za)
+    const dagRij = document.createElement('div');
+    dagRij.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 10px '+(isVorigeW4?'10px':'6px');
+
+    for(let i=0; i<6; i++){
+      const dagDatum = new Date(maandag);
+      dagDatum.setDate(maandag.getDate() + i);
+      const datumStr = dagDatum.toDateString();
+      const isVandaag = datumStr === nu.toDateString();
+
+      const sessie = td2.sessies?.find(s2 => new Date(s2.start).toDateString() === datumStr);
+      const huidigDag = td2.huidig && new Date(td2.huidig.start).toDateString() === datumStr ? td2.huidig : null;
+
+      const dagKnop = document.createElement('button');
+      const borderKleur = isVandaag ? 'var(--green)' : sessie || huidigDag ? '#bbf7d0' : 'var(--line)';
+      const bgKleur = isVandaag ? '#e8f0fe' : huidigDag ? '#fff9e6' : sessie ? '#f0faf4' : '#fff';
+      dagKnop.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;padding:6px 3px;border-radius:10px;'+
+        'border:2px solid '+borderKleur+';background:'+bgKleur+';cursor:pointer;gap:1px;'+
+        (isVorigeW4 ? 'opacity:.65;' : '');
+
+      const naamEl = document.createElement('div');
+      naamEl.style.cssText = 'font-size:10px;font-weight:800;color:'+(isVandaag?'var(--green)':'var(--muted)');
+      naamEl.textContent = dagNamen[i+1];
+
+      const nrEl = document.createElement('div');
+      nrEl.style.cssText = 'font-size:15px;font-weight:900;color:var(--ink)';
+      nrEl.textContent = dagDatum.getDate();
+
+      const tijdEl = document.createElement('div');
+      tijdEl.style.cssText = 'font-size:9px;font-weight:700;text-align:center;line-height:1.2;margin-top:1px';
+
+      if(huidigDag){
+        tijdEl.style.color = '#f57c00';
+        tijdEl.textContent = '▶'+fmt2(huidigDag.start);
+      } else if(sessie){
+        tijdEl.style.color = '#43a047';
+        tijdEl.textContent = fmt2(sessie.start)+'\n'+fmt2(sessie.eind);
+        tijdEl.style.whiteSpace = 'pre';
+      } else {
+        tijdEl.style.color = 'var(--muted)';
+        tijdEl.textContent = '—';
+      }
+
+      dagKnop.appendChild(naamEl);
+      dagKnop.appendChild(nrEl);
+      dagKnop.appendChild(tijdEl);
+      dagKnop.onclick = ()=>{ view={mode:'tijd'}; render(); };
+      dagRij.appendChild(dagKnop);
     }
 
-    dagKnop.appendChild(dagNaamEl);
-    dagKnop.appendChild(dagNrEl);
-    dagKnop.appendChild(tijdEl2);
+    agenda.appendChild(dagRij);
 
-    dagKnop.onclick = ()=>{
-      // Ga naar tijdregistratie voor deze dag
-      view={mode:'tijd'};
-      render();
-    };
+    // Scheidingslijn tussen weken (niet na laatste)
+    if(!isVorigeW4){
+      const lijn = document.createElement('div');
+      lijn.style.cssText = 'border-top:1px solid var(--line);margin:4px 12px';
+      agenda.appendChild(lijn);
+    }
+  });
 
-    dagRij.appendChild(dagKnop);
-  }
-  agenda.appendChild(dagRij);
   main.appendChild(agenda);
 
   // 4 grote keuze-kaarten
@@ -3999,18 +4046,30 @@ function renderTijd(){
         const item = document.createElement('div');
         item.className = 'tijd-gesch-item';
         const pMs = (sess.pauzes||[]).reduce((t,p)=>t+(p.eind-p.start),0);
+        const netto = sess.nettoMs || (sess.eind - sess.start);
         item.innerHTML =
-          '<div style="display:flex;justify-content:space-between;align-items:center">'+
-            '<div>'+
-              '<div class="tijd-gesch-datum">'+tijdFormatDatumTijd(sess.start)+'</div>'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+
+            '<div style="flex:1;min-width:0">'+
+              '<div class="tijd-gesch-datum">'+tijdFormatDatumTijd(sess.start)+(sess.handmatig?' <span style="font-size:9px;background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:4px;font-weight:700">handmatig</span>':'')+'</div>'+
               '<div class="tijd-gesch-detail">'+
                 new Date(sess.start).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
                 ' – '+new Date(sess.eind).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
                 (pMs>0?' · '+sess.pauzes.length+' pauze(s)':'')+
               '</div>'+
             '</div>'+
-            '<div class="tijd-gesch-duur">'+tijdFormatDuur(sess.nettoMs||sess.eind-sess.start)+'</div>'+
+            '<div class="tijd-gesch-duur">'+tijdFormatDuur(netto)+'</div>'+
+            '<button style="flex:0 0 auto;background:#fee2e2;color:#c62828;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;line-height:1" title="Verwijder deze sessie">🗑</button>'+
           '</div>';
+        // Verwijder knop handler
+        item.querySelector('button').addEventListener('click', ()=>{
+          const bevestig = confirm('Sessie van '+tijdFormatDatumTijd(sess.start)+' verwijderen?');
+          if(!bevestig) return;
+          const d3 = tijdLaadData();
+          d3.sessies = (d3.sessies||[]).filter(s=> s.start !== sess.start);
+          tijdSlaOp(d3);
+          toast('Sessie verwijderd');
+          herrender();
+        });
         gesch.appendChild(item);
       });
       wrap.appendChild(gesch);
@@ -8297,6 +8356,10 @@ function toonWeekKeuzePopup(){
     btn.onclick = ()=>{
       const nieuw = parseInt(btn.getAttribute('data-w'));
       const oud = vergoedingWeek;
+      // Sla vorige week op voor agenda W4-badge
+      localStorage.setItem('looplijst_v23_vorigeWeek', String(oud||1));
+      // Bij W2 begin: wis de W4-badge
+      if(nieuw === 2) localStorage.removeItem('looplijst_v23_vorigeWeek');
       vergoedingWeek = nieuw;
       saveVergoedingWeek();
       // Voeg week toe aan cumulatief
