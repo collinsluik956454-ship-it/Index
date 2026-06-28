@@ -3433,7 +3433,16 @@ function renderHome(){
   const vorigeWeekOud = parseInt(localStorage.getItem('looplijst_v23_vorigeWeek')||'0');
   const toonVorigeW4 = (huidigePW === 1 && vorigeWeekOud >= 4);
 
-  // Bereken maandag van huidige kalenderweek
+  // Bereken maandag van de looplijst-week (vanuit meta.date + weeknummer)
+  // meta.date = datum van de ingeladen looplijst (bijv. "15 jun 2026")
+  const refDatumLooplijst = parseLooplijstDatum(meta.date) || nu;
+  const refDag = refDatumLooplijst.getDay(); // 0=zo, 1=ma..6=za
+  const refDagIdx = refDag === 0 ? 7 : refDag; // 1=ma..7=zo
+  const maandagLooplijstWeek = new Date(refDatumLooplijst);
+  maandagLooplijstWeek.setDate(refDatumLooplijst.getDate() - refDagIdx + 1);
+  maandagLooplijstWeek.setHours(0,0,0,0);
+
+  // maandagHuidig = maandag van de HUIDIGE kalenderweek (voor vandaag-markering)
   const dagVdWeek = nu.getDay() === 0 ? 7 : nu.getDay();
   const maandagHuidig = new Date(nu);
   maandagHuidig.setDate(nu.getDate() - dagVdWeek + 1);
@@ -3451,9 +3460,17 @@ function renderHome(){
     const isHuidig = offset === 0;
     const isVorigeW4 = toonVorigeW4 && offset === aantalWeken-1;
 
-    // Maandag van deze week (offset weken vanaf nu)
-    const maandag = new Date(maandagHuidig);
-    maandag.setDate(maandagHuidig.getDate() + (isVorigeW4 ? -7 : offset * 7));
+    // Maandag van deze week: start vanuit de looplijstweek (W1 basis)
+    // maandagLooplijstWeek = maandag van de ingeladen looplijst (= W huidig)
+    // Elke week = +7 dagen per stap na de huidige week
+    const maandag = new Date(maandagLooplijstWeek);
+    if(isVorigeW4){
+      // Vorige W4 = 7 dagen terug vanuit W1 (huidige looplijstweek)
+      maandag.setDate(maandagLooplijstWeek.getDate() - 7);
+    } else {
+      // W(huidig) + offset weken
+      maandag.setDate(maandagLooplijstWeek.getDate() + offset * 7);
+    }
 
     weekBlokken.push({ weekNr, isHuidig, isVorigeW4, maandag });
   }
