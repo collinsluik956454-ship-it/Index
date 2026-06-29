@@ -3340,9 +3340,22 @@ function renderHome(){
   const periodeLabel = vergoedingPeriode?.label || null;
   const periodeSinds = localStorage.getItem('looplijst_v23_nieuwePeriodeSinds');
 
-  // Filter sessies op huidige periode (na periodeSinds of alles als geen reset)
-  const periodeStart = periodeSinds ? parseInt(periodeSinds) : 0;
-  const periodeSessies = alleSessies.filter(s=> s.start >= periodeStart);
+  // Filter sessies op huidige periode: vanaf maandag van W1 van deze periode
+  // Bereken maandag van W1 vanuit de looplijstdatum + huidigePeriodeWeek
+  let periodeStartMs = 0;
+  try {
+    const refDatum = parseLooplijstDatum(meta.date) || new Date();
+    const refDag = refDatum.getDay() === 0 ? 7 : refDatum.getDay();
+    const maandagHuidigeWeek = new Date(refDatum);
+    maandagHuidigeWeek.setDate(refDatum.getDate() - refDag + 1);
+    maandagHuidigeWeek.setHours(0,0,0,0);
+    // Ga terug naar maandag van W1 (huidigePeriodeWeek - 1 weken terug)
+    const hPW = huidigePeriodeWeek || 1;
+    const maandagW1 = new Date(maandagHuidigeWeek);
+    maandagW1.setDate(maandagHuidigeWeek.getDate() - (hPW - 1) * 7);
+    periodeStartMs = maandagW1.getTime();
+  } catch(e) {}
+  const periodeSessies = alleSessies.filter(s => s.start >= periodeStartMs);
 
   let totaalMs = periodeSessies.reduce((som, s)=>{
     const nu = Date.now();
@@ -4228,6 +4241,97 @@ const SEGMENT_DATA = {
     'LOOK':['2','10','18','19','27','33','39','45','51','55','63','69','73','75','81','89','93','99','103','107','113','115','117','119'],
   }},
 };
+
+// Bouw SEGMENT_DATA dynamisch vanuit ingeladen looplijst adressen
+function bouwSegmentDataVanuitAdressen(adressen, bezorgwijken){
+  if(!adressen || adressen.length === 0) return;
+
+  // Maak lookup: segmentnummer -> wijknaam
+  const segNaarWijk = {};
+  Object.entries(bezorgwijken).forEach(([wijkNaam, lijst])=>{
+    lijst.forEach(({kort, segment})=>{
+      segNaarWijk[segment] = {wijkNaam, kort};
+    });
+  });
+
+  // Bouw nieuw segment data object vanuit adressen
+  const nieuweData = {};
+
+  adressen.forEach(a=>{
+    if(!a.straat || !a.nr) return;
+
+    // Bepaal segmentnummer: uit bezorgwijken via wijk+ronde, of gebruik bestaande
+    // Zoek segment voor dit adres via bezorgwijken (wijk -> segment pairs)
+    let segNr = null;
+    const wijkInfo = a.wijk ? Object.entries(bezorgwijken).find(([wn])=>
+      wn.toLowerCase().includes(a.wijk.toLowerCase().replace('oldenzaal ','').split(' ')[0])
+    ) : null;
+
+    if(wijkInfo){
+      // Neem het eerste segment van die wijk als fallback
+      const rondeNr = a.ronde;
+      const segPair = wijkInfo[1].find(p=> p.kort === rondeNr) || wijkInfo[1][0];
+      if(segPair) segNr = segPair.segment;
+    }
+
+    if(!segNr){
+      // Zoek in bestaande SEGMENT_DATA welk segment deze straat bevat
+      const straatUpper = a.straat.toUpperCase();
+      const bestaand = Object.entries(SEGMENT_DATA).find(([nr, seg])=>
+        seg.straten && straatUpper in seg.straten
+      );
+      if(bestaand) segNr = bestaand[0];
+    }
+
+    if(!segNr) return;
+
+    if(!nieuweData[segNr]){
+      const bekendSeg = SEGMENT_DATA[segNr];
+      nieuweData[segNr] = {
+        naam: bekendSeg ? bekendSeg.naam : 'SEGMENT '+segNr,
+        straten: {}
+      };
+    }
+
+    const straat = a.straat.toUpperCase();
+    if(!nieuweData[segNr].straten[straat]) nieuweData[segNr].straten[straat] = [];
+    if(!nieuweData[segNr].straten[straat].includes(a.nr)){
+      nieuweData[segNr].straten[straat].push(a.nr);
+    }
+  });
+
+  // Update SEGMENT_DATA als er data gevonden is
+  const aantalSegs = Object.keys(nieuweData).length;
+  if(aantalSegs > 0){
+    // Overschrijf alleen de segmenten die in de PDF zitten
+    Object.entries(nieuweData).forEach(([nr, data])=>{
+      SEGMENT_DATA[nr] = data;
+    });
+    console.log('Segment data bijgewerkt: '+aantalSegs+' segmenten vanuit looplijst');
+    // Sla op in localStorage voor persistentie
+    try{
+      localStorage.setItem('looplijst_v23_seg_data_dynamic',
+        JSON.stringify(Object.fromEntries(
+          Object.entries(nieuweData).map(([k,v])=>[k,v])
+        ))
+      );
+    }catch(e){}
+  }
+}
+
+// Laad dynamische segmentdata uit localStorage bij opstarten
+(function laadDynamischeSegData(){
+  try{
+    const raw = localStorage.getItem('looplijst_v23_seg_data_dynamic');
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    Object.entries(data).forEach(([nr, seg])=>{
+      SEGMENT_DATA[nr] = seg;
+    });
+    console.log('Dynamische segmentdata geladen: '+Object.keys(data).length+' segmenten');
+  }catch(e){}
+})();
+
 
 const STORAGE_SEG_DONE = 'looplijst_v23_seg_done';
 let segDone = {};
@@ -8234,6 +8338,10 @@ function finalizeLooplijst(parsed){
   meta.mutaties = parsed.mutaties || [];
   // Sla bezorgwijken (segmentnummers) op per wijk-naam (uit header)
   meta.bezorgwijken = parsed.bezorgwijken || {};
+
+  // Update SEGMENT_DATA dynamisch vanuit de ingeladen adressen
+  bouwSegmentDataVanuitAdressen(parsed.adressen, parsed.bezorgwijken || {});
+
   saveData(); save(); saveZaterdag(); saveMeta();
   saveRondeOrder(); saveStraatOrder(); saveAdresOrder();
   saveVrijVink(); saveStraatVink();
