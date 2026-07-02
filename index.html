@@ -2998,6 +2998,61 @@ function renderKrant(){
 }
 
 // ===== Kerstmodus: wijk -> ronde -> straat -> brievenbus =====
+function toonKerstKeuzePopup(){
+  // Verwijder bestaande popup
+  const bestaand = document.getElementById('kerstKeuzePopup');
+  if(bestaand) bestaand.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'kerstKeuzePopup';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;backdrop-filter:blur(4px)';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#fff;border-radius:22px 22px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;margin:0 auto';
+
+  const huidigeModus = localStorage.getItem('looplijst_v23_kerst_modus') || 'afvinken';
+
+  sheet.innerHTML =
+    '<div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 20px"></div>'+
+    '<div style="font-size:17px;font-weight:900;color:#1a1a2e;margin-bottom:6px">🎄 Kerstfooi invoer</div>'+
+    '<div style="font-size:13px;color:#6b7280;margin-bottom:20px">Kies hoe je fooi wilt invoeren</div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px">'+
+      ['afvinken','fooi'].map(modus=>{
+        const labels = {
+          afvinken: {ico:'✓', titel:'Afvinken', sub:'Vink brievenbussen af zonder bedrag'},
+          fooi:     {ico:'🪙💵', titel:'Fooi invoeren', sub:'Munten én biljetten per brievenbus invoeren'},
+        };
+        const l = labels[modus];
+        const actief = huidigeModus === modus;
+        return '<button data-modus="'+modus+'" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid '+(actief?'var(--accent)':'#e5e7eb')+';background:'+(actief?'#e3f2fd':'#fff')+';font-family:inherit;cursor:pointer;text-align:left;width:100%">'+
+          '<span style="font-size:24px;flex:0 0 auto">'+l.ico+'</span>'+
+          '<div><div style="font-size:14px;font-weight:800;color:#1a1a2e">'+l.titel+'</div>'+
+          '<div style="font-size:11px;color:#6b7280;margin-top:1px">'+l.sub+'</div></div>'+
+          (actief?'<span style="margin-left:auto;font-size:18px;color:var(--accent)">✓</span>':'')+
+        '</button>';
+      }).join('')+
+    '</div>'+
+    '<button id="kerstKeuzeAnnuleer" style="margin-top:16px;width:100%;padding:13px;background:#f3f4f6;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;color:#374151">Annuleren</button>';
+
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+
+  // Keuze handlers
+  sheet.querySelectorAll('[data-modus]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const gekozen = btn.getAttribute('data-modus');
+      localStorage.setItem('looplijst_v23_kerst_modus', gekozen);
+      overlay.remove();
+      view = {mode:'kerst', level:'wijk', wijk:null, ronde:null, straat:null, krant:null};
+      syncModeButtons();
+      render();
+    };
+  });
+
+  document.getElementById('kerstKeuzeAnnuleer').onclick = ()=> overlay.remove();
+  overlay.onclick = (e)=>{ if(e.target===overlay) overlay.remove(); };
+}
+
 function renderKerst(){
   const main=document.getElementById('main');
   const back=document.getElementById('back');
@@ -3589,7 +3644,7 @@ function renderHome(){
   cardVolgorde.onclick = ()=>{ if(!isModeActief('order')) return; view={mode:'order',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
   grid.appendChild(cardVolgorde);
 
-  // Route-kaart (zaterdag)
+  // Route-kaart (zaterdag) — alleen tonen als looplijst van zaterdag is
   const cardRoute = document.createElement('button');
   cardRoute.className = 'home-card';
   cardRoute.innerHTML =
@@ -3630,7 +3685,7 @@ function renderHome(){
   cardKrant.onclick = ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); };
   grid.appendChild(cardKrant);
 
-  // Kerstkaarten / fooi
+  // Kerstkaarten / fooi — alleen op zaterdag
   let kaartTotaal = 0;
   DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
     kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length;
@@ -3646,7 +3701,11 @@ function renderHome(){
       '</div>'+
     '</div>';
   if(!isModeActief('kerst')){ cardKaart.style.opacity='.35'; cardKaart.style.pointerEvents='none'; }
-  cardKaart.onclick = ()=>{ if(!isModeActief('kerst')) return; view={mode:'kerst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
+  cardKaart.onclick = ()=>{
+    if(!isModeActief('kerst')) return;
+    // Toon keuze popup: munt / biljet / afvinken
+    toonKerstKeuzePopup();
+  };
   grid.appendChild(cardKaart);
 
   // Vergoeding
