@@ -4189,26 +4189,7 @@ window.tijdWisGeschiedenis = function(){
 // ===== Segment-module =====
 // Vaste wijkindeling uit LOOPLIJST_WIJKEN.docx
 const SEGMENT_DATA = {
-  '249': {naam:'OLDENZAAL OOST 249', straten:{
-    'TULPSTRAAT':['7','9','25','39','43','45','47','65','73'],
-    'NOORDWAL':['12','14','16','18','98'],
-    'KLOOSTERSTRAAT':['24','28','30','42','60','90','102','108'],
-  }},
-  '244': {naam:'OLDENZAAL OOST 244', straten:{
-    'BOTERSTRAAT':['21','23','27','31','35','39','43','55'],
-    'NAGELSTRAAT':['26','32','38','42','50','56'],
-    'DEURNINGERSTRAAT':['16','26B','3401','3402','3411','3412','3421','3422'],
-  }},
-  '236': {naam:'OLDENZAAL OOST 236', straten:{
-    'DEURNINGERSTRAAT':['17','17A','19'],
-    'KORTESTRAAT':['4'],
-    'STEENSTRAAT':['29','31','35','37','39','41','45','47','49'],
-    'PASTORIESTRAAT':['24','32'],
-    'GASTHUISSTRAAT':['2B','7','9','11','19'],
-    'PLECHELMUSPLEIN':['9A','9B','9C','9D','13','15'],
-    'GANZENMARKT':['8','10','14','16','22','24','26','28','34','36','38','40'],
-  }},
-  '226': {naam:'OLDENZAAL OOST 226', straten:{
+  '226': {naam:'OLDENZAAL 226', straten:{
     'GANZENMARKT':['27','31','39'],
     'GASTHUISSTRAAT':['14F','34','38','42','58','62','72','74','76','78'],
     'PASTORIESTRAAT':['46'],
@@ -4216,20 +4197,20 @@ const SEGMENT_DATA = {
     'WILHELMINASTRAAT':['4','6','8','14','14C','14D'],
     'SCHOOLSTRAAT':['10','16','20','24','30','32','1','5','7','13','15','17','35','37','43','47','59','61','65','67','69'],
   }},
-  '227': {naam:'OLDENZAAL OOST 227', straten:{
-    'WILHELMINASTRAAT':['22','32','34','36','40','44','50','56','60','64','68','72','74','78','80','82'],
+  '227': {naam:'OLDENZAAL 227', straten:{
+    'WILHEMINASTRAAT':['22','32','34','36','40','44','50','56','60','64','68','72','74','78','80','82'],
     'BEATRIXSTRAAT':['163'],
     'PRINS HENDRIKSTRAAT':['39','43','57','71','79'],
     'PASTORIESTRAAT':['39','55','71','75','81','83','87','91'],
   }},
-  '230': {naam:'OLDENZAAL OOST 230', straten:{
+  '230': {naam:'OLDENZAAL 230', straten:{
     'BERKSTRAAT':['9','23','27','43','45'],
     'CARMELSTRAAT':['2','8','10','16','18'],
     'BEUKERSMOLEN':['1','5','7','37','53','67','69','79','26','34','38','40'],
     'BEUKPLEIN':['11'],
     'KASTANJESTRAAT':['50','68','34','38','42','44','46','16','20','21','31','35','37','51','53','55','63'],
   }},
-  '231': {naam:'OLDENZAAL OOST 231', straten:{
+  '231': {naam:'OLDENZAAL 231', straten:{
     'SPARSTRAAT':['43','49','55','57','63','65','67','73','93','99'],
     'BERKSTRAAT':['55'],
     'EIKSTRAAT':['7'],
@@ -4237,48 +4218,66 @@ const SEGMENT_DATA = {
     'LYCEUMSTRAAT':['10','18','24','26'],
     'SPOORSTRAAT':['8','12','18'],
   }},
-  '232': {naam:'OLDENZAAL OOST 232', straten:{
+  '232': {naam:'OLDENZAAL 232', straten:{
     'LYCEUMSTRAAT':['46','52','54'],
     'INSLAGSTRAAT':['1','5','7','2','17','19','25','29'],
     'TITUS BRANDSMASTRAAT':['5','7','9','13','25','29','33','39','43','47','49'],
     'SPARSTRAAT':['40','42','48','50','56','78','80','84','124','128'],
   }},
-  '618': {naam:'OLDENZAAL-WEST 618', straten:{
+  '236': {naam:'OLDENZAAL 236', straten:{
+    'DEURNINGERSTRAAT':['17','17A','19'],
+    'KORTERSTRAAT':['4'],
+    'STEENSTRAAT':['29','31','35','37','39','41','45','47','49'],
+    'PASTORIESTRAAT':['24','32'],
+    'GASTHUISSTRAAT':['2B','7','9','11','19'],
+    'PLECHELMUSPLEIN':['9A','9B','9C','9D','13','15'],
+    'GANZENMARKT':['8','10','14','16','22','24','26','28','34','36','38','40'],
+  }},
+  '244': {naam:'OLDENZAAL 244', straten:{
+    'BOTERSTRAAT':['21','23','27','31','35','39','43','55'],
+    'NAGELSTRAAT':['26','32','38','42','50','56'],
+    'DEURNINGERSTRAAT':['16','26B','3401','3402','3411','3412','3421','3422'],
+  }},
+  '249': {naam:'OLDENZAAL 249', straten:{
+    'TULPSTRAAT':['7','9','25','39','43','45','47','65','73'],
+    'NOORDWAL':['12','14','16','18','98'],
+    'KLOOSTERSTRAAT':['24','28','30','42','60','90','102','108'],
+  }},
+  '618': {naam:'OLDENZAAL 618', straten:{
     'SPORTLAAN':['1','5','7','25','27','29','31','33','39','47','2','6','10A','10B','10C','14','16','22','26','28','30','32','34','38','40','46','54'],
   }},
-  '619': {naam:'OLDENZAAL-WEST 619', straten:{
+  '619': {naam:'OLDENZAAL 619', straten:{
     'WORTKAMP':['3','7','9','11','17','23','27','33','39','2','8','16','18','24','30','36'],
   }},
-  '620': {naam:'OLDENZAAL-WEST 620', straten:{
+  '620': {naam:'OLDENZAAL 620', straten:{
     'NIJHUISKAMP':['1','3','7','11','13','15','4','8','10','12','14','16'],
-    'KRUIJSKAMP':['1','5','7','11','15','17','21','23','25','27','4','8','12','20','24','26'],
-    'SAASVELDERLAAN':['97'],
+    'KRUIJSKAMP':['1','5','7','11','15','17','21','23','25','27','4','8','12','20','24','26','SAASVELDERLAAN','97'],
   }},
-  '621': {naam:'OLDENZAAL-WEST 621', straten:{
+  '621': {naam:'OLDENZAAL 621', straten:{
     'NIJHUISKAMP':['28','30','32','40','44','31','35'],
     'KRUIJSKAMP':['28','32','34','50','42','46','33'],
     'WATERHAMSKAMP':['7','8','10','12','15','17','25','21','27','22','26','28'],
   }},
-  '622': {naam:'OLDENZAAL-WEST 622', straten:{
+  '622': {naam:'OLDENZAAL 622', straten:{
     'HULSBEKENKAMP':['1','15','19','8','16','23','25','29','22','24','26','34','36','38','31','41','43','44','50','56'],
     'MARELLENKAMP':['19','20','21','22','23'],
   }},
-  '623': {naam:'OLDENZAAL-WEST 623', straten:{
+  '623': {naam:'OLDENZAAL 623', straten:{
     'MARELLENKAMP':['24','27','30','31','3','5','6','7','10','9','13','14'],
     'BOLKSKAMP':['2','5','6','7','13','39','41','43','45','52','60','72','75'],
   }},
-  '624': {naam:'OLDENZAAL-WEST 624', straten:{
+  '624': {naam:'OLDENZAAL 624', straten:{
     'TELGENKAMP':['1','7','6','9','8','10','11','15','21','12','14','20','22','23','31','30'],
     'WIJNTJESKAMP':['1','9','11','2','6','8','10','15','21','25','16','18','20','22'],
   }},
-  '716': {naam:'OLDENZAAL-WEST 716', straten:{
+  '716': {naam:'OLDENZAAL 716', straten:{
     'KRETALAAN':['51','55','57','59','61','63','67','75','62','64','70','74','76'],
     'DELAGOSLAAN':['22','24','32'],
     'KOSLAAN':['3','9','11','6','8','10'],
     'DELOSLAAN':['4','5','8'],
     'KASSANDRALAAN':['9','21','23'],
   }},
-  '717': {naam:'OLDENZAAL-WEST 717', straten:{
+  '717': {naam:'OLDENZAAL 717', straten:{
     'KRETALAAN':['17','19','23','25','29','35','39','45'],
     'RHODOSLAAN':['2','4','10','12','9','11','17','19','21','25','14','26'],
     'PARNONLAAN':['4','10','12','18','22','26'],
@@ -4286,16 +4285,16 @@ const SEGMENT_DATA = {
     'SAMOSLAAN':['3','9','11'],
     'KASSANDRALAAN':['2','4','8','16','24','26'],
   }},
-  '729': {naam:'OLDENZAAL-WEST 729', straten:{
+  '729': {naam:'OLDENZAAL 729', straten:{
     'BREM':['49','51','53','55','23','31','58','62','66','50'],
     'HONINGKLAVER':['4'],
     'OOTMARSUMSEDIJK':['3','9','4','8','18','24','26','23','25','31','43','45','65','69','71'],
   }},
-  '730': {naam:'OLDENZAAL-WEST 730', straten:{
+  '730': {naam:'OLDENZAAL 730', straten:{
     'BREM':['6','8','12','14','26','30','34','36','38'],
     'GEELSTER':['32','38','40','42','46','66','89','90','96','104','106','108','110','1','9','13','17','39','41','51'],
   }},
-  '731': {naam:'OLDENZAAL-WEST 731', straten:{
+  '731': {naam:'OLDENZAAL 731', straten:{
     'GEELSTER':['4','16'],
     'LOOK':['2','10','18','19','27','33','39','45','51','55','63','69','73','75','81','89','93','99','103','107','113','115','117','119'],
   }},
@@ -7674,6 +7673,27 @@ function openFooiPopup(straat, hoofdnr, key, isDone){
   updateFooiUI();
   document.getElementById('fooiUndo').style.display = isDone ? 'block' : 'none';
   document.getElementById('fooiDone').textContent = isDone ? 'Bedrag bijwerken ✓' : 'Klaar ✓';
+
+  // Toon/verberg grid op basis van kerstmodus
+  const kerstModus = localStorage.getItem('looplijst_v23_kerst_modus') || 'afvinken';
+  const grid = document.querySelector('.fooi-grid');
+  const fooiMin = document.getElementById('fooiMin');
+  const fooiTotal = document.getElementById('fooiTotal');
+  const fooiSplit = document.getElementById('fooiSplit');
+  if(kerstModus === 'afvinken'){
+    if(grid) grid.style.display = 'none';
+    if(fooiMin) fooiMin.style.display = 'none';
+    if(fooiTotal) fooiTotal.style.display = 'none';
+    if(fooiSplit) fooiSplit.style.display = 'none';
+    document.getElementById('fooiDone').textContent = isDone ? 'Afgevinkt ✓' : 'Afvinken ✓';
+    document.getElementById('fooiDone').style.background = isDone ? '#43a047' : 'var(--green)';
+  } else {
+    if(grid) grid.style.display = '';
+    if(fooiMin) fooiMin.style.display = '';
+    if(fooiTotal) fooiTotal.style.display = '';
+    document.getElementById('fooiDone').textContent = isDone ? 'Bedrag bijwerken ✓' : 'Klaar ✓';
+  }
+
   fooiBg.classList.add('show');
   fooiSheet.classList.add('show');
 }
