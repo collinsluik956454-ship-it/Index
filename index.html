@@ -262,6 +262,7 @@ body{display:flex;flex-direction:column}
 .print-view{background:#fff;color:#000;padding:12px}
 @media print{
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  body{ background:#fff !important; }
   body>*:not(#printView){ display:none !important; }
   #printView{
     display:block !important;
@@ -273,8 +274,15 @@ body{display:flex;flex-direction:column}
     padding:0 !important;
     margin:0 !important;
     background:#fff !important;
+    color:#000 !important;
     z-index:auto !important;
   }
+  /* Verberg alle app-elementen die donkere achtergrond hebben */
+  header, .footbar, .sheet-bg, .sheet, #printView .pv-actions{ display:none !important; }
+  /* Zorg dat alle tekst zwart is */
+  #printView *{ color:#000 !important; background:transparent !important; }
+  /* Behoud gekleurde badges */
+  #printView .pv-nr{ background:#1565c0 !important; color:#fff !important; }
 }
 .pv-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:3px;font-size:12px}
 .pv-row.done{background:#f6fbf8;border-color:#cfe5d7}
@@ -563,7 +571,7 @@ body{display:flex;flex-direction:column}
   .home-card.full .hc-sub{font-size:13px}
   .home-card .hc-chev{font-size:22px;color:var(--muted);flex:0 0 auto}
   .home-card.primary .hc-chev{color:rgba(255,255,255,.65)}
-  .print-view{display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow-y:auto;padding:18px;color:#000}
+  .print-view{display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow-y:auto;padding:18px;color:#000;font-family:Arial,sans-serif}
   .print-view.show{display:block}
   .print-view h1{font-size:20px;margin:0 0 6px;color:#1a2d5a}
   .print-view .pv-meta{font-size:12px;color:#666;margin-bottom:18px}
@@ -2227,6 +2235,21 @@ function renderPrive(){
   document.getElementById('footstat').innerHTML='<b>🏠</b> Privé';
 }
 
+// Helper: geeft segmentnummer voor een straatnaam
+function segmentVoorStraat(straatnaam){
+  const upper = straatnaam.toUpperCase();
+  for(const [nr, seg] of Object.entries(SEGMENT_DATA)){
+    if(seg.straten && upper in seg.straten) return nr;
+  }
+  return null;
+}
+
+
+// Segment data wordt NIET automatisch overschreven
+// Hardcoded SEGMENT_DATA is de authoritative bron
+// Update handmatig via de code als de looplijst wijzigt
+function bouwSegmentDataVanuitAdressen(adressen, bezorgwijken){ /* niet actief */ }
+
 function renderRoute(){
   const main=document.getElementById('main');
   const back=document.getElementById('back');
@@ -2362,7 +2385,8 @@ function renderRoute(){
     const w = DATA[view.wijk];
     const r = w.rondes[view.ronde];
     const s = r.straten[view.straat];
-    crumb.textContent='↕ '+s.naam;
+    const segNrAdres = segmentVoorStraat(s.naam);
+    crumb.textContent='↕ '+(segNrAdres?'['+segNrAdres+'] ':'')+s.naam;
     title.textContent='Volgorde adressen';
     const info = document.createElement('div');
     info.className='order-header-info';
@@ -2615,7 +2639,8 @@ function renderRoute(){
     const r=w.rondes[view.ronde];
     const s=r.straten[view.straat];
     const label = view.rondeLabel || r.ronde;
-    crumb.textContent=w.wijk+' · '+label;
+    const segNrLooplijst = segmentVoorStraat(s.naam);
+    crumb.textContent=w.wijk+' · '+label+(segNrLooplijst?' · seg '+segNrLooplijst:'');
     title.textContent=s.naam;
 
     // Groepeer adressen op exact huisnummer, in user-volgorde
@@ -2795,7 +2820,8 @@ function renderKrant(){
     const w = DATA[view.wijk];
     const r = w.rondes[view.ronde];
     const s = r.straten[view.straat];
-    crumb.textContent='↕ '+s.naam;
+    const segNrAdres = segmentVoorStraat(s.naam);
+    crumb.textContent='↕ '+(segNrAdres?'['+segNrAdres+'] ':'')+s.naam;
     title.textContent='Volgorde adressen';
     const info = document.createElement('div');
     info.className='order-header-info';
@@ -3119,7 +3145,8 @@ function renderKerst(){
     const w = DATA[view.wijk];
     const r = w.rondes[view.ronde];
     const s = r.straten[view.straat];
-    crumb.textContent='↕ '+s.naam;
+    const segNrAdres = segmentVoorStraat(s.naam);
+    crumb.textContent='↕ '+(segNrAdres?'['+segNrAdres+'] ':'')+s.naam;
     title.textContent='Volgorde adressen';
     const info = document.createElement('div');
     info.className='order-header-info';
@@ -4323,39 +4350,8 @@ const SEGMENT_DATA = {
   }},
 };
 
-// Bouw SEGMENT_DATA automatisch vanuit ingeladen looplijst adressen
-// Gebruikt a.segmentNr die de parser nu bijhoudt per adres
-function bouwSegmentDataVanuitAdressen(adressen, bezorgwijken){
-  if(!adressen || adressen.length === 0) return;
 
-  const nieuweData = {};
 
-  adressen.forEach(a=>{
-    if(!a.straat || !a.nr || a.stop) return;
-    const segNr = a.segmentNr;
-    if(!segNr) return;
-
-    if(!nieuweData[segNr]){
-      nieuweData[segNr] = {
-        naam: SEGMENT_DATA[segNr]?.naam || 'OLDENZAAL '+segNr,
-        straten: {}
-      };
-    }
-    const straat = a.straat.toUpperCase();
-    if(!nieuweData[segNr].straten[straat]) nieuweData[segNr].straten[straat] = [];
-    if(!nieuweData[segNr].straten[straat].includes(a.nr)){
-      nieuweData[segNr].straten[straat].push(a.nr);
-    }
-  });
-
-  const aantalSegs = Object.keys(nieuweData).length;
-  if(aantalSegs > 0){
-    Object.entries(nieuweData).forEach(([nr, data])=>{
-      SEGMENT_DATA[nr] = data;
-    });
-    console.log('✓ Segment data bijgewerkt: '+aantalSegs+' segmenten vanuit looplijst');
-  }
-}
 
 
 
@@ -6071,8 +6067,12 @@ function renderOrder(){
       const checkHTML = isVinked
         ? '<div class="vink-box done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
         : '<div class="vink-box"></div>';
+      const segNrStraat = segmentVoorStraat(s.straat);
+      const segBadgeHTML = segNrStraat
+        ? '<span style="background:#e3f2fd;color:#1565c0;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:5px;white-space:nowrap">'+segNrStraat+'</span>'
+        : '';
       row.innerHTML = (isVinked ? '<div class="opos">'+pos+'</div>' : '<div class="opos" style="color:#cfd9d3">·</div>')+
-        '<div class="obody"><div class="onm">'+s.straat+'</div>'+
+        '<div class="obody"><div class="onm">'+s.straat+segBadgeHTML+'</div>'+
         '<div class="osub">'+s.adressen.length+' adressen · '+krantenHTML+'</div></div>'+
         checkHTML+
         '<button class="oopen open-adressen" style="background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 6px">›</button>';
@@ -6130,7 +6130,8 @@ function renderOrder(){
     const w = DATA[view.wijk];
     const r = w.rondes[view.ronde];
     const s = r.straten[view.straat];
-    crumb.textContent='↕ '+s.naam;
+    const segNrAdres = segmentVoorStraat(s.naam);
+    crumb.textContent='↕ '+(segNrAdres?'['+segNrAdres+'] ':'')+s.naam;
     title.textContent='Volgorde adressen';
     const info = document.createElement('div');
     info.className='order-header-info';
@@ -8198,9 +8199,7 @@ function parseLooplijst(lines, mutaties){
       else if(sn.includes('west')) huidigeSectie = 'west';
       continue;
     }
-    // Detecteer segmentnummer: "226 (5757226)" patroon
-    const segNrMatch = L.match(/^(\d{3})\s*\(\d{6,}\)/);
-    if(segNrMatch){ huidigSegmentNr = segNrMatch[1]; continue; }
+
     if(/^OLDENZAAL/i.test(L)) continue;
     if(/^\(\d+\/\d+\)$/.test(L)) continue;
     if(/^Product\b/i.test(L)) continue;
