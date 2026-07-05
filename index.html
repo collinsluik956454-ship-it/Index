@@ -4355,8 +4355,138 @@ const SEGMENT_DATA = {
 
 
 
-// Wis oude dynamische segmentdata zodat hardcoded data geldt
+// Wis oude (onbetrouwbare) dynamische segmentdata die ooit vanuit de bezorglijst kwam
 try{ localStorage.removeItem('looplijst_v23_seg_data_dynamic'); }catch(e){}
+
+// ===== Wijken-PDF import (betrouwbare bron voor segmentindeling) =====
+// De hardcoded SEGMENT_DATA hierboven is de basis. Als de gebruiker ooit een
+// "Wijken PDF" (bijv. Looplijst_Wijken_Compleet.pdf) heeft ingeladen via de
+// segmenten-module, wordt die data hier overheen gelegd (per segment, dus
+// een oude handmatige correctie op segment 226 blijft intact als 226 niet
+// opnieuw is ingeladen).
+const STORAGE_SEG_WIJKEN = 'looplijst_v23_seg_data_wijken';
+try{
+  const opgeslagenWijken = JSON.parse(localStorage.getItem(STORAGE_SEG_WIJKEN));
+  if(opgeslagenWijken && typeof opgeslagenWijken === 'object'){
+    Object.entries(opgeslagenWijken).forEach(([nr, seg])=>{ SEGMENT_DATA[nr] = seg; });
+  }
+}catch(e){}
+
+// Parser voor de "Wijken PDF" (Looplijst & Wijkindeling / LOOPLIJST_WIJKEN):
+// deze PDF heeft een schoon, eenduidig formaat met expliciete segmentnummers
+// en huisnummers per straat, in tegenstelling tot de bezorglijst (waarin
+// straatnamen in meerdere segmenten kunnen voorkomen).
+function parseWijkenPdf(tekst){
+  // Veiligheid: als de laatste regel van een segment vastplakt aan de
+  // volgende "Segment N (" header (komt voor bij docx→pdf conversie),
+  // splits die dan alsnog op.
+  tekst = tekst.replace(/(?=Segment\s+\d+\s*\(\d+\s*adressen)/g, '\n');
+  const regels = tekst.split('\n').map(l=>l.trim()).filter(l=>l.length);
+
+  const resultaat = {};
+  let curSeg = null;
+  let curStraat = null;
+  let wijkNaam = '';
+  let inAdressenSectie = false; // alleen tussen "Adressen per segment" en volgende wijk-header lezen we straten
+
+  for(const regel of regels){
+    if(/^OLDENZAAL\s+(OOST|WEST)/i.test(regel)){
+      wijkNaam = regel;
+      inAdressenSectie = false;
+      curSeg = null;
+      curStraat = null;
+      continue;
+    }
+    if(/^Adressen per segment/i.test(regel)){ inAdressenSectie = true; continue; }
+    if(!inAdressenSectie) continue; // negeer product-/vergoedingoverzicht en mutaties
+
+    const segMatch = regel.match(/^Segment\s+(\d+)\s*\((\d+)\s*adressen,\s*(\d+)\s*straten\)/i);
+    if(segMatch){
+      curSeg = segMatch[1];
+      resultaat[curSeg] = {
+        naam: (wijkNaam || 'OLDENZAAL') + ' ' + curSeg,
+        _verwachtAdressen: parseInt(segMatch[2],10),
+        _verwachtStraten: parseInt(segMatch[3],10),
+        straten: {}
+      };
+      curStraat = null;
+      continue;
+    }
+    if(!curSeg) continue;
+
+    if(/^\d/.test(regel)){
+      // Regel met huisnummers, hoort bij de laatst gezien straatnaam
+      if(!curStraat) continue;
+      const nrs = regel.split(',').map(s=>s.trim()).filter(Boolean);
+      resultaat[curSeg].straten[curStraat] = (resultaat[curSeg].straten[curStraat]||[]).concat(nrs);
+    } else {
+      // Straatnaam-regel
+      curStraat = regel.toUpperCase();
+      if(!resultaat[curSeg].straten[curStraat]) resultaat[curSeg].straten[curStraat] = [];
+    }
+  }
+  return resultaat;
+}
+
+function importeerWijkenPdf(file){
+  if(typeof pdfjsLib === 'undefined'){ toast('PDF-bibliotheek nog niet geladen', true); return; }
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const pdf = await pdfjsLib.getDocument({data: e.target.result}).promise;
+      let allText = '';
+      for(let p=1; p<=pdf.numPages; p++){
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const items = content.items.slice().sort((a,b)=>{
+          if(Math.abs(a.transform[5]-b.transform[5]) > 3) return b.transform[5]-a.transform[5];
+          return a.transform[4]-b.transform[4];
+        });
+        let lastY = null, line = '';
+        items.forEach(it=>{
+          const y = it.transform[5];
+          if(lastY !== null && Math.abs(y-lastY) > 3){
+            allText += line+'\n';
+            line = '';
+          }
+          line += (line ? ' ' : '')+it.str;
+          lastY = y;
+        });
+        if(line) allText += line+'\n';
+      }
+      const geparsed = parseWijkenPdf(allText);
+      const gevondenSegmenten = Object.keys(geparsed);
+      if(gevondenSegmenten.length === 0){
+        toast('Geen segmenten gevonden in deze PDF', true);
+        return;
+      }
+      // Controleer per segment of het aantal adressen/straten klopt met wat de PDF zelf claimt
+      let klopt = 0, afwijkend = [];
+      gevondenSegmenten.forEach(nr=>{
+        const seg = geparsed[nr];
+        const straatCount = Object.keys(seg.straten).length;
+        const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
+        if(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen) klopt++;
+        else afwijkend.push(nr);
+        delete seg._verwachtStraten; delete seg._verwachtAdressen;
+      });
+      // Zet in SEGMENT_DATA (overschrijft alleen de segmenten die in deze PDF stonden)
+      gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
+      // Bewaar zodat het na herladen van de app behouden blijft
+      try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); }catch(e){}
+
+      const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
+      let melding = '✓ '+gevondenSegmenten.length+' segmenten bijgewerkt · '+totaalAdressen+' adressen';
+      if(afwijkend.length) melding += ' · let op: '+afwijkend.join(', ')+' wijkt af van PDF-telling';
+      toast(melding, afwijkend.length>0);
+      if(typeof renderSegment === 'function') renderSegment();
+    } catch(err){
+      console.error(err);
+      toast('Wijken-PDF kon niet worden ingelezen', true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
 
 const STORAGE_SEG_DONE = 'looplijst_v23_seg_done';
 let segDone = {};
@@ -4393,7 +4523,23 @@ function renderSegment(){
   pdfBtn.textContent = '⬇ PDF';
   pdfBtn.onclick = ()=> exportSegmentPDF();
 
+  const wijkBtn = document.createElement('button');
+  wijkBtn.className = 'seg-export-btn';
+  wijkBtn.style.background = '#2e7d32';
+  wijkBtn.title = 'Wijkindeling automatisch bijwerken vanuit de Wijken PDF (bijv. Looplijst_Wijken_Compleet.pdf)';
+  wijkBtn.textContent = '📥 Wijken PDF';
+  wijkBtn.onclick = ()=>{
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.pdf,application/pdf';
+    inp.onchange = (e)=>{
+      const f = e.target.files[0]; if(!f) return;
+      importeerWijkenPdf(f);
+    };
+    inp.click();
+  };
+
   topbar.appendChild(zoek);
+  topbar.appendChild(wijkBtn);
   topbar.appendChild(expBtn);
   topbar.appendChild(pdfBtn);
   wrap.appendChild(topbar);
