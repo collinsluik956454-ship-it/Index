@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1b3e">
 <title>Looplijst Charlotte</title>
-<link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Looplijst%20Charlotte%22%2C%22short_name%22%3A%22Looplijst%22%2C%22description%22%3A%22DPG%20Media%20bezorg-app%20Oldenzaal%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1b3e%22%2C%22theme_color%22%3A%22%230d1b3e%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJyBmaWxsPScjMGQxYjNlJy8%2BPHRleHQgeT0nLjllbScgZm9udC1zaXplPSc3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgeD0nNTAlJyBkeT0nLjNlbScgZmlsbD0nd2hpdGUnPvCfk408L3RleHQ%2BPC9zdmc%2B%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Looplijst%20Charlotte%22%2C%22short_name%22%3A%22Looplijst%22%2C%22description%22%3A%22DPG%20Media%20bezorg-app%20Oldenzaal%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1b3e%22%2C%22theme_color%22%3A%22%230d1b3e%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJyBmaWxsPScjMGQxYjNlJy8%2BPHRleHQgeT0nLjllbScgZm9udC1zaXplPSc3MCcgdGV4dC1hbmNob3I9J21pZGRsZScgeD0nNTAlJyBkeT0nLjNlbScgZmlsbD0nd2hpdGUnPvCfk408L3RleHQ%2BPC9zdmc%2B%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22share_target%22%3A%7B%22action%22%3A%22share-target%2F%22%2C%22method%22%3A%22POST%22%2C%22enctype%22%3A%22multipart%2Fform-data%22%2C%22params%22%3A%7B%22files%22%3A%5B%7B%22name%22%3A%22pdf%22%2C%22accept%22%3A%5B%22application%2Fpdf%22%2C%22.pdf%22%5D%7D%5D%7D%7D%7D">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -262,7 +262,7 @@ body{display:flex;flex-direction:column}
 .print-view{background:#fff;color:#000;padding:12px}
 @media print{
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  body{ background:#fff !important; }
+  html, body{ height:auto !important; overflow:visible !important; background:#fff !important; }
   body>*:not(#printView){ display:none !important; }
   #printView{
     display:block !important;
@@ -591,6 +591,7 @@ body{display:flex;flex-direction:column}
   .print-view .pv-row.done{background:#f6fbf8;border-color:#cfe5d7}
   .print-view .pv-row.done .pv-nr{background:#1565c0;color:#fff}
   @media print {
+    html, body { height: auto !important; overflow: visible !important; }
     body > *:not(.print-view) { display: none !important; }
     .print-view {
       position: static !important;
@@ -701,16 +702,16 @@ body{display:flex;flex-direction:column}
   .tijd-gesch-detail{font-size:12px;color:var(--muted);margin-top:3px}
   .tijd-gesch-duur{font-size:14px;font-weight:900;color:var(--green)}
   .seg-page{padding:12px 12px 100px}
-  .seg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
-  .seg-topbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
-  .seg-zoek{flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;color:var(--ink);background:#fff;outline:none}
+  .seg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+  .seg-topbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+  .seg-zoek{flex:1 1 100%;min-width:0;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;color:var(--ink);background:#fff;outline:none}
   .seg-zoek:focus{border-color:var(--green)}
-  .seg-export-btn{flex:0 0 auto;padding:11px 14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
-  .seg-wijk{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .seg-export-btn{flex:0 0 auto;padding:11px 10px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+  .seg-wijk{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);min-width:0}
   .seg-wijk-header{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;user-select:none;border-bottom:2px solid transparent;transition:border-color .15s}
   .seg-wijk-header.open{border-bottom-color:var(--line)}
-  .seg-wijk-badge{width:100%;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0}
-  .seg-wijk-badge span{color:#fff;font-weight:900;font-size:16px;line-height:1}
+  .seg-wijk-badge{width:calc(100% - 10px);height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:4px 5px}
+  .seg-wijk-badge span{color:#fff;font-weight:900;font-size:15px;line-height:1}
   .seg-wijk-info{padding:10px 12px 10px}
   .seg-wijk-naam{font-size:15px;font-weight:900;color:var(--ink)}
   .seg-wijk-sub{font-size:11px;color:var(--muted);margin-top:2px}
@@ -748,6 +749,21 @@ self.addEventListener('activate', e=>{
   clients.claim();
 });
 self.addEventListener('fetch', e=>{
+  const url = new URL(e.request.url);
+  if(e.request.method === 'POST' && url.pathname.indexOf('/share-target') !== -1){
+    e.respondWith((async ()=>{
+      try{
+        const formData = await e.request.formData();
+        const file = formData.get('pdf');
+        if(file){
+          const cache = await caches.open('shared-files');
+          await cache.put('shared-pdf', new Response(file, {headers:{'Content-Type': file.type || 'application/pdf'}}));
+        }
+      }catch(err){}
+      return Response.redirect('./?shared=1', 303);
+    })());
+    return;
+  }
   e.respondWith(fetch(e.request).then(r=>{
     const rc = r.clone();
     caches.open(CACHE).then(c=>c.put(e.request, rc));
@@ -4366,6 +4382,8 @@ try{ localStorage.removeItem('looplijst_v23_seg_data_dynamic'); }catch(e){}
 // een oude handmatige correctie op segment 226 blijft intact als 226 niet
 // opnieuw is ingeladen).
 const STORAGE_SEG_WIJKEN = 'looplijst_v23_seg_data_wijken';
+const STORAGE_SEG_LAST_UPDATE = 'looplijst_v23_seg_laatst_update';
+const SEG_WAARSCHUW_NA_DAGEN = 14; // waarschuw als wijkindeling langer dan dit niet is bijgewerkt
 try{
   const opgeslagenWijken = JSON.parse(localStorage.getItem(STORAGE_SEG_WIJKEN));
   if(opgeslagenWijken && typeof opgeslagenWijken === 'object'){
@@ -4474,7 +4492,7 @@ function importeerWijkenPdf(file){
       // Zet in SEGMENT_DATA (overschrijft alleen de segmenten die in deze PDF stonden)
       gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
       // Bewaar zodat het na herladen van de app behouden blijft
-      try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); }catch(e){}
+      try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); localStorage.setItem(STORAGE_SEG_LAST_UPDATE, new Date().toISOString()); }catch(e){}
 
       const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
       let melding = '✓ '+gevondenSegmenten.length+' segmenten bijgewerkt · '+totaalAdressen+' adressen';
@@ -8275,6 +8293,125 @@ document.getElementById('jsonInput').onchange=async (e)=>{
 // PDF parser — geverifieerd op Distributie Portaal layout
 // =========================================================================
 document.getElementById('loadPdfBtn').onclick=()=>{ closeSheet(); document.getElementById('pdfInput').click(); };
+document.getElementById('pdfInput').onchange = async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  await verwerkGekozenPdfBestand(file);
+  e.target.value='';
+};
+
+async function verwerkGekozenPdfBestand(file){
+  console.log('[Looplijst] PDF gekozen:', file.name, file.size, 'bytes');
+  const parsing = document.getElementById('parsing');
+  const lbl = document.getElementById('parsingLbl');
+  parsing.classList.add('show');
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF-leescode niet geladen. Verbind even met internet en probeer opnieuw.');
+    lbl.textContent='PDF lezen…';
+    const arr = await file.arrayBuffer();
+    console.log('[Looplijst] ArrayBuffer:', arr.byteLength, 'bytes');
+
+    // ---- Automatische herkenning: is dit een "Wijken PDF" (adressen per segment) ----
+    // i.p.v. een normale bezorglijst? Zo ja: wijkindeling bijwerken en stoppen,
+    // zodat de gebruiker niet apart naar Segmenten hoeft voor deze PDF.
+    lbl.textContent='PDF controleren…';
+    let wijkenTekst = null;
+    try{
+      if(!pdfjsLib.GlobalWorkerOptions.workerSrc) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const probeBuf = arr.slice(0); // kopie, want pdf.js maakt het origineel 'detached'
+      const pdfProbe = await pdfjsLib.getDocument({data: probeBuf}).promise;
+      let probeText = '';
+      for(let p=1; p<=pdfProbe.numPages; p++){
+        const page = await pdfProbe.getPage(p);
+        const content = await page.getTextContent();
+        const items = content.items.slice().sort((a,b)=>{
+          if(Math.abs(a.transform[5]-b.transform[5]) > 3) return b.transform[5]-a.transform[5];
+          return a.transform[4]-b.transform[4];
+        });
+        let lastY = null, line = '';
+        items.forEach(it=>{
+          const y = it.transform[5];
+          if(lastY !== null && Math.abs(y-lastY) > 3){ probeText += line+'\n'; line=''; }
+          line += (line ? ' ' : '')+it.str;
+          lastY = y;
+        });
+        if(line) probeText += line+'\n';
+      }
+      if(/Adressen per segment/i.test(probeText) && /Segment\s+\d+\s*\(\d+\s*adressen/i.test(probeText)){
+        wijkenTekst = probeText;
+      }
+    }catch(probeErr){ console.warn('[Looplijst] Wijken-detectie mislukt, ga door als normale looplijst', probeErr); }
+
+    if(wijkenTekst){
+      const geparsed = parseWijkenPdf(wijkenTekst);
+      const gevondenSegmenten = Object.keys(geparsed);
+      if(gevondenSegmenten.length === 0){
+        toast('Geen segmenten gevonden in deze PDF', true);
+      } else {
+        let afwijkend = [];
+        gevondenSegmenten.forEach(nr=>{
+          const seg = geparsed[nr];
+          const straatCount = Object.keys(seg.straten).length;
+          const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
+          if(!(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen)) afwijkend.push(nr);
+          delete seg._verwachtStraten; delete seg._verwachtAdressen;
+        });
+        gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
+        try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); localStorage.setItem(STORAGE_SEG_LAST_UPDATE, new Date().toISOString()); }catch(e){}
+        const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
+        let melding = '✓ Wijkindeling automatisch bijgewerkt · '+gevondenSegmenten.length+' segmenten · '+totaalAdressen+' adressen';
+        if(afwijkend.length) melding += ' · let op: '+afwijkend.join(', ')+' wijkt af';
+        toast(melding, afwijkend.length>0);
+      }
+      parsing.classList.remove('show');
+      return;
+    }
+
+    lbl.textContent='Tekst extraheren…';
+    const extracted = await pdfExtractLines(arr);
+    console.log('[Looplijst] Tekst-regels:', extracted.allLines.length, '· mutatie-regels:', extracted.mutatieRegels.length);
+    if(extracted.allLines.length === 0) throw new Error('Geen tekst gevonden in PDF — is deze gescand of beveiligd?');
+    lbl.textContent='Adressen herkennen…';
+    const mutaties = parseMutaties(extracted.mutatieRegels);
+    const parsed = parseLooplijst(extracted.allLines, mutaties);
+    console.log('[Looplijst] Geparseerde adressen:', parsed.adressen.length, '· bezorgwijken:', Object.keys(parsed.bezorgwijken||{}).length);
+    if(parsed.adressen.length === 0) throw new Error('Geen adressen herkend. Is dit wel een DPG-looplijst?');
+    const built = buildDataStructure(parsed.adressen);
+    const onbekendeNamen = Object.keys(built.onbekende);
+    console.log('[Looplijst] Wijken gebouwd:', built.data.length, '· onbekende straten:', onbekendeNamen.length);
+    parsing.classList.remove('show');
+
+    if(onbekendeNamen.length > 0){
+      toonStraatToewijzing(parsed, built.onbekende);
+    } else {
+      finalizeLooplijst(parsed);
+    }
+  } catch(err){
+    parsing.classList.remove('show');
+    console.error('[Looplijst] Fout:', err);
+    toast('Fout: '+err.message, true);
+  }
+}
+
+// ---- Gedeelde PDF vanuit Android "Openen met…" / share-menu ophalen ----
+// Werkt als de app als PWA is toegevoegd aan het beginscherm; via de
+// service worker (share_target in manifest) komt een gedeelde PDF hier terecht.
+(async function verwerkGedeeldeShare(){
+  try{
+    const params = new URLSearchParams(location.search);
+    if(params.get('shared') !== '1') return;
+    history.replaceState(null, '', location.pathname);
+    if(!('caches' in window)) return;
+    const cache = await caches.open('shared-files');
+    const resp = await cache.match('shared-pdf');
+    if(!resp){ return; }
+    const blob = await resp.blob();
+    await cache.delete('shared-pdf');
+    const file = new File([blob], 'gedeeld.pdf', {type: blob.type || 'application/pdf'});
+    await verwerkGekozenPdfBestand(file);
+  }catch(err){
+    console.error('[Looplijst] Gedeelde PDF verwerken mislukt:', err);
+  }
+})();
 
 function normStr(s){ return s.toLowerCase().trim().replace(/\s+/g,' '); }
 function matchBekendeStraat(text){
@@ -8564,101 +8701,6 @@ function buildDataStructure(adressen){
   return {data:result, totaal, onbekende};
 }
 
-document.getElementById('pdfInput').onchange = async (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  console.log('[Looplijst] PDF gekozen:', file.name, file.size, 'bytes');
-  const parsing = document.getElementById('parsing');
-  const lbl = document.getElementById('parsingLbl');
-  parsing.classList.add('show');
-  try {
-    if (typeof pdfjsLib === 'undefined') throw new Error('PDF-leescode niet geladen. Verbind even met internet en probeer opnieuw.');
-    lbl.textContent='PDF lezen…';
-    const arr = await file.arrayBuffer();
-    console.log('[Looplijst] ArrayBuffer:', arr.byteLength, 'bytes');
-
-    // ---- Automatische herkenning: is dit een "Wijken PDF" (adressen per segment) ----
-    // i.p.v. een normale bezorglijst? Zo ja: wijkindeling bijwerken en stoppen,
-    // zodat de gebruiker niet apart naar Segmenten hoeft voor deze PDF.
-    lbl.textContent='PDF controleren…';
-    let wijkenTekst = null;
-    try{
-      if(!pdfjsLib.GlobalWorkerOptions.workerSrc) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      const probeBuf = arr.slice(0); // kopie, want pdf.js maakt het origineel 'detached'
-      const pdfProbe = await pdfjsLib.getDocument({data: probeBuf}).promise;
-      let probeText = '';
-      for(let p=1; p<=pdfProbe.numPages; p++){
-        const page = await pdfProbe.getPage(p);
-        const content = await page.getTextContent();
-        const items = content.items.slice().sort((a,b)=>{
-          if(Math.abs(a.transform[5]-b.transform[5]) > 3) return b.transform[5]-a.transform[5];
-          return a.transform[4]-b.transform[4];
-        });
-        let lastY = null, line = '';
-        items.forEach(it=>{
-          const y = it.transform[5];
-          if(lastY !== null && Math.abs(y-lastY) > 3){ probeText += line+'\n'; line=''; }
-          line += (line ? ' ' : '')+it.str;
-          lastY = y;
-        });
-        if(line) probeText += line+'\n';
-      }
-      if(/Adressen per segment/i.test(probeText) && /Segment\s+\d+\s*\(\d+\s*adressen/i.test(probeText)){
-        wijkenTekst = probeText;
-      }
-    }catch(probeErr){ console.warn('[Looplijst] Wijken-detectie mislukt, ga door als normale looplijst', probeErr); }
-
-    if(wijkenTekst){
-      const geparsed = parseWijkenPdf(wijkenTekst);
-      const gevondenSegmenten = Object.keys(geparsed);
-      if(gevondenSegmenten.length === 0){
-        toast('Geen segmenten gevonden in deze PDF', true);
-      } else {
-        let afwijkend = [];
-        gevondenSegmenten.forEach(nr=>{
-          const seg = geparsed[nr];
-          const straatCount = Object.keys(seg.straten).length;
-          const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
-          if(!(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen)) afwijkend.push(nr);
-          delete seg._verwachtStraten; delete seg._verwachtAdressen;
-        });
-        gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
-        try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); }catch(e){}
-        const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
-        let melding = '✓ Wijkindeling automatisch bijgewerkt · '+gevondenSegmenten.length+' segmenten · '+totaalAdressen+' adressen';
-        if(afwijkend.length) melding += ' · let op: '+afwijkend.join(', ')+' wijkt af';
-        toast(melding, afwijkend.length>0);
-      }
-      parsing.classList.remove('show');
-      e.target.value = '';
-      return;
-    }
-
-    lbl.textContent='Tekst extraheren…';
-    const extracted = await pdfExtractLines(arr);
-    console.log('[Looplijst] Tekst-regels:', extracted.allLines.length, '· mutatie-regels:', extracted.mutatieRegels.length);
-    if(extracted.allLines.length === 0) throw new Error('Geen tekst gevonden in PDF — is deze gescand of beveiligd?');
-    lbl.textContent='Adressen herkennen…';
-    const mutaties = parseMutaties(extracted.mutatieRegels);
-    const parsed = parseLooplijst(extracted.allLines, mutaties);
-    console.log('[Looplijst] Geparseerde adressen:', parsed.adressen.length, '· bezorgwijken:', Object.keys(parsed.bezorgwijken||{}).length);
-    if(parsed.adressen.length === 0) throw new Error('Geen adressen herkend. Is dit wel een DPG-looplijst?');
-    const built = buildDataStructure(parsed.adressen);
-    const onbekendeNamen = Object.keys(built.onbekende);
-    console.log('[Looplijst] Wijken gebouwd:', built.data.length, '· onbekende straten:', onbekendeNamen.length);
-    parsing.classList.remove('show');
-
-    if(onbekendeNamen.length > 0){
-      toonStraatToewijzing(parsed, built.onbekende);
-    } else {
-      finalizeLooplijst(parsed);
-    }
-  } catch(err){
-    parsing.classList.remove('show');
-    console.error('[Looplijst] Fout:', err);
-    toast('Fout: '+err.message, true);
-  }
-  e.target.value='';
-};
 
 // Verwerk en activeer een geparste looplijst
 function finalizeLooplijst(parsed){
@@ -8721,6 +8763,19 @@ function toonPdfDoelKeuze(built, parsed){
   const scherm = document.getElementById('pdfDoelScreen');
   const lijst = document.getElementById('pdfDoelList');
   lijst.innerHTML = '';
+
+  // Waarschuwing tonen als de wijkindeling (Segmenten) al lang niet is bijgewerkt
+  const laatst = localStorage.getItem(STORAGE_SEG_LAST_UPDATE);
+  const dagenGeleden = laatst ? Math.floor((Date.now() - new Date(laatst).getTime()) / 86400000) : null;
+  if(dagenGeleden === null || dagenGeleden >= SEG_WAARSCHUW_NA_DAGEN){
+    const warn = document.createElement('div');
+    warn.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff3cd;border:1.5px solid #ffe08a;border-radius:12px;margin-bottom:10px;font-size:13px;color:#7a5c00';
+    warn.innerHTML = '<span style="font-size:20px;flex:0 0 auto">⚠️</span>'+
+      '<div>Wijkindeling (Segmenten) is '+(dagenGeleden===null ? 'nog nooit bijgewerkt' : dagenGeleden+' dagen niet bijgewerkt')+'. '+
+      'Laad de <b>Wijken PDF</b> in via de Segmenten-knop als de straten of nummers zijn veranderd.</div>';
+    lijst.appendChild(warn);
+  }
+
   const dag = dagVanLooplijst();
   const modes = [
     {key:'order',     icon:'↕',  titel:'Volgorde & Bezorgen', uitleg:'Bezorgvolgorde instellen en 1-voor-1 bezorgen'},
@@ -8732,9 +8787,11 @@ function toonPdfDoelKeuze(built, parsed){
     {key:'segment',   icon:'📍', titel:'Segmenten',             uitleg:'Wijkindeling bijwerken · aanvinken per huisnummer'},
   ];
   modes.forEach(m=>{
-    const isAan = m.key === 'kaart'
+    const isAan = (m.key === 'kaart')
       ? !!localStorage.getItem('looplijst_v23_kaart_bijwerken')
-      : isModeActief(m.key);
+      : (m.key === 'segment')
+        ? !!localStorage.getItem('looplijst_v23_seg_bijwerken')
+        : isModeActief(m.key);
     const opt = document.createElement('button');
     opt.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 16px;text-align:left;width:100%;border:2px solid '+(isAan?'var(--green)':'var(--line)')+';background:'+(isAan?'var(--green)':'#fff')+';color:'+(isAan?'#fff':'var(--ink)')+';border-radius:13px;margin-bottom:8px;cursor:pointer;font-size:14px';
     opt.innerHTML = '<span style="font-size:24px;flex:0 0 auto">'+m.icon+'</span>'+
