@@ -932,6 +932,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const DEFAULT_DATA = [{"wijk": "Oldenzaal Oost", "rondes": [{"ronde": "Centrum", "straten": [{"naam": "Tulpstraat", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}]}, {"naam": "Nagelstraat", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "38", "prod": "NRC", "schema": true}, {"nr": "42", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}]}, {"naam": "Noordwal", "adressen": [{"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "98", "prod": "TT OL"}]}, {"naam": "Deurningerstraat", "adressen": [{"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "26 B", "prod": "TEL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "34 01", "prod": "TT OL"}, {"nr": "34 02", "prod": "NRC", "schema": true}, {"nr": "34 2", "prod": "TT OL"}, {"nr": "34 21", "prod": "TT OL"}, {"nr": "34 AP11", "prod": "TT OL"}, {"nr": "34 AP12", "prod": "TT OL"}, {"nr": "34 APP 2", "prod": "VK", "schema": true}]}, {"naam": "Kortestraat", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Steenstraat", "adressen": [{"nr": "29", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TEL", "naam": "Hesselink…", "schema": true}, {"nr": "41", "prod": "TT OL", "naam": "Hesselink"}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "NRC", "naam": "Beerlage", "schema": true}, {"nr": "49", "prod": "TT OL", "naam": "Platvoet", "start": true}]}, {"naam": "Prins Hendrikstraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TEL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "71", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TT OL"}]}, {"naam": "Pastoriestraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL", "schema": true}, {"nr": "81", "prod": "TT OL"}, {"nr": "83", "prod": "TT OL"}, {"nr": "87", "prod": "TT OL"}, {"nr": "91", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL", "schema": true}]}, {"naam": "Beatrixstraat", "adressen": [{"nr": "163", "prod": "TT OL"}]}, {"naam": "Wilhelminastraat", "adressen": [{"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TEL"}, {"nr": "44", "prod": "TEL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TEL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}, {"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "naam": "Wulfften …"}, {"nr": "10", "prod": "VK", "naam": "Palthe", "schema": true}, {"nr": "14", "prod": "TT OL"}, {"nr": "14 C", "prod": "TT OL"}, {"nr": "14 D", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}]}, {"naam": "Gasthuisstraat", "adressen": [{"nr": "2 b", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "14 F", "prod": "TT OL", "naam": "Backhuijs", "schema": true}, {"nr": "14 F", "prod": "VK", "naam": "Backhuys"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}]}, {"naam": "Ganzenmarkt", "adressen": [{"nr": "8", "prod": "NRC"}, {"nr": "10", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TEL", "naam": "Krakers"}, {"nr": "38", "prod": "TT OL", "naam": "Krakers-v…"}, {"nr": "40", "prod": "TT OL"}, {"nr": "27", "prod": "TEL", "naam": "Breuken -…", "schema": true}, {"nr": "27", "prod": "TT OL", "naam": "Hoogen"}, {"nr": "31", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Schoolstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TR", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "15", "prod": "VK", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "VK", "schema": true}, {"nr": "47", "prod": "TT OL"}, {"nr": "59", "prod": "TT OL"}, {"nr": "61", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}]}, {"naam": "Kloosterstraat", "adressen": [{"nr": "24", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "30", "prod": "NRC"}, {"nr": "42", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "102", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}]}, {"naam": "Zuidwal", "adressen": [{"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}]}, {"naam": "Boterstraat", "adressen": [{"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}]}, {"naam": "St. Plechelmusplein", "adressen": [{"nr": "9 A", "prod": "TT OL", "schema": true}, {"nr": "9 b", "prod": "TT OL"}, {"nr": "9 C", "prod": "TEL"}, {"nr": "9 C", "prod": "TT OL"}, {"nr": "9 D", "prod": "TEL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}]}]}, {"ronde": "Vierkant (Titus)", "straten": [{"naam": "Berkstraat", "adressen": [{"nr": "9", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL", "schema": true}]}, {"naam": "Titus Brandsmastraat", "adressen": [{"nr": "5", "prod": "TT OL"}, {"nr": "5", "prod": "VK", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "33", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "HFD", "naam": "L.H. van …"}, {"nr": "49", "prod": "TEL", "naam": "Woning"}, {"nr": "49", "prod": "TT OL", "naam": "Woning"}, {"nr": "49", "prod": "VK", "naam": "Woning", "schema": true}]}, {"naam": "Inslagstraat", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "NRC", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}]}, {"naam": "Lyceumstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "VK", "naam": "Twents Ca…"}, {"nr": "46", "prod": "TT OL"}, {"nr": "52", "prod": "TT OL"}, {"nr": "54", "prod": "TT OL"}]}, {"naam": "Carmelstraat", "adressen": [{"nr": "31", "prod": "TT OL", "naam": "Boerrigter"}, {"nr": "31", "prod": "TT OL", "naam": "Assink"}, {"nr": "31", "prod": "TT OL", "naam": "Faas-Steur"}, {"nr": "31", "prod": "TT OL", "naam": "Aa"}, {"nr": "31 01", "prod": "TT OL"}, {"nr": "31 -6", "prod": "TT OL"}, {"nr": "31 K5", "prod": "TT OL"}, {"nr": "31 K9", "prod": "TT OL"}, {"nr": "31 k12", "prod": "TT OL"}, {"nr": "31 St.7", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Spoorstraat", "adressen": [{"nr": "12", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Beukersmolen", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TEL"}, {"nr": "79", "prod": "TT OL", "schema": true}]}, {"naam": "Beukplein", "adressen": [{"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}]}, {"naam": "Sparstraat", "adressen": [{"nr": "124", "prod": "TT OL"}, {"nr": "128", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "78", "prod": "VK", "schema": true}, {"nr": "80", "prod": "TT OL"}, {"nr": "84", "prod": "TT OL", "schema": true}, {"nr": "40", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "48", "prod": "TT OL", "naam": "Hurenkamp"}, {"nr": "48", "prod": "VK", "naam": "hurenkamp", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "55", "prod": "TT OL"}, {"nr": "55", "prod": "VK", "schema": true}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "57", "prod": "VK", "schema": true}, {"nr": "63", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL", "schema": true}, {"nr": "99", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "NRC", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "TT OL", "naam": "Holsheime…"}, {"nr": "49", "prod": "NRC", "schema": true}]}, {"naam": "Eikstraat", "adressen": [{"nr": "7", "prod": "TT OL"}]}, {"naam": "Kastanjestraat", "adressen": [{"nr": "50", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "44", "prod": "TT OL"}, {"nr": "46", "prod": "NRC", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "HFD", "schema": true}, {"nr": "37", "prod": "TT OL", "schema": true}, {"nr": "35", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "31", "prod": "VK", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}]}]}]}, {"wijk": "Oldenzaal Mariahof", "rondes": [{"ronde": "Mariahof", "straten": [{"naam": "Beatrixstraat", "adressen": [{"nr": "64", "prod": "NRC", "naam": "Vloedgrav…"}, {"nr": "64", "prod": "TT OL", "naam": "St Mariah…"}, {"nr": "64", "prod": "TT OL", "naam": "Wellink"}, {"nr": "64 0.25", "prod": "TT OL"}, {"nr": "64 103", "prod": "TT OL"}, {"nr": "64 1.06", "prod": "TT OL", "schema": true}, {"nr": "64 2.19", "prod": "TT OL"}, {"nr": "64 027", "prod": "TT OL", "naam": "Linde"}, {"nr": "64 027", "prod": "TT OL", "naam": "Egberts"}, {"nr": "64 109", "prod": "TT OL"}, {"nr": "64 124", "prod": "TT OL"}, {"nr": "64 202", "prod": "TT OL"}, {"nr": "64 A28", "prod": "TT OL"}, {"nr": "64 A122", "prod": "TT OL"}, {"nr": "64 A208", "prod": "TT OL"}, {"nr": "64 K 100", "prod": "TT OL"}, {"nr": "64 K.29", "prod": "TT OL"}, {"nr": "64 K112", "prod": "TT OL"}, {"nr": "64 K121", "prod": "TT OL"}, {"nr": "64 k200", "prod": "TT OL"}, {"nr": "64 K201", "prod": "TT OL"}, {"nr": "64 K211", "prod": "TT OL"}, {"nr": "64 K212", "prod": "TT OL"}, {"nr": "64 K218", "prod": "TT OL"}, {"nr": "64 k223", "prod": "TT OL", "schema": true}]}]}]}, {"wijk": "Oldenzaal-West", "rondes": [{"ronde": "De Essen", "straten": [{"naam": "Brem", "adressen": [{"nr": "49", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "62", "prod": "AD NL", "schema": true}, {"nr": "66", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TR"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}]}, {"naam": "Honingklaver", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Geelster", "adressen": [{"nr": "4", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL"}, {"nr": "66", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "96", "prod": "TT OL"}, {"nr": "104", "prod": "TT OL", "schema": true}, {"nr": "106", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}, {"nr": "110", "prod": "TT OL", "schema": true}, {"nr": "1", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TEL", "schema": true}]}, {"naam": "Look", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "27", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TEL", "schema": true}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "73", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}, {"nr": "81", "prod": "TT OL", "schema": true}, {"nr": "89", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL"}, {"nr": "99", "prod": "TT OL"}, {"nr": "103", "prod": "TT OL"}, {"nr": "107", "prod": "TT OL"}, {"nr": "113", "prod": "TT OL"}, {"nr": "115", "prod": "TT OL"}, {"nr": "117", "prod": "TT OL"}, {"nr": "119", "prod": "TT OL"}]}, {"naam": "Ootmarsumsedijk", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "NRC", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}]}, {"naam": "Weerselosestraat", "adressen": [{"nr": "73", "prod": "TT OL"}, {"nr": "79", "prod": "TT OL"}]}]}, {"ronde": "De Kampjes", "straten": [{"naam": "Saasvelderlaan", "adressen": [{"nr": "97", "prod": "TEL", "naam": "Wildeboer…"}, {"nr": "97", "prod": "TT OL", "naam": "Wildeboer"}]}, {"naam": "Telgenkamp", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TR", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "NRC", "schema": true}, {"nr": "12", "prod": "NRC"}, {"nr": "12", "prod": "VK"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "VK", "schema": true}, {"nr": "22", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "NRC", "schema": true}]}, {"naam": "Wijntjeskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "2", "prod": "VK", "schema": true}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "20", "prod": "TEL"}, {"nr": "21", "prod": "NRC", "schema": true}, {"nr": "22", "prod": "VK", "schema": true}, {"nr": "25", "prod": "NRC"}, {"nr": "25", "prod": "TT OL", "schema": true}]}, {"naam": "Waterhamskamp", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "naam": "Ter Huurne"}, {"nr": "12", "prod": "VK", "naam": "Huurne"}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL"}]}, {"naam": "Kruijskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "5", "prod": "VK"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "AD NL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "NRC"}, {"nr": "17", "prod": "TT OL", "schema": true}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "HFD", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "32", "prod": "VK"}, {"nr": "33", "prod": "AD NL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "naam": "Van Dijck"}, {"nr": "42", "prod": "VK", "naam": "dijck", "schema": true}, {"nr": "46", "prod": "TEL"}]}, {"naam": "Nijhuiskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TEL"}, {"nr": "17", "prod": "VK"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL", "schema": true}, {"nr": "32", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}]}, {"naam": "Wortkamp", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "3", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "naam": "Bosma"}, {"nr": "7", "prod": "VK", "naam": "Borghorst…"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "VK"}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TR", "naam": "Marle - A…"}, {"nr": "23", "prod": "TT OL", "naam": "Marle"}, {"nr": "24", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "33", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Hulsbekenkamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "8", "prod": "NRC", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "23", "prod": "NRC", "naam": "Lage Vent…"}, {"nr": "23", "prod": "TT OL", "naam": "Venterink"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "25", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "34", "prod": "VK"}, {"nr": "36", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "VK", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}, {"nr": "44", "prod": "VK", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "56", "prod": "TT OL", "schema": true}]}, {"naam": "Marellenkamp", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "13", "prod": "TR", "schema": true}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "VK"}, {"nr": "22", "prod": "TEL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "24", "prod": "NRC"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}]}, {"naam": "Bolkskamp", "adressen": [{"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "schema": true}, {"nr": "43", "prod": "NRC", "schema": true}, {"nr": "43", "prod": "TR", "schema": true}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "VK", "schema": true}, {"nr": "52", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}]}]}, {"ronde": "Sportlaan", "straten": [{"naam": "Sportlaan", "adressen": [{"nr": "1", "prod": "NRC"}, {"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "10 A", "prod": "HFD", "naam": "Triple M …"}, {"nr": "10 A", "prod": "TT OL", "naam": "Schaepers"}, {"nr": "10 C", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL", "naam": "J. Koende…", "schema": true}, {"nr": "16", "prod": "TT OL", "naam": "Koenders"}, {"nr": "25", "prod": "NRC", "naam": "Droste", "schema": true}, {"nr": "25", "prod": "TT OL", "naam": "Brand"}, {"nr": "26", "prod": "HFD", "naam": "Bruijsten", "schema": true}, {"nr": "26", "prod": "TEL", "naam": "Bruijsten"}, {"nr": "26", "prod": "TT OL", "naam": "Kuiphuis …"}, {"nr": "27", "prod": "HFD", "schema": true}, {"nr": "27", "prod": "VK", "schema": true}, {"nr": "28", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "naam": "Wilbrink", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "naam": "Troost"}, {"nr": "32", "prod": "TT OL", "naam": "Bekhuis"}, {"nr": "33", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "39", "prod": "TEL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "HFD", "naam": "Willemsen", "schema": true}, {"nr": "46", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "54", "prod": "TT OL"}]}]}, {"ronde": "Graven Es", "straten": [{"naam": "Alpenlaan", "adressen": [{"nr": "2", "prod": "TT OL"}]}, {"naam": "Kretalaan", "adressen": [{"nr": "19", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL"}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL"}, {"nr": "62", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL", "schema": true}, {"nr": "69", "prod": "TT OL"}, {"nr": "70", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL", "schema": true}, {"nr": "75", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}]}, {"naam": "Rhodoslaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "12", "prod": "TT OL"}, {"nr": "9", "prod": "TEL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "14", "prod": "VK"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "naam": "Obdeijn"}, {"nr": "21", "prod": "VK", "naam": "Obdeyn"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}]}, {"naam": "Parnonlaan", "adressen": [{"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Corfulaan", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK"}]}, {"naam": "Delagoslaan", "adressen": [{"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "schema": true}, {"nr": "32", "prod": "TT OL"}]}, {"naam": "Samoslaan", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL", "schema": true}]}, {"naam": "Kassandralaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "23", "prod": "VK"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Deloslaan", "adressen": [{"nr": "4", "prod": "NRC", "schema": true}, {"nr": "4", "prod": "TR", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "4", "prod": "VK"}, {"nr": "5", "prod": "TR", "schema": true}, {"nr": "8", "prod": "TT OL"}]}, {"naam": "Koslaan", "adressen": [{"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}]}]}]}];
@@ -4682,8 +4683,105 @@ function exportSegmentCSV(){
   toast('✓ CSV geëxporteerd');
 }
 
+const SEG_KLEUREN_PDF = {
+  '226':'#e53935','227':'#8e24aa','230':'#1e88e5','231':'#00897b',
+  '232':'#f4511e','236':'#3949ab','244':'#6d4c41','249':'#00acc1',
+  '618':'#43a047','619':'#fb8c00','620':'#d81b60','621':'#5e35b1',
+  '622':'#00838f','623':'#c0ca33','624':'#f06292','716':'#8d6e63',
+  '717':'#26a69a','729':'#ef5350','730':'#7e57c2','731':'#66bb6a',
+};
+
 function exportSegmentPDF(){
-  // Bouw een print-venster met nette lay-out per segment
+  // Echte PDF-download via jsPDF — werkt betrouwbaar op mobiel/PWA,
+  // in tegenstelling tot de oude print-venster methode (popups vaak geblokkeerd).
+  if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+    toast('PDF-bibliotheek nog niet geladen, probeer nog eens', true);
+    exportSegmentPDFPrint();
+    return;
+  }
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marge = 14;
+    let y = marge;
+    const nu = new Date();
+    const datumStr = nu.toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
+
+    function hexToRgb(hex){
+      const h = hex.replace('#','');
+      return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+    }
+    function nieuwePaginaAlsNodig(minHoogte){
+      if(y + minHoogte > pageH - marge){ doc.addPage(); y = marge; }
+    }
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.text('Wijkindeling Oldenzaal - Segmenten', marge, y);
+    y += 6;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text('Geexporteerd op '+datumStr+'  ·  * = aangevinkt', marge, y);
+    doc.setTextColor(20);
+    y += 8;
+
+    Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
+      const regio = seg.naam.includes('OOST') ? 'OOST' : 'WEST';
+      const kleur = SEG_KLEUREN_PDF[nr] || '#555555';
+      const [r,g,b] = hexToRgb(kleur);
+      const wijkNaam = seg.naam.replace(/OLDENZAAL[- ]*(OOST|WEST)\s*/i,'').trim();
+
+      let totaal=0, gedaan=0;
+      Object.entries(seg.straten).forEach(([s,nrs])=> nrs.forEach(n=>{totaal++; if(segDone[nr+':'+s+':'+n]) gedaan++;}));
+
+      nieuwePaginaAlsNodig(20);
+
+      doc.setFillColor(r,g,b);
+      doc.roundedRect(marge, y, pageW-2*marge, 10, 1.5, 1.5, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(12);
+      doc.text(nr+' - '+(wijkNaam||seg.naam)+' ('+regio+')', marge+3, y+7);
+      doc.setFontSize(9);
+      doc.text(gedaan+'/'+totaal+' aangevinkt', pageW-marge-3, y+7, {align:'right'});
+      doc.setTextColor(20,20,20);
+      y += 14;
+
+      Object.entries(seg.straten).forEach(([straat, nrs])=>{
+        nieuwePaginaAlsNodig(12);
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(9.5);
+        doc.text(straat, marge, y);
+        y += 4.5;
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(9);
+        const regelTekst = nrs.map(n=> segDone[nr+':'+straat+':'+n] ? (n+'*') : n).join(', ');
+        const regels = doc.splitTextToSize(regelTekst, pageW-2*marge);
+        regels.forEach(regel=>{
+          nieuwePaginaAlsNodig(5);
+          doc.text(regel, marge, y);
+          y += 4.3;
+        });
+        y += 1.5;
+      });
+
+      y += 4;
+    });
+
+    const bestandsnaam = 'segmenten-oldenzaal-'+nu.toISOString().slice(0,10)+'.pdf';
+    doc.save(bestandsnaam);
+    toast('✓ PDF gedownload');
+  }catch(err){
+    console.error(err);
+    toast('PDF maken mislukt, probeer opnieuw', true);
+  }
+}
+
+function exportSegmentPDFPrint(){
+  // Terugval: oude print-venster methode (als jsPDF niet geladen kon worden)
   const nu = new Date();
   const datumStr = nu.toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
 
@@ -4731,13 +4829,6 @@ function exportSegmentPDF(){
 
   Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
     const regio = seg.naam.includes('OOST') ? 'OOST' : 'WEST';
-    const SEG_KLEUREN_PDF = {
-      '226':'#e53935','227':'#8e24aa','230':'#1e88e5','231':'#00897b',
-      '232':'#f4511e','236':'#3949ab','244':'#6d4c41','249':'#00acc1',
-      '618':'#43a047','619':'#fb8c00','620':'#d81b60','621':'#5e35b1',
-      '622':'#00838f','623':'#c0ca33','624':'#f06292','716':'#8d6e63',
-      '717':'#26a69a','729':'#ef5350','730':'#7e57c2','731':'#66bb6a',
-    };
     const kleur = SEG_KLEUREN_PDF[nr] || '#555';
     const wijkNaam = seg.naam.replace(/OLDENZAAL[- ]*(OOST|WEST)\s*/i,'').trim();
 
@@ -4775,8 +4866,6 @@ function exportSegmentPDF(){
 
   html += `</body></html>`;
 
-
-  // Open in nieuw venster via blob - meest betrouwbaar voor afdrukken
   const blob = new Blob([html], {type: 'text/html; charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const win = window.open(url, '_blank');
@@ -4789,7 +4878,6 @@ function exportSegmentPDF(){
     });
     toast('✓ Afdrukvenster geopend');
   } else {
-    // Fallback als popup geblokkeerd: download als HTML bestand
     const a = document.createElement('a');
     a.href = url;
     a.download = 'segmenten-oldenzaal.html';
@@ -8487,6 +8575,64 @@ document.getElementById('pdfInput').onchange = async (e)=>{
     lbl.textContent='PDF lezen…';
     const arr = await file.arrayBuffer();
     console.log('[Looplijst] ArrayBuffer:', arr.byteLength, 'bytes');
+
+    // ---- Automatische herkenning: is dit een "Wijken PDF" (adressen per segment) ----
+    // i.p.v. een normale bezorglijst? Zo ja: wijkindeling bijwerken en stoppen,
+    // zodat de gebruiker niet apart naar Segmenten hoeft voor deze PDF.
+    lbl.textContent='PDF controleren…';
+    let wijkenTekst = null;
+    try{
+      if(!pdfjsLib.GlobalWorkerOptions.workerSrc) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const probeBuf = arr.slice(0); // kopie, want pdf.js maakt het origineel 'detached'
+      const pdfProbe = await pdfjsLib.getDocument({data: probeBuf}).promise;
+      let probeText = '';
+      for(let p=1; p<=pdfProbe.numPages; p++){
+        const page = await pdfProbe.getPage(p);
+        const content = await page.getTextContent();
+        const items = content.items.slice().sort((a,b)=>{
+          if(Math.abs(a.transform[5]-b.transform[5]) > 3) return b.transform[5]-a.transform[5];
+          return a.transform[4]-b.transform[4];
+        });
+        let lastY = null, line = '';
+        items.forEach(it=>{
+          const y = it.transform[5];
+          if(lastY !== null && Math.abs(y-lastY) > 3){ probeText += line+'\n'; line=''; }
+          line += (line ? ' ' : '')+it.str;
+          lastY = y;
+        });
+        if(line) probeText += line+'\n';
+      }
+      if(/Adressen per segment/i.test(probeText) && /Segment\s+\d+\s*\(\d+\s*adressen/i.test(probeText)){
+        wijkenTekst = probeText;
+      }
+    }catch(probeErr){ console.warn('[Looplijst] Wijken-detectie mislukt, ga door als normale looplijst', probeErr); }
+
+    if(wijkenTekst){
+      const geparsed = parseWijkenPdf(wijkenTekst);
+      const gevondenSegmenten = Object.keys(geparsed);
+      if(gevondenSegmenten.length === 0){
+        toast('Geen segmenten gevonden in deze PDF', true);
+      } else {
+        let afwijkend = [];
+        gevondenSegmenten.forEach(nr=>{
+          const seg = geparsed[nr];
+          const straatCount = Object.keys(seg.straten).length;
+          const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
+          if(!(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen)) afwijkend.push(nr);
+          delete seg._verwachtStraten; delete seg._verwachtAdressen;
+        });
+        gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
+        try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); }catch(e){}
+        const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
+        let melding = '✓ Wijkindeling automatisch bijgewerkt · '+gevondenSegmenten.length+' segmenten · '+totaalAdressen+' adressen';
+        if(afwijkend.length) melding += ' · let op: '+afwijkend.join(', ')+' wijkt af';
+        toast(melding, afwijkend.length>0);
+      }
+      parsing.classList.remove('show');
+      e.target.value = '';
+      return;
+    }
+
     lbl.textContent='Tekst extraheren…';
     const extracted = await pdfExtractLines(arr);
     console.log('[Looplijst] Tekst-regels:', extracted.allLines.length, '· mutatie-regels:', extracted.mutatieRegels.length);
