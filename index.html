@@ -260,7 +260,22 @@ body{display:flex;flex-direction:column}
 
 /* Print view */
 .print-view{background:#fff;color:#000;padding:12px}
-@media print{body>*:not(.print-view){display:none}.print-view{display:block!important}}
+@media print{
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  body>*:not(#printView){ display:none !important; }
+  #printView{
+    display:block !important;
+    position:static !important;
+    inset:auto !important;
+    overflow:visible !important;
+    height:auto !important;
+    max-height:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:#fff !important;
+    z-index:auto !important;
+  }
+}
 .pv-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:3px;font-size:12px}
 .pv-row.done{background:#f6fbf8;border-color:#cfe5d7}
 .pv-nr{font-weight:700;min-width:44px;font-size:11px;white-space:nowrap;text-align:right}
@@ -569,7 +584,14 @@ body{display:flex;flex-direction:column}
   .print-view .pv-row.done .pv-nr{background:#1565c0;color:#fff}
   @media print {
     body > *:not(.print-view) { display: none !important; }
-    .print-view { position: static; padding: 0; }
+    .print-view {
+      position: static !important;
+      inset: auto !important;
+      overflow: visible !important;
+      height: auto !important;
+      max-height: none !important;
+      padding: 10px !important;
+    }
     .print-view .pv-actions { display: none !important; }
     .print-view .pv-row { page-break-inside: avoid; }
     .print-view .pv-subtotal { page-break-inside: avoid; }
@@ -4198,7 +4220,7 @@ const SEGMENT_DATA = {
     'SCHOOLSTRAAT':['10','16','20','24','30','32','1','5','7','13','15','17','35','37','43','47','59','61','65','67','69'],
   }},
   '227': {naam:'OLDENZAAL 227', straten:{
-    'WILHEMINASTRAAT':['22','32','34','36','40','44','50','56','60','64','68','72','74','78','80','82'],
+    'WILHELMINASTRAAT':['22','32','34','36','40','44','50','56','60','64','68','72','74','78','80','82'],
     'BEATRIXSTRAAT':['163'],
     'PRINS HENDRIKSTRAAT':['39','43','57','71','79'],
     'PASTORIESTRAAT':['39','55','71','75','81','83','87','91'],
@@ -4251,7 +4273,8 @@ const SEGMENT_DATA = {
   }},
   '620': {naam:'OLDENZAAL 620', straten:{
     'NIJHUISKAMP':['1','3','7','11','13','15','4','8','10','12','14','16'],
-    'KRUIJSKAMP':['1','5','7','11','15','17','21','23','25','27','4','8','12','20','24','26','SAASVELDERLAAN','97'],
+    'KRUIJSKAMP':['1','5','7','11','15','17','21','23','25','27','4','8','12','20','24','26'],
+    'SAASVELDERLAAN':['97'],
   }},
   '621': {naam:'OLDENZAAL 621', straten:{
     'NIJHUISKAMP':['28','30','32','40','44','31','35'],
@@ -4300,57 +4323,24 @@ const SEGMENT_DATA = {
   }},
 };
 
-// Bouw SEGMENT_DATA dynamisch vanuit ingeladen looplijst adressen
+// Bouw SEGMENT_DATA automatisch vanuit ingeladen looplijst adressen
+// Gebruikt a.segmentNr die de parser nu bijhoudt per adres
 function bouwSegmentDataVanuitAdressen(adressen, bezorgwijken){
   if(!adressen || adressen.length === 0) return;
 
-  // Maak lookup: segmentnummer -> wijknaam
-  const segNaarWijk = {};
-  Object.entries(bezorgwijken).forEach(([wijkNaam, lijst])=>{
-    lijst.forEach(({kort, segment})=>{
-      segNaarWijk[segment] = {wijkNaam, kort};
-    });
-  });
-
-  // Bouw nieuw segment data object vanuit adressen
   const nieuweData = {};
 
   adressen.forEach(a=>{
-    if(!a.straat || !a.nr) return;
-
-    // Bepaal segmentnummer: uit bezorgwijken via wijk+ronde, of gebruik bestaande
-    // Zoek segment voor dit adres via bezorgwijken (wijk -> segment pairs)
-    let segNr = null;
-    const wijkInfo = a.wijk ? Object.entries(bezorgwijken).find(([wn])=>
-      wn.toLowerCase().includes(a.wijk.toLowerCase().replace('oldenzaal ','').split(' ')[0])
-    ) : null;
-
-    if(wijkInfo){
-      // Neem het eerste segment van die wijk als fallback
-      const rondeNr = a.ronde;
-      const segPair = wijkInfo[1].find(p=> p.kort === rondeNr) || wijkInfo[1][0];
-      if(segPair) segNr = segPair.segment;
-    }
-
-    if(!segNr){
-      // Zoek in bestaande SEGMENT_DATA welk segment deze straat bevat
-      const straatUpper = a.straat.toUpperCase();
-      const bestaand = Object.entries(SEGMENT_DATA).find(([nr, seg])=>
-        seg.straten && straatUpper in seg.straten
-      );
-      if(bestaand) segNr = bestaand[0];
-    }
-
+    if(!a.straat || !a.nr || a.stop) return;
+    const segNr = a.segmentNr;
     if(!segNr) return;
 
     if(!nieuweData[segNr]){
-      const bekendSeg = SEGMENT_DATA[segNr];
       nieuweData[segNr] = {
-        naam: bekendSeg ? bekendSeg.naam : 'SEGMENT '+segNr,
+        naam: SEGMENT_DATA[segNr]?.naam || 'OLDENZAAL '+segNr,
         straten: {}
       };
     }
-
     const straat = a.straat.toUpperCase();
     if(!nieuweData[segNr].straten[straat]) nieuweData[segNr].straten[straat] = [];
     if(!nieuweData[segNr].straten[straat].includes(a.nr)){
@@ -4358,38 +4348,19 @@ function bouwSegmentDataVanuitAdressen(adressen, bezorgwijken){
     }
   });
 
-  // Update SEGMENT_DATA als er data gevonden is
   const aantalSegs = Object.keys(nieuweData).length;
   if(aantalSegs > 0){
-    // Overschrijf alleen de segmenten die in de PDF zitten
     Object.entries(nieuweData).forEach(([nr, data])=>{
       SEGMENT_DATA[nr] = data;
     });
-    console.log('Segment data bijgewerkt: '+aantalSegs+' segmenten vanuit looplijst');
-    // Sla op in localStorage voor persistentie
-    try{
-      localStorage.setItem('looplijst_v23_seg_data_dynamic',
-        JSON.stringify(Object.fromEntries(
-          Object.entries(nieuweData).map(([k,v])=>[k,v])
-        ))
-      );
-    }catch(e){}
+    console.log('✓ Segment data bijgewerkt: '+aantalSegs+' segmenten vanuit looplijst');
   }
 }
 
-// Laad dynamische segmentdata uit localStorage bij opstarten
-(function laadDynamischeSegData(){
-  try{
-    const raw = localStorage.getItem('looplijst_v23_seg_data_dynamic');
-    if(!raw) return;
-    const data = JSON.parse(raw);
-    Object.entries(data).forEach(([nr, seg])=>{
-      SEGMENT_DATA[nr] = seg;
-    });
-    console.log('Dynamische segmentdata geladen: '+Object.keys(data).length+' segmenten');
-  }catch(e){}
-})();
 
+
+// Wis oude dynamische segmentdata zodat hardcoded data geldt
+try{ localStorage.removeItem('looplijst_v23_seg_data_dynamic'); }catch(e){}
 
 const STORAGE_SEG_DONE = 'looplijst_v23_seg_done';
 let segDone = {};
@@ -4656,11 +4627,29 @@ function exportSegmentPDF(){
 
   html += `</body></html>`;
 
-  const win = window.open('','_blank');
-  win.document.write(html);
-  win.document.close();
-  win.onload = ()=>{ win.print(); };
-  toast('✓ PDF-venster geopend');
+  // Gebruik een blob URL ipv window.open (werkt ook als popups geblokkeerd zijn)
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if(win){
+    win.onload = ()=>{ win.print(); URL.revokeObjectURL(url); };
+    toast('✓ PDF-venster geopend');
+  } else {
+    // Fallback: toon in huidige tab via printView
+    const pv = document.getElementById('printView');
+    pv.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:none;z-index:9999';
+    iframe.src = url;
+    pv.appendChild(iframe);
+    pv.classList.add('show');
+    const sluitBtn = document.createElement('button');
+    sluitBtn.textContent = '✕ Sluiten';
+    sluitBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10000;background:#c62828;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer';
+    sluitBtn.onclick = ()=>{ pv.classList.remove('show'); pv.innerHTML=''; URL.revokeObjectURL(url); };
+    pv.appendChild(sluitBtn);
+    toast('✓ Segmenten geladen — gebruik Afdrukken voor PDF');
+  }
 }
 
 // ===== Kaart-module =====
@@ -8136,7 +8125,7 @@ function parseMutaties(regels){
 }
 
 function parseLooplijst(lines, mutaties){
-  let datum=null, bezorger=null;
+  let datum=null, bezorger=null, huidigSegmentNr=null;
   // Bezorgwijken per wijk-naam: {wijkNaam: [{kort, segment}]}
   const bezorgwijken = {};
   // Verzamel ALLE tekst (Oost-header staat op pagina 1, West-header op pagina 5+)
@@ -8204,6 +8193,9 @@ function parseLooplijst(lines, mutaties){
       else if(sn.includes('west')) huidigeSectie = 'west';
       continue;
     }
+    // Detecteer segmentnummer: "226 (5757226)" patroon
+    const segNrMatch = L.match(/^(\d{3})\s*\(\d{6,}\)/);
+    if(segNrMatch){ huidigSegmentNr = segNrMatch[1]; continue; }
     if(/^OLDENZAAL/i.test(L)) continue;
     if(/^\(\d+\/\d+\)$/.test(L)) continue;
     if(/^Product\b/i.test(L)) continue;
@@ -8248,6 +8240,7 @@ function parseLooplijst(lines, mutaties){
         const a={nr,prod};
         if(naam) a.naam=naam;
         if(isStop) a.stop=true;
+        if(huidigSegmentNr) a.segmentNr=huidigSegmentNr;
         adressen.push(Object.assign({straat:huidigStraat},a));
       }
       continue;
