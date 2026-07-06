@@ -1081,7 +1081,7 @@ function registreerWeek(weekNr){
         vergoedingOpgebouwd.archief.unshift(vergoedingOpgebouwd.huidige);
         if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
       }
-      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, weken: []};
+      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, weken: []};
     }
     const huidigeWeken = vergoedingOpgebouwd.huidige.weken.map(w=>w.nr);
     const laatsteWeek = huidigeWeken.length ? Math.max(...huidigeWeken) : 0;
@@ -1097,7 +1097,7 @@ function registreerWeek(weekNr){
       const archiefEntry = {...vergoedingOpgebouwd.huidige, totaal_tijd_ms: _totMs};
       vergoedingOpgebouwd.archief.unshift(archiefEntry);
       if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
-      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, weken: []};
+      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, weken: []};
       localStorage.setItem('looplijst_v23_nieuwePeriodeSinds', String(Date.now()));
     }
     const bestaand = vergoedingOpgebouwd.huidige.weken.find(w => w.nr === weekNr);
@@ -1124,6 +1124,7 @@ function registreerWeek(weekNr){
     }
     vergoedingOpgebouwd.huidige.weken.sort((a,b)=>a.nr - b.nr);
     vergoedingOpgebouwd.huidige.totaal_verwacht = verwachtTotaal;
+    if(vergoedingPeriode && vergoedingPeriode.dagen) vergoedingOpgebouwd.huidige.dagen = vergoedingPeriode.dagen;
     saveVergoedingOpgebouwd();
   } catch(err){
     console.error('[registreerWeek] fout:', err);
@@ -1187,6 +1188,23 @@ function parseVergoedingsPdf(allText){
     }
   }
   console.log('[Vergoeding] Aantal blokken gevonden:', aantalBlokken, '· unieke segmenten:', Object.keys(data).length);
+  // Werkelijk aantal bezorgdagen deze periode = de 'aantal' waarde bij code 110
+  // ("Verg bez per dag"). Dit staat gewoon op de PDF en is vaak 21/22/23,
+  // niet altijd de aangenomen 4 weken × 6 dagen = 24.
+  const dagenTellingen = {};
+  Object.values(data).forEach(seg=>{
+    if(seg.codes && seg.codes['110']){
+      const a = seg.codes['110'].aantal;
+      dagenTellingen[a] = (dagenTellingen[a]||0) + 1;
+    }
+  });
+  let aantalDagenPeriode = null;
+  let besteFreq = 0;
+  Object.entries(dagenTellingen).forEach(([dagen, freq])=>{
+    if(freq > besteFreq){ besteFreq = freq; aantalDagenPeriode = parseInt(dagen); }
+  });
+  console.log('[Vergoeding] Aantal bezorgdagen deze periode (uit PDF):', aantalDagenPeriode, dagenTellingen);
+  if(periode && aantalDagenPeriode) periode.dagen = aantalDagenPeriode;
   return {data, periode};
 }
 
@@ -5491,7 +5509,10 @@ function renderVergoeding(){
   const badge = isNieuw ? '<div style="position:absolute;top:-8px;right:12px;background:#ffd54f;color:#5d4900;font-size:10px;font-weight:800;padding:4px 10px;border-radius:12px;letter-spacing:.06em;box-shadow:0 2px 6px rgba(0,0,0,.2)">✨ NIEUWE PERIODE</div>' : '';
   // Cumulatief = som van aangevinkte dagen × dagbedrag
   const opg = (vergoedingOpgebouwd.huidige && vergoedingOpgebouwd.huidige.periode_label === periode.label) ? vergoedingOpgebouwd.huidige : null;
-  function dagBedrag(){ return (totaalPeriode / 4) / 6; }
+  function dagBedrag(){
+    if(periode && periode.dagen) return totaalPeriode / periode.dagen;
+    return (totaalPeriode / 4) / 6; // terugval voor oudere ingeladen data zonder dagen-veld
+  }
   function weekCum(w){
     if(!w.dagen) return w.bedrag || 0;
     return w.dagen.filter(x=>x).length * dagBedrag();
@@ -5625,7 +5646,7 @@ function renderVergoeding(){
     archLbl.textContent = '📚 Vorige periodes';
     main.appendChild(archLbl);
     vergoedingOpgebouwd.archief.forEach(arc=>{
-      const dB = arc.totaal_verwacht > 0 ? (arc.totaal_verwacht/4)/6 : 0;
+      const dB = arc.totaal_verwacht > 0 ? (arc.dagen ? arc.totaal_verwacht/arc.dagen : (arc.totaal_verwacht/4)/6) : 0;
       const cumArc = arc.weken.reduce((s,w)=>{
         const cnt = w.dagen ? w.dagen.filter(x=>x).length : 6;
         return s + cnt * dB;
@@ -8784,14 +8805,11 @@ function toonPdfDoelKeuze(built, parsed){
     {key:'krant',     icon:'📰', titel:'Per krant',            uitleg:'Afvinken per kranttype'},
     {key:'kerst',     icon:'🎄', titel:'Kerstkaarten & fooi',  uitleg:'Brievenbussen + fooi-tracker'},
     {key:'kaart',     icon:'🗺️', titel:'Wijkenkaart',          uitleg:'Adressen op kaart + afvinken · geocoding opnieuw'},
-    {key:'segment',   icon:'📍', titel:'Segmenten',             uitleg:'Wijkindeling bijwerken · aanvinken per huisnummer'},
   ];
   modes.forEach(m=>{
     const isAan = (m.key === 'kaart')
       ? !!localStorage.getItem('looplijst_v23_kaart_bijwerken')
-      : (m.key === 'segment')
-        ? !!localStorage.getItem('looplijst_v23_seg_bijwerken')
-        : isModeActief(m.key);
+      : isModeActief(m.key);
     const opt = document.createElement('button');
     opt.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 16px;text-align:left;width:100%;border:2px solid '+(isAan?'var(--green)':'var(--line)')+';background:'+(isAan?'var(--green)':'#fff')+';color:'+(isAan?'#fff':'var(--ink)')+';border-radius:13px;margin-bottom:8px;cursor:pointer;font-size:14px';
     opt.innerHTML = '<span style="font-size:24px;flex:0 0 auto">'+m.icon+'</span>'+
@@ -8804,11 +8822,6 @@ function toonPdfDoelKeuze(built, parsed){
           localStorage.removeItem('looplijst_v23_kaart_bijwerken');
         else
           localStorage.setItem('looplijst_v23_kaart_bijwerken','1');
-      } else if(m.key === 'segment'){
-        if(localStorage.getItem('looplijst_v23_seg_bijwerken'))
-          localStorage.removeItem('looplijst_v23_seg_bijwerken');
-        else
-          localStorage.setItem('looplijst_v23_seg_bijwerken','1');
       } else {
         const idx = actieveModi.indexOf(m.key);
         if(idx >= 0) actieveModi.splice(idx, 1);
@@ -8823,12 +8836,6 @@ function toonPdfDoelKeuze(built, parsed){
 }
 document.getElementById('pdfDoelKlaar').onclick = ()=>{
   // Als Wijkenkaart aangevinkt: wis geocache zodat adressen opnieuw worden opgezocht
-  if(localStorage.getItem('looplijst_v23_seg_bijwerken')){
-    segDone = {};
-    saveSegDone();
-    localStorage.removeItem('looplijst_v23_seg_bijwerken');
-    toast('Segmenten worden opnieuw bijgewerkt');
-  }
   if(localStorage.getItem('looplijst_v23_kaart_bijwerken')){
     geocache = {};
     try { localStorage.removeItem(STORAGE_GEOCACHE); } catch(e){}
@@ -8916,7 +8923,8 @@ function toonWeekKeuzePopup(){
       registreerWeek(nieuw);
       bg.remove();
       const cumNu = vergoedingOpgebouwd.huidige ? vergoedingOpgebouwd.huidige.weken.reduce((s,w)=>{
-        const dB = vergoedingOpgebouwd.huidige.totaal_verwacht ? (vergoedingOpgebouwd.huidige.totaal_verwacht/4)/6 : 0;
+        const h = vergoedingOpgebouwd.huidige;
+        const dB = h.totaal_verwacht ? (h.dagen ? h.totaal_verwacht/h.dagen : (h.totaal_verwacht/4)/6) : 0;
         const cnt = w.dagen ? w.dagen.filter(x=>x).length : 6;
         return s + cnt * dB;
       }, 0) : 0;
