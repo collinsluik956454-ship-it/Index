@@ -3519,7 +3519,18 @@ function renderHome(){
     ? Object.values(vergoedingsdata).filter(v=>looplijstSegSet.has(v.segment)).reduce((s,v)=>s+v.totaal,0)
     : Object.values(vergoedingsdata).reduce((s,v)=>s+v.totaal,0);
 
-  const uurloon = totaalUren > 0 ? vergTotaal/totaalUren : 0;
+  // Voor "per uur" gebruiken we niet het volledige periodetotaal (dat gaat ervan uit
+  // dat de hele periode al gewerkt is), maar het bedrag dat werkelijk is opgebouwd
+  // op basis van de dagen die tot nu toe zijn aangevinkt/geregistreerd.
+  const _opgHuidige = (vergoedingOpgebouwd.huidige && vergoedingOpgebouwd.huidige.periode_label === periodeLabel)
+    ? vergoedingOpgebouwd.huidige : null;
+  const _dagBedragNu = (_opgHuidige && _opgHuidige.dagen) ? vergTotaal / _opgHuidige.dagen
+    : (vergTotaal ? (vergTotaal/4)/6 : 0);
+  const vergOpgebouwdTotNu = _opgHuidige
+    ? _opgHuidige.weken.reduce((s,w)=> s + (w.dagen ? w.dagen.filter(x=>x).length : (w.bedrag>0?1:0)) * _dagBedragNu, 0)
+    : 0;
+
+  const uurloon = totaalUren > 0 ? vergOpgebouwdTotNu/totaalUren : 0;
 
   // Bouw kaart HTML
   let kaartHtml = '<div style="display:flex;align-items:flex-start;gap:12px">';
@@ -3533,7 +3544,7 @@ function renderHome(){
     kaartHtml += '<div style="text-align:right">';
     kaartHtml += '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Per uur</div>';
     kaartHtml += '<div style="font-size:22px;font-weight:900;color:#2e7d32;line-height:1">€'+uurloon.toFixed(2).replace(".",",")+' </div>';
-    kaartHtml += '<div style="font-size:10px;color:#6b7280;margin-top:3px;font-weight:600">€'+vergTotaal.toFixed(2).replace(".",",")+'÷'+tijdTekst+'</div>';
+    kaartHtml += '<div style="font-size:10px;color:#6b7280;margin-top:3px;font-weight:600">€'+vergOpgebouwdTotNu.toFixed(2).replace(".",",")+'÷'+tijdTekst+'</div>';
     kaartHtml += '</div>';
   }
   kaartHtml += '</div>';
@@ -3687,9 +3698,29 @@ function renderHome(){
         tijdEl.textContent = '—';
       }
 
+      // Vergoeding voor deze dag: DPG betaalt een vast dagbedrag per bezorgdag
+      // (niet per gewerkt uur), dus toon dat naast de geregistreerde tijd.
+      let dagVergoedingEl = null;
+      if(sessie){
+        const _segSet = new Set();
+        if(meta.bezorgwijken) Object.values(meta.bezorgwijken).forEach(l=>l.forEach(b=>_segSet.add(b.segment)));
+        const _totaalPer = _segSet.size>0
+          ? Object.values(vergoedingsdata).filter(v=>_segSet.has(v.segment)).reduce((s,v)=>s+v.totaal,0)
+          : Object.values(vergoedingsdata).reduce((s,v)=>s+v.totaal,0);
+        const _dagBedr = (vergoedingPeriode && vergoedingPeriode.dagen && _totaalPer)
+          ? _totaalPer / vergoedingPeriode.dagen
+          : (_totaalPer ? (_totaalPer/4)/6 : 0);
+        if(_dagBedr > 0){
+          dagVergoedingEl = document.createElement('div');
+          dagVergoedingEl.style.cssText = 'font-size:9px;font-weight:800;color:#1565c0;margin-top:1px';
+          dagVergoedingEl.textContent = '€'+_dagBedr.toFixed(2).replace('.',',');
+        }
+      }
+
       dagKnop.appendChild(naamEl);
       dagKnop.appendChild(nrEl);
       dagKnop.appendChild(tijdEl);
+      if(dagVergoedingEl) dagKnop.appendChild(dagVergoedingEl);
       dagKnop.onclick = ()=>{ view={mode:'tijd'}; render(); };
       dagRij.appendChild(dagKnop);
     }
