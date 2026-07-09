@@ -114,7 +114,7 @@ body{display:flex;flex-direction:column}
 .volgorde-kaart .vk-chev{font-size:20px;opacity:.7}
 
 /* Home grid tegels */
-.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
 .home-card{background:var(--card);border-radius:var(--radius);padding:16px 14px;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-family:inherit;box-shadow:var(--shadow);cursor:pointer;width:100%;text-align:left;transition:.12s}
 .home-card:active{transform:scale(.97)}
 .home-card.full{grid-column:1/-1;flex-direction:row;align-items:center;gap:12px;padding:14px 16px}
@@ -556,21 +556,26 @@ body{display:flex;flex-direction:column}
   .home-progress{height:8px;background:rgba(255,255,255,.2);border-radius:99px;margin-top:14px;overflow:hidden}
   .home-progress-fill{height:100%;background:#fef4d3;transition:width .3s}
   .home-stats{font-size:13px;opacity:.95;margin-top:6px;font-weight:600}
-  .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .home-card{background:#fff;border:none;border-radius:16px;padding:18px 10px 16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;cursor:pointer;text-align:center;box-shadow:var(--shadow);transition:transform .13s,box-shadow .13s;width:100%;min-height:108px}
+  .home-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .home-card{background:#fff;border:none;border-radius:14px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;text-align:center;box-shadow:var(--shadow);transition:transform .13s,box-shadow .13s;width:100%;aspect-ratio:1;overflow:hidden}
   .home-card:active{transform:scale(.95)}
   .home-card.primary{background:linear-gradient(135deg,#3b6fd6,#5b8def);color:#fff;box-shadow:0 6px 20px rgba(59,111,214,.3)}
-  .home-card.full{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;padding:16px 18px;min-height:auto;text-align:left}
-  .home-card .hc-ic{font-size:34px;line-height:1;flex:0 0 auto}
+  .home-card.groen{background:linear-gradient(135deg,#3b6fd6,#5b8def);color:#fff;box-shadow:0 4px 16px rgba(59,111,214,.28)}
+  .home-card.groen .hc-sub{color:rgba(255,255,255,.85)}
+  .home-card.full{grid-column:1/-1;aspect-ratio:auto;flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;padding:16px 18px;text-align:left}
+  .home-card.full .hc-ic{font-size:30px}
+  .home-card.full .hc-body{flex:1;min-width:0}
+  .home-card.full .hc-titel{font-size:16px;white-space:normal}
+  .home-card.full .hc-sub{font-size:12px;white-space:normal;overflow:visible;text-overflow:clip}
+  .home-card.full .hc-chev{display:block;font-size:20px;color:var(--muted);flex:0 0 auto}
+  .home-card.full.primary .hc-chev{color:rgba(255,255,255,.65)}
+  .home-card .hc-ic{font-size:22px;line-height:1;flex:0 0 auto}
   .home-card.primary .hc-ic{color:#fef4d3}
-  .home-card .hc-body{flex:1;min-width:0}
-  .home-card .hc-titel{font-size:14px;font-weight:800;line-height:1.25}
-  .home-card.full .hc-titel{font-size:17px}
-  .home-card .hc-sub{font-size:11px;margin-top:3px;color:var(--muted);font-weight:500;line-height:1.35}
+  .home-card .hc-body{min-width:0}
+  .home-card .hc-titel{font-size:11px;font-weight:800;line-height:1.2}
+  .home-card .hc-sub{font-size:9px;margin-top:1px;color:var(--muted);font-weight:500;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .home-card.primary .hc-sub{color:rgba(255,255,255,.82)}
-  .home-card.full .hc-sub{font-size:13px}
-  .home-card .hc-chev{font-size:22px;color:var(--muted);flex:0 0 auto}
-  .home-card.primary .hc-chev{color:rgba(255,255,255,.65)}
+  .home-card .hc-chev{display:none}
   .print-view{display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow-y:auto;padding:18px;color:#000;font-family:Arial,sans-serif}
   .print-view.show{display:block}
   .print-view h1{font-size:20px;margin:0 0 6px;color:#1a2d5a}
@@ -1534,6 +1539,7 @@ try { const p = JSON.parse(localStorage.getItem(STORAGE_PREF)); if(p && typeof p
 let meta = {"date": "13 jun 2026", "bezorger": "Charlotte Rekers", "mutaties": [{"type": "START", "prod": "TT OL", "straat": "Steenstraat", "nr": "49", "naam": "Platvoet"}, {"type": "START", "prod": "TT OL", "straat": "Beatrixstraat 64 0.", "nr": "25", "naam": null}, {"type": "STOP", "prod": "HFD", "straat": "Sportlaan", "nr": "30", "naam": "Gerimex BV"}]};
 try { const m = JSON.parse(localStorage.getItem(STORAGE_META)); if(m) meta=Object.assign(meta,m); } catch(e){}
 let view = {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
+let agendaToonAlleWeken = false; // standaard: alleen de huidige week tonen, voor overzicht
 
 // Bepaal dag-naam (maandag/dinsdag/...) uit meta.date "13 jun 2026"
 function dagVanLooplijst(){
@@ -3562,6 +3568,11 @@ function bouwTijdEnAgendaSectie(container){
   const agHead = document.createElement('div');
   agHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px';
   agHead.innerHTML = '<div style="display:flex;align-items:center;gap:6px"><div style="font-size:13px;font-weight:800;color:var(--ink)">📅 Agenda · Weken</div></div>';
+  const agToggle = document.createElement('button');
+  agToggle.style.cssText = 'border:none;background:none;color:var(--accent, #1565c0);font-size:11px;font-weight:800;padding:4px 6px;cursor:pointer';
+  agToggle.textContent = agendaToonAlleWeken ? 'Toon alleen deze week ▴' : 'Toon alle weken ▾';
+  agToggle.onclick = ()=>{ agendaToonAlleWeken = !agendaToonAlleWeken; render(); };
+  agHead.appendChild(agToggle);
   agenda.appendChild(agHead);
 
   // Bouw 4-weken overzicht
@@ -3619,6 +3630,8 @@ function bouwTijdEnAgendaSectie(container){
   const fmtDatum = d => d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
 
   weekBlokken.forEach(({weekNr, isHuidig, isVorigeW4, maandag})=>{
+    if(!agendaToonAlleWeken && !isHuidig) return; // standaard: alleen huidige week, voor overzicht
+
     // Week label rij
     const weekLabelDiv = document.createElement('div');
     weekLabelDiv.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px 4px';
@@ -3703,8 +3716,8 @@ function bouwTijdEnAgendaSectie(container){
 
     agenda.appendChild(dagRij);
 
-    // Scheidingslijn tussen weken (niet na laatste)
-    if(!isVorigeW4){
+    // Scheidingslijn tussen weken (niet na laatste, en niet als slechts 1 week getoond wordt)
+    if(!isVorigeW4 && agendaToonAlleWeken){
       const lijn = document.createElement('div');
       lijn.style.cssText = 'border-top:1px solid var(--line);margin:4px 12px';
       agenda.appendChild(lijn);
@@ -3743,6 +3756,8 @@ function renderHome(){
     '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
   main.appendChild(welk);
 
+  bouwTijdEnAgendaSectie(main);
+
   // 4 grote keuze-kaarten
   const grid = document.createElement('div');
   grid.className = 'home-grid';
@@ -3765,40 +3780,71 @@ function renderHome(){
   cardVolgorde.onclick = ()=>{ if(!isModeActief('order')) return; view={mode:'order',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
   grid.appendChild(cardVolgorde);
 
-  // ===== Hoofdmodule: Wijken (Wijkenkaart, Looplijst, Per krant, Zaterdag/dag) =====
-  const krantSet = new Set();
-  DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>krantSet.add(a.prod)))));
-  const cardWijken = document.createElement('button');
-  cardWijken.className = 'home-card full';
-  cardWijken.innerHTML =
-    '<div class="hc-ic">🗺️</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Wijken</div>'+
-      '<div class="hc-sub">Wijkenkaart · Looplijst · Per krant · '+dag+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardWijken.onclick = ()=>{ view={mode:'wijkenmenu'}; render(); };
-  grid.appendChild(cardWijken);
-
-  // ===== Hoofdmodule: Agenda (Tijdregistratie + dagen en tijd) =====
-  const tijdSessie = tijdLaadHuidigeSessie();
-  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
-    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
-    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
-    : 'Tijdregistratie · dagen · uren';
-  const cardAgenda = document.createElement('button');
-  cardAgenda.className = 'home-card full';
-  cardAgenda.innerHTML =
+  // Route-kaart (zaterdag) — alleen tonen als looplijst van zaterdag is
+  const cardRoute = document.createElement('button');
+  cardRoute.className = 'home-card';
+  cardRoute.innerHTML =
     '<div class="hc-ic">📅</div>'+
     '<div class="hc-body">'+
-      '<div class="hc-titel">Agenda</div>'+
-      '<div class="hc-sub">'+tijdStatus+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardAgenda.onclick = ()=>{ view={mode:'agendahoofd'}; render(); };
-  grid.appendChild(cardAgenda);
+      '<div class="hc-titel">'+dag+'</div>'+
+      '<div class="hc-sub">'+totaal+' adressen</div>'+
+    '</div>';
+  if(!isModeActief('route')){ cardRoute.style.opacity='.35'; cardRoute.style.pointerEvents='none'; }
+  cardRoute.onclick = ()=>{ if(!isModeActief('route')) return; view={mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
+  grid.appendChild(cardRoute);
 
-  // ===== Hoofdmodule: Vergoeding (Vergoeding + Kerstfooi) =====
+  // Looplijst-kaart
+  const cardLooplijst = document.createElement('button');
+  cardLooplijst.className = 'home-card';
+  cardLooplijst.innerHTML =
+    '<div class="hc-ic">📋</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Looplijst</div>'+
+      '<div class="hc-sub">Afvinken per adres</div>'+
+    '</div>';
+  if(!isModeActief('looplijst')){ cardLooplijst.style.opacity='.35'; cardLooplijst.style.pointerEvents='none'; }
+  cardLooplijst.onclick = ()=>{ if(!isModeActief('looplijst')) return; view={mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
+  grid.appendChild(cardLooplijst);
+
+  // Krant-kaart
+  const krantSet = new Set();
+  DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>krantSet.add(a.prod)))));
+  const cardKrant = document.createElement('button');
+  cardKrant.className = 'home-card';
+  cardKrant.innerHTML =
+    '<div class="hc-ic">📰</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Per krant</div>'+
+      '<div class="hc-sub">'+krantSet.size+' krantensoorten</div>'+
+    '</div>';
+  if(!isModeActief('krant')){ cardKrant.style.opacity='.35'; cardKrant.style.pointerEvents='none'; }
+  cardKrant.onclick = ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); };
+  grid.appendChild(cardKrant);
+
+  // Kerstkaarten / fooi — alleen op zaterdag
+  let kaartTotaal = 0;
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
+    kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length;
+  })));
+  const fooiTot = fooiTotaal();
+  const cardKaart = document.createElement('button');
+  cardKaart.className = 'home-card';
+  cardKaart.innerHTML =
+    '<div class="hc-ic">🎄</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Kerstfooi</div>'+
+      '<div class="hc-sub">'+kaartTotaal+' bussen'+(fooiTot.totaal>0?' · '+formatEuro(fooiTot.totaal):'')+
+      '</div>'+
+    '</div>';
+  if(!isModeActief('kerst')){ cardKaart.style.opacity='.35'; cardKaart.style.pointerEvents='none'; }
+  cardKaart.onclick = ()=>{
+    if(!isModeActief('kerst')) return;
+    // Toon keuze popup: munt / biljet / afvinken
+    toonKerstKeuzePopup();
+  };
+  grid.appendChild(cardKaart);
+
+  // Vergoeding
   let vergoedingTotaal = 0;
   DATA.forEach((w,wi)=>{
     w.rondes.forEach((r,ri)=>{
@@ -3808,6 +3854,8 @@ function renderHome(){
   });
   const vergNieuwSinds = parseInt(localStorage.getItem('looplijst_v23_nieuwePeriodeSinds')) || 0;
   const vergIsNieuw = vergNieuwSinds > 0 && (Date.now() - vergNieuwSinds) < 14*86400000;
+  const cardVerg = document.createElement('button');
+  cardVerg.className = 'home-card';
   let vergSub;
   if(vergoedingPeriode){
     vergSub = 'Periode '+vergoedingPeriode.label;
@@ -3816,22 +3864,30 @@ function renderHome(){
   } else {
     vergSub = 'DPG tarieven';
   }
-  const fooiTot = fooiTotaal();
-  const cardVergHoofd = document.createElement('button');
-  cardVergHoofd.className = 'home-card full';
-  cardVergHoofd.innerHTML =
+  cardVerg.innerHTML =
     '<div class="hc-ic">💵</div>'+
     '<div class="hc-body">'+
       '<div class="hc-titel">Vergoeding'+(vergIsNieuw?' <span style="background:#ffd54f;color:#5d4900;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;vertical-align:middle">NIEUW</span>':'')+'</div>'+
-      '<div class="hc-sub">'+vergSub+(fooiTot.totaal>0?' · Kerstfooi '+formatEuro(fooiTot.totaal):' · Kerstfooi')+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardVergHoofd.onclick = ()=>{ view={mode:'vergoedingmenu'}; render(); };
-  grid.appendChild(cardVergHoofd);
+      '<div class="hc-sub">'+vergSub+'</div>'+
+    '</div>';
+  cardVerg.onclick = ()=>{ view={mode:'vergoeding', level:'overzicht'}; render(); };
+  grid.appendChild(cardVerg);
+
+  // Wijkenkaart
+  const cardKaartMod = document.createElement('button');
+  cardKaartMod.className = 'home-card';
+  cardKaartMod.innerHTML =
+    '<div class="hc-ic">🗺️</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Wijkenkaart</div>'+
+      '<div class="hc-sub">Kaart + navigeren</div>'+
+    '</div>';
+  cardKaartMod.onclick = ()=>{ view={mode:'kaart', level:null}; render(); };
+  grid.appendChild(cardKaartMod);
 
   // Segment-module
   const cardSeg = document.createElement('button');
-  cardSeg.className = 'home-card full';
+  cardSeg.className = 'home-card';
   cardSeg.innerHTML =
     '<div class="hc-ic">📍</div>'+
     '<div class="hc-body">'+
@@ -3844,7 +3900,7 @@ function renderHome(){
 
   // Bonus-module
   const cardBonus = document.createElement('button');
-  cardBonus.className = 'home-card full';
+  cardBonus.className = 'home-card';
   const _bonusInst = (()=>{ try{ return JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)); }catch(e){ return null; } })();
   let _bonusSub = 'Klachtenpromillage · 8 weken';
   if(_bonusInst && _bonusInst.start){
@@ -3860,6 +3916,24 @@ function renderHome(){
     '<div class="hc-chev">›</div>';
   cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
   grid.appendChild(cardBonus);
+
+  // Tijdregistratie
+  const tijdSessie = tijdLaadHuidigeSessie();
+  const cardTijd = document.createElement('button');
+  cardTijd.className = 'home-card';
+  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
+    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
+    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
+    : 'Tik om te starten';
+  cardTijd.innerHTML =
+    '<div class="hc-ic">⏱</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Tijdregistratie</div>'+
+      '<div class="hc-sub">'+tijdStatus+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
+  grid.appendChild(cardTijd);
 
   main.appendChild(grid);
 
