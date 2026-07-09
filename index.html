@@ -2127,6 +2127,9 @@ function render(){
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
   if(view.mode==='bonus') return renderBonus();
+  if(view.mode==='wijkenmenu') return renderWijkenMenu();
+  if(view.mode==='agendahoofd') return renderAgendaHoofd();
+  if(view.mode==='vergoedingmenu') return renderVergoedingMenu();
   if(view.mode==='tijd') return renderTijd();
   if(view.mode==='vergoeding') return renderVergoeding();
   if(view.mode==='order' && view.level==='bezorg') return renderBezorg();
@@ -3438,35 +3441,7 @@ function renderKerst(){
 }
 
 // ===== Home-scherm: startpunt met grote keuze-knoppen =====
-function renderHome(){
-  const main = document.getElementById('main');
-  const back = document.getElementById('back');
-  const crumb = document.getElementById('crumb');
-  const title = document.getElementById('title');
-  main.innerHTML = '';
-  back.classList.add('hidden');
-  crumb.textContent = meta.bezorger || '';
-  title.textContent = meta.date || 'Looplijst';
-
-  // Tel statistieken
-  let totaal = 0, klaar = 0;
-  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
-    totaal++;
-    if(done[keyFor(wi,ri,si,ai)]) klaar++;
-  }))));
-  const pct = totaal ? Math.round(klaar/totaal*100) : 0;
-  const totaalAangevinkt = Object.values(volgordeVink).reduce((s,arr)=>s+(arr||[]).length, 0);
-  const dag = dagVanLooplijst();
-
-  // Welkomst-kop
-  const welk = document.createElement('div');
-  welk.className = 'home-welk';
-  welk.innerHTML = '<div class="home-dag">'+dag+'</div>'+
-    '<div class="home-datum">'+(meta.date||'')+'</div>'+
-    '<div class="home-progress"><div class="home-progress-fill" style="width:'+pct+'%"></div></div>'+
-    '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
-  main.appendChild(welk);
-
+function bouwTijdEnAgendaSectie(container){
   // ===== Periode-tijd + uurloon kaart =====
   const periodeKaart = document.createElement('div');
   periodeKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
@@ -3577,7 +3552,7 @@ function renderHome(){
   }
 
   periodeKaart.innerHTML = kaartHtml;
-  main.appendChild(periodeKaart);
+  container.appendChild(periodeKaart);
 
 
   // Weekagenda met tijdregistratie per dag
@@ -3736,7 +3711,37 @@ function renderHome(){
     }
   });
 
-  main.appendChild(agenda);
+  container.appendChild(agenda);
+}
+
+function renderHome(){
+  const main = document.getElementById('main');
+  const back = document.getElementById('back');
+  const crumb = document.getElementById('crumb');
+  const title = document.getElementById('title');
+  main.innerHTML = '';
+  back.classList.add('hidden');
+  crumb.textContent = meta.bezorger || '';
+  title.textContent = meta.date || 'Looplijst';
+
+  // Tel statistieken
+  let totaal = 0, klaar = 0;
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
+    totaal++;
+    if(done[keyFor(wi,ri,si,ai)]) klaar++;
+  }))));
+  const pct = totaal ? Math.round(klaar/totaal*100) : 0;
+  const totaalAangevinkt = Object.values(volgordeVink).reduce((s,arr)=>s+(arr||[]).length, 0);
+  const dag = dagVanLooplijst();
+
+  // Welkomst-kop
+  const welk = document.createElement('div');
+  welk.className = 'home-welk';
+  welk.innerHTML = '<div class="home-dag">'+dag+'</div>'+
+    '<div class="home-datum">'+(meta.date||'')+'</div>'+
+    '<div class="home-progress"><div class="home-progress-fill" style="width:'+pct+'%"></div></div>'+
+    '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
+  main.appendChild(welk);
 
   // 4 grote keuze-kaarten
   const grid = document.createElement('div');
@@ -3760,71 +3765,40 @@ function renderHome(){
   cardVolgorde.onclick = ()=>{ if(!isModeActief('order')) return; view={mode:'order',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
   grid.appendChild(cardVolgorde);
 
-  // Route-kaart (zaterdag) — alleen tonen als looplijst van zaterdag is
-  const cardRoute = document.createElement('button');
-  cardRoute.className = 'home-card';
-  cardRoute.innerHTML =
-    '<div class="hc-ic">📅</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">'+dag+'</div>'+
-      '<div class="hc-sub">'+totaal+' adressen</div>'+
-    '</div>';
-  if(!isModeActief('route')){ cardRoute.style.opacity='.35'; cardRoute.style.pointerEvents='none'; }
-  cardRoute.onclick = ()=>{ if(!isModeActief('route')) return; view={mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardRoute);
-
-  // Looplijst-kaart
-  const cardLooplijst = document.createElement('button');
-  cardLooplijst.className = 'home-card';
-  cardLooplijst.innerHTML =
-    '<div class="hc-ic">📋</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Looplijst</div>'+
-      '<div class="hc-sub">Afvinken per adres</div>'+
-    '</div>';
-  if(!isModeActief('looplijst')){ cardLooplijst.style.opacity='.35'; cardLooplijst.style.pointerEvents='none'; }
-  cardLooplijst.onclick = ()=>{ if(!isModeActief('looplijst')) return; view={mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardLooplijst);
-
-  // Krant-kaart
+  // ===== Hoofdmodule: Wijken (Wijkenkaart, Looplijst, Per krant, Zaterdag/dag) =====
   const krantSet = new Set();
   DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>krantSet.add(a.prod)))));
-  const cardKrant = document.createElement('button');
-  cardKrant.className = 'home-card';
-  cardKrant.innerHTML =
-    '<div class="hc-ic">📰</div>'+
+  const cardWijken = document.createElement('button');
+  cardWijken.className = 'home-card full';
+  cardWijken.innerHTML =
+    '<div class="hc-ic">🗺️</div>'+
     '<div class="hc-body">'+
-      '<div class="hc-titel">Per krant</div>'+
-      '<div class="hc-sub">'+krantSet.size+' krantensoorten</div>'+
-    '</div>';
-  if(!isModeActief('krant')){ cardKrant.style.opacity='.35'; cardKrant.style.pointerEvents='none'; }
-  cardKrant.onclick = ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardKrant);
+      '<div class="hc-titel">Wijken</div>'+
+      '<div class="hc-sub">Wijkenkaart · Looplijst · Per krant · '+dag+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardWijken.onclick = ()=>{ view={mode:'wijkenmenu'}; render(); };
+  grid.appendChild(cardWijken);
 
-  // Kerstkaarten / fooi — alleen op zaterdag
-  let kaartTotaal = 0;
-  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
-    kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length;
-  })));
-  const fooiTot = fooiTotaal();
-  const cardKaart = document.createElement('button');
-  cardKaart.className = 'home-card';
-  cardKaart.innerHTML =
-    '<div class="hc-ic">🎄</div>'+
+  // ===== Hoofdmodule: Agenda (Tijdregistratie + dagen en tijd) =====
+  const tijdSessie = tijdLaadHuidigeSessie();
+  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
+    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
+    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
+    : 'Tijdregistratie · dagen · uren';
+  const cardAgenda = document.createElement('button');
+  cardAgenda.className = 'home-card full';
+  cardAgenda.innerHTML =
+    '<div class="hc-ic">📅</div>'+
     '<div class="hc-body">'+
-      '<div class="hc-titel">Kerstfooi</div>'+
-      '<div class="hc-sub">'+kaartTotaal+' bussen'+(fooiTot.totaal>0?' · '+formatEuro(fooiTot.totaal):'')+
-      '</div>'+
-    '</div>';
-  if(!isModeActief('kerst')){ cardKaart.style.opacity='.35'; cardKaart.style.pointerEvents='none'; }
-  cardKaart.onclick = ()=>{
-    if(!isModeActief('kerst')) return;
-    // Toon keuze popup: munt / biljet / afvinken
-    toonKerstKeuzePopup();
-  };
-  grid.appendChild(cardKaart);
+      '<div class="hc-titel">Agenda</div>'+
+      '<div class="hc-sub">'+tijdStatus+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardAgenda.onclick = ()=>{ view={mode:'agendahoofd'}; render(); };
+  grid.appendChild(cardAgenda);
 
-  // Vergoeding
+  // ===== Hoofdmodule: Vergoeding (Vergoeding + Kerstfooi) =====
   let vergoedingTotaal = 0;
   DATA.forEach((w,wi)=>{
     w.rondes.forEach((r,ri)=>{
@@ -3834,8 +3808,6 @@ function renderHome(){
   });
   const vergNieuwSinds = parseInt(localStorage.getItem('looplijst_v23_nieuwePeriodeSinds')) || 0;
   const vergIsNieuw = vergNieuwSinds > 0 && (Date.now() - vergNieuwSinds) < 14*86400000;
-  const cardVerg = document.createElement('button');
-  cardVerg.className = 'home-card';
   let vergSub;
   if(vergoedingPeriode){
     vergSub = 'Periode '+vergoedingPeriode.label;
@@ -3844,26 +3816,18 @@ function renderHome(){
   } else {
     vergSub = 'DPG tarieven';
   }
-  cardVerg.innerHTML =
+  const fooiTot = fooiTotaal();
+  const cardVergHoofd = document.createElement('button');
+  cardVergHoofd.className = 'home-card full';
+  cardVergHoofd.innerHTML =
     '<div class="hc-ic">💵</div>'+
     '<div class="hc-body">'+
       '<div class="hc-titel">Vergoeding'+(vergIsNieuw?' <span style="background:#ffd54f;color:#5d4900;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;vertical-align:middle">NIEUW</span>':'')+'</div>'+
-      '<div class="hc-sub">'+vergSub+'</div>'+
-    '</div>';
-  cardVerg.onclick = ()=>{ view={mode:'vergoeding', level:'overzicht'}; render(); };
-  grid.appendChild(cardVerg);
-
-  // Wijkenkaart
-  const cardKaartMod = document.createElement('button');
-  cardKaartMod.className = 'home-card';
-  cardKaartMod.innerHTML =
-    '<div class="hc-ic">🗺️</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Wijkenkaart</div>'+
-      '<div class="hc-sub">Kaart + navigeren</div>'+
-    '</div>';
-  cardKaartMod.onclick = ()=>{ view={mode:'kaart', level:null}; render(); };
-  grid.appendChild(cardKaartMod);
+      '<div class="hc-sub">'+vergSub+(fooiTot.totaal>0?' · Kerstfooi '+formatEuro(fooiTot.totaal):' · Kerstfooi')+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardVergHoofd.onclick = ()=>{ view={mode:'vergoedingmenu'}; render(); };
+  grid.appendChild(cardVergHoofd);
 
   // Segment-module
   const cardSeg = document.createElement('button');
@@ -3896,24 +3860,6 @@ function renderHome(){
     '<div class="hc-chev">›</div>';
   cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
   grid.appendChild(cardBonus);
-
-  // Tijdregistratie
-  const tijdSessie = tijdLaadHuidigeSessie();
-  const cardTijd = document.createElement('button');
-  cardTijd.className = 'home-card full';
-  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
-    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
-    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
-    : 'Tik om te starten';
-  cardTijd.innerHTML =
-    '<div class="hc-ic">⏱</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Tijdregistratie</div>'+
-      '<div class="hc-sub">'+tijdStatus+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
-  grid.appendChild(cardTijd);
 
   main.appendChild(grid);
 
@@ -4581,6 +4527,127 @@ let segDone = {};
 try { segDone = JSON.parse(localStorage.getItem(STORAGE_SEG_DONE))||{}; } catch(e){ segDone={}; }
 function saveSegDone(){ try{localStorage.setItem(STORAGE_SEG_DONE,JSON.stringify(segDone));}catch(e){} }
 
+function renderWijkenMenu(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Wijken';
+  document.getElementById('title').textContent = 'Wijken';
+  main.innerHTML = '';
+
+  const dag = dagVanLooplijst();
+  let totaal = 0;
+  DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(()=>totaal++))));
+  const krantSet = new Set();
+  DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>krantSet.add(a.prod)))));
+
+  const grid = document.createElement('div');
+  grid.className = 'home-grid';
+
+  const maakKaart = (ic, titel, sub, modeKey, onclick)=>{
+    const c = document.createElement('button');
+    c.className = 'home-card full';
+    c.innerHTML = '<div class="hc-ic">'+ic+'</div><div class="hc-body"><div class="hc-titel">'+titel+'</div><div class="hc-sub">'+sub+'</div></div><div class="hc-chev">›</div>';
+    if(modeKey && !isModeActief(modeKey)){ c.style.opacity='.35'; c.style.pointerEvents='none'; }
+    c.onclick = onclick;
+    grid.appendChild(c);
+  };
+
+  maakKaart('🗺️', 'Wijkenkaart', 'Kaart + navigeren', null, ()=>{ view={mode:'kaart', level:null}; render(); });
+  maakKaart('📋', 'Looplijst', 'Afvinken per adres', 'looplijst', ()=>{ if(!isModeActief('looplijst')) return; view={mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); });
+  maakKaart('📰', 'Per krant', krantSet.size+' krantensoorten', 'krant', ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); });
+  maakKaart('📅', dag, totaal+' adressen', 'route', ()=>{ if(!isModeActief('route')) return; view={mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); });
+
+  main.appendChild(grid);
+}
+
+function renderAgendaHoofd(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Agenda';
+  document.getElementById('title').textContent = 'Agenda';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+
+  const tijdSessie = tijdLaadHuidigeSessie();
+  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
+    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief — tik om te beheren' : '▶ Bezig — tik om te stoppen')
+    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
+    : 'Tik om te starten';
+  const cardTijd = document.createElement('button');
+  cardTijd.className = 'home-card full';
+  cardTijd.style.marginBottom = '14px';
+  cardTijd.innerHTML =
+    '<div class="hc-ic">⏱</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Tijdregistratie</div>'+
+      '<div class="hc-sub">'+tijdStatus+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
+  wrap.appendChild(cardTijd);
+
+  bouwTijdEnAgendaSectie(wrap);
+
+  main.appendChild(wrap);
+}
+
+function renderVergoedingMenu(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Vergoeding';
+  document.getElementById('title').textContent = 'Vergoeding';
+  main.innerHTML = '';
+
+  let vergoedingTotaal = 0;
+  DATA.forEach((w,wi)=>{
+    w.rondes.forEach((r,ri)=>{
+      const code = tariefPerRonde[w.wijk+'|'+r.ronde];
+      if(code && tariefcodes[code]) vergoedingTotaal += tariefcodes[code].bedrag;
+    });
+  });
+  let vergSub;
+  if(vergoedingPeriode){ vergSub = 'Periode '+vergoedingPeriode.label; }
+  else if(vergoedingTotaal > 0){ vergSub = formatEuro(vergoedingTotaal); }
+  else { vergSub = 'DPG tarieven'; }
+
+  let kaartTotaal = 0;
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
+    kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length;
+  })));
+  const fooiTot = fooiTotaal();
+
+  const grid = document.createElement('div');
+  grid.className = 'home-grid';
+
+  const cardVerg = document.createElement('button');
+  cardVerg.className = 'home-card full';
+  cardVerg.innerHTML =
+    '<div class="hc-ic">💵</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Vergoeding</div>'+
+      '<div class="hc-sub">'+vergSub+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardVerg.onclick = ()=>{ view={mode:'vergoeding', level:'overzicht'}; render(); };
+  grid.appendChild(cardVerg);
+
+  const cardKerst = document.createElement('button');
+  cardKerst.className = 'home-card full';
+  cardKerst.innerHTML =
+    '<div class="hc-ic">🎄</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Kerstfooi</div>'+
+      '<div class="hc-sub">'+kaartTotaal+' bussen'+(fooiTot.totaal>0?' · '+formatEuro(fooiTot.totaal):'')+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  if(!isModeActief('kerst')){ cardKerst.style.opacity='.35'; cardKerst.style.pointerEvents='none'; }
+  cardKerst.onclick = ()=>{ if(!isModeActief('kerst')) return; toonKerstKeuzePopup(); };
+  grid.appendChild(cardKerst);
+
+  main.appendChild(grid);
+}
+
 function renderBonus(){
   const main = document.getElementById('main');
   document.getElementById('back').classList.remove('hidden');
@@ -4647,6 +4714,17 @@ function renderBonus(){
       warn.style.cssText = 'margin-top:12px;padding:10px 12px;background:#fff3cd;border:1.5px solid #ffe08a;border-radius:10px;font-size:12px;color:#7a5c00';
       warn.textContent = '⚠️ '+v.dagenOntbrekend.length+' dag(en) in deze periode zijn nog niet ingeladen als looplijst — het totaal aantal kranten (en dus de promillage) is nog niet compleet.';
       resKaart.appendChild(warn);
+    }
+    if(v.totaalKranten > 0){
+      const maxKlachten = Math.floor(4 * v.totaalKranten / 1000);
+      const ruimte = maxKlachten - v.klachten;
+      const ruimteEl = document.createElement('div');
+      ruimteEl.style.cssText = 'margin-top:12px;padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:700;'+
+        (ruimte >= 0 ? 'background:#e8f5e9;color:#2e7d32' : 'background:#ffebee;color:#c62828');
+      ruimteEl.textContent = ruimte >= 0
+        ? '💡 Bij dit aantal kranten mag je nog '+ruimte+' klacht'+(ruimte===1?'':'en')+' erbij krijgen voor je boven 4‰ komt (max '+maxKlachten+' in totaal).'
+        : '💡 Je zit al '+Math.abs(ruimte)+' klacht'+(Math.abs(ruimte)===1?'':'en')+' boven de 4‰-grens (max '+maxKlachten+' bij dit aantal kranten).';
+      resKaart.appendChild(ruimteEl);
     }
     wrap.appendChild(resKaart);
 
