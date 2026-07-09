@@ -1357,6 +1357,10 @@ function fooiClear(key){ delete fooi[key]; saveFooi(); }
 
 // === Wijken-volgorde (door gebruiker aanpasbaar) ===
 let wijkOrder = [];  // lijst van wijk-namen in user-gekozen volgorde
+const STORAGE_VOLGORDE_MODUS = 'looplijst_v23_volgorde_modus';
+let volgordeModus = localStorage.getItem(STORAGE_VOLGORDE_MODUS) || 'perwijk'; // 'perwijk' of 'gemengd'
+function saveVolgordeModus(){ localStorage.setItem(STORAGE_VOLGORDE_MODUS, volgordeModus); }
+const GEMENGD_KEY = '__GEMENGD__';
 try { wijkOrder = JSON.parse(localStorage.getItem(STORAGE_WIJKORDER)) || []; } catch(e){ wijkOrder = []; }
 function saveWijkOrder(){ localStorage.setItem(STORAGE_WIJKORDER, JSON.stringify(wijkOrder)); }
 
@@ -6130,7 +6134,48 @@ function renderVergoedingTarieven(){
 // Bouwt platte lijst van adressen in user-volgorde (over alle wijken/rondes/straten)
 // Per wijk: aangevinkte adressen uit vrijVink eerst (in vink-volgorde, kan door straten heen lopen!),
 // daarna de rest in hiërarchische volgorde (ronde/straat/adres uit user-volgorde).
+// Verzamel alle adressen van ALLE wijken samen (voor de 'gemengd' modus)
+function alleAdresItemsGemengd(){
+  const alleItems = [];
+  wijkVolgordeIdxs().forEach(wi=>{
+    const w = DATA[wi];
+    rondeIdxsInWijk(wi).forEach(ri=>{
+      straatIdxsInRonde(wi, ri).forEach(si=>{
+        adresIdxsInStraat(wi, ri, si).forEach(ai=>{
+          const a = w.rondes[ri].straten[si].adressen[ai];
+          if(a.stop) return;
+          alleItems.push({
+            wi, ri, si, ai,
+            wijk: w.wijk,
+            ronde: w.rondes[ri].ronde,
+            straat: w.rondes[ri].straten[si].naam,
+            adres: a,
+            key: w.wijk+'||'+fullAdresKey(w.rondes[ri].ronde, w.rondes[ri].straten[si].naam, a)
+          });
+        });
+      });
+    });
+  });
+  return alleItems;
+}
+
+function bezorgLijstGemengd(){
+  const alleItems = alleAdresItemsGemengd();
+  const vinkLijst = (vrijVink[GEMENGD_KEY] || []).filter(k => alleItems.some(it=>it.key===k));
+  const lijst = [];
+  const gebruikt = new Set();
+  vinkLijst.forEach(k=>{
+    const item = alleItems.find(it=>it.key===k);
+    if(item && !gebruikt.has(k)){ lijst.push(item); gebruikt.add(k); }
+  });
+  alleItems.forEach(it=>{ if(!gebruikt.has(it.key)) lijst.push(it); });
+  return lijst;
+}
+
 function bezorgLijst(){
+  if(volgordeModus === 'gemengd'){
+    return bezorgLijstGemengd();
+  }
   const lijst = [];
   wijkVolgordeIdxs().forEach(wi=>{
     const w = DATA[wi];
@@ -6446,6 +6491,105 @@ function renderVrijeAdresOrde(w){
   }
 }
 
+// Vrije volgorde over ALLE wijken heen (gemengde modus: adressen uit meerdere
+// wijken door elkaar in één doorlopende looproute)
+function renderVrijeAdresOrdeGemengd(){
+  const main = document.getElementById('main');
+  const alleItems = alleAdresItemsGemengd();
+
+  // Groepeer op (wijk, ronde, straat, groepKey) — meerdere kranten op zelfde huisnummer = 1 groep
+  const groepen = [];
+  const groepIdx = {};
+  alleItems.forEach(it=>{
+    const gk = it.wijk+'|'+it.ronde+'|'+it.straat+'|'+groepKeyVoorAdres(it.straat, it.adres.nr);
+    if(groepIdx[gk] === undefined){
+      groepIdx[gk] = groepen.length;
+      groepen.push({
+        key: gk,
+        wijk: it.wijk,
+        ronde: it.ronde,
+        straat: it.straat,
+        displayNr: displayNrVoor(it.straat, it.adres.nr),
+        items: [it]
+      });
+    } else {
+      groepen[groepIdx[gk]].items.push(it);
+    }
+  });
+
+  let vinkLijst = (vrijVink[GEMENGD_KEY] || []).filter(k => alleItems.some(it => it.key === k));
+  vrijVink[GEMENGD_KEY] = vinkLijst;
+
+  function groepIsVinked(g){ return g.items.every(it => vinkLijst.includes(it.key)); }
+  function groepEersteVinkPos(g){
+    let min = Infinity;
+    g.items.forEach(it=>{ const i = vinkLijst.indexOf(it.key); if(i>=0 && i<min) min = i; });
+    return min === Infinity ? -1 : min;
+  }
+
+  if(vinkLijst.length > 0){
+    const resetBtn = document.createElement('button');
+    resetBtn.style.cssText = 'width:100%;padding:10px;background:#fdecec;color:var(--red);border:none;border-radius:10px;font-weight:700;font-size:13px;margin-bottom:10px;cursor:pointer';
+    resetBtn.textContent = '↶ Alle vinkjes wissen';
+    resetBtn.onclick = ()=>{
+      if(!confirm('Gemengde volgorde wissen?')) return;
+      vrijVink[GEMENGD_KEY] = [];
+      saveVrijVink();
+      render();
+    };
+    main.appendChild(resetBtn);
+  }
+
+  const aangevinkteGroepen = groepen.filter(g => groepIsVinked(g)).sort((a,b)=>groepEersteVinkPos(a)-groepEersteVinkPos(b));
+  const onaangevinkteGroepen = groepen.filter(g => !groepIsVinked(g));
+
+  function renderGroep(g, pos, isVinked){
+    const krantenHTML = krantenCompact(g.items, {smallBadge:true});
+    const namen = [...new Set(g.items.map(it => it.adres.naam || '').filter(n => n))];
+    const row = document.createElement('div');
+    row.className = 'order-row';
+    const checkHTML = isVinked
+      ? '<div class="vink-box done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      : '<div class="vink-box"></div>';
+    row.innerHTML = (isVinked ? '<div class="opos">'+pos+'</div>' : '<div class="opos" style="color:#cfd9d3">·</div>')+
+      '<div class="obody"><div class="onm">'+g.straat+' <span style="color:var(--ink);font-weight:900">'+g.displayNr+'</span>'+
+      (g.items.length > 1 ? ' <span style="font-size:11px;color:var(--muted);font-weight:600">('+g.items.length+'×)</span>' : '')+
+      '</div>'+
+      '<div class="osub"><span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:4px">'+g.wijk+'</span>'+
+      krantenHTML+
+      (namen.length ? ' <span style="color:var(--muted);font-size:12px">· '+namen.join(', ')+'</span>' : '')+
+      '</div></div>'+
+      checkHTML;
+    row.querySelector('.vink-box').onclick = ()=>{
+      const wasVinked = groepIsVinked(g);
+      if(wasVinked){
+        g.items.forEach(it=>{ const i = vinkLijst.indexOf(it.key); if(i>=0) vinkLijst.splice(i, 1); });
+      } else {
+        g.items.forEach(it=>{ if(!vinkLijst.includes(it.key)) vinkLijst.push(it.key); });
+      }
+      vrijVink[GEMENGD_KEY] = vinkLijst;
+      saveVrijVink();
+      render();
+    };
+    main.appendChild(row);
+  }
+
+  if(aangevinkteGroepen.length > 0){
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:6px 4px 6px';
+    lbl.textContent = '✓ '+aangevinkteGroepen.length+' adressen op volgorde';
+    main.appendChild(lbl);
+    aangevinkteGroepen.forEach((g, i)=>renderGroep(g, i+1, true));
+  }
+  if(onaangevinkteGroepen.length > 0){
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:14px 4px 6px';
+    lbl.textContent = onaangevinkteGroepen.length+' adressen nog te plaatsen (in standaardvolgorde)';
+    main.appendChild(lbl);
+    onaangevinkteGroepen.forEach(g=>renderGroep(g, 0, false));
+  }
+}
+
 // ===== Order-modus: volgorde aanpassen op alle niveaus =====
 // Bouwt platte adres-lijst voor 1 wijk in user-volgorde over alle rondes/straten heen
 function wijkPlatteAdresIdxs(wi){
@@ -6512,9 +6656,23 @@ function renderOrder(){
     back.classList.add('hidden');
     crumb.textContent='↕ Volgorde aanpassen';
     title.textContent='Wijken';
+
+    // Modus-toggle: per wijk (blokken) of gemengd (alle wijken door elkaar)
+    const modusToggle = document.createElement('div');
+    modusToggle.style.cssText = 'display:flex;gap:6px;margin-bottom:12px;background:#f0f5f2;padding:4px;border-radius:11px';
+    modusToggle.innerHTML =
+      '<button data-modus="perwijk" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='perwijk'?'#fff':'transparent')+';color:'+(volgordeModus==='perwijk'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='perwijk'?'var(--shadow)':'none')+'">Per wijk</button>'+
+      '<button data-modus="gemengd" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='gemengd'?'#fff':'transparent')+';color:'+(volgordeModus==='gemengd'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='gemengd'?'var(--shadow)':'none')+'">Wijken door elkaar</button>';
+    modusToggle.querySelectorAll('button').forEach(btn=>{
+      btn.onclick = ()=>{ volgordeModus = btn.dataset.modus; saveVolgordeModus(); render(); };
+    });
+    main.appendChild(modusToggle);
+
     const info = document.createElement('div');
     info.className='order-header-info';
-    info.innerHTML='Tik <b>▲</b> of <b>▼</b> om de volgorde te wijzigen. Tik op <b>›</b> om dieper te gaan.';
+    info.innerHTML = volgordeModus==='gemengd'
+      ? 'Stel hieronder één doorlopende route in met adressen uit al je wijken door elkaar.'
+      : 'Tik <b>▲</b> of <b>▼</b> om de volgorde te wijzigen. Tik op <b>›</b> om dieper te gaan.';
     main.appendChild(info);
     // Start-knop voor bezorg-modus
     const lijstAantal = bezorgLijst().length;
@@ -6523,36 +6681,55 @@ function renderOrder(){
     startBtn.innerHTML = '▶ Start bezorgen (1 voor 1)<div style="font-size:12px;font-weight:500;opacity:.9;margin-top:4px">'+lijstAantal+' adressen · volgorde wordt onthouden tijdens lopen</div>';
     startBtn.onclick = ()=>{ startBezorgModus(); };
     main.appendChild(startBtn);
-    const idxs = wijkVolgordeIdxs();
-    const names = idxs.map(i=>DATA[i].wijk);
-    names.forEach((naam,pos)=>{
-      const wi = idxs[pos];
-      const w = DATA[wi];
-      const aantal = w.rondes.reduce((s,r)=>s+r.straten.reduce((q,st)=>q+st.adressen.length,0),0);
-      const row = document.createElement('div');
-      row.className='order-row';
-      row.innerHTML='<div class="opos">'+(pos+1)+'</div>'+
-        '<div class="obody"><div class="onm">'+naam+'</div>'+
-        '<div class="osub">'+w.rondes.length+' rondes · '+aantal+' adressen</div></div>'+
-        '<div class="oarrows">'+
-          '<button class="up" '+(pos===0?'disabled':'')+'>▲</button>'+
-          '<button class="down" '+(pos===names.length-1?'disabled':'')+'>▼</button>'+
-        '</div>'+
+
+    if(volgordeModus === 'gemengd'){
+      const gemengdAantal = alleAdresItemsGemengd().length;
+      const gemengdBtn = document.createElement('button');
+      gemengdBtn.className = 'order-row';
+      gemengdBtn.style.cssText = 'width:100%;text-align:left;border:none;cursor:pointer;background:#fff';
+      gemengdBtn.innerHTML = '<div class="obody" style="padding:2px 0"><div class="onm">📋 Gemengde looproute instellen</div>'+
+        '<div class="osub">'+gemengdAantal+' adressen uit al je wijken door elkaar</div></div>'+
         '<button class="oopen">›</button>';
-      row.querySelector('.up').onclick=()=>{
-        [names[pos-1],names[pos]] = [names[pos],names[pos-1]];
-        wijkOrder = names.slice(); saveWijkOrder(); render();
-      };
-      row.querySelector('.down').onclick=()=>{
-        [names[pos+1],names[pos]] = [names[pos],names[pos+1]];
-        wijkOrder = names.slice(); saveWijkOrder(); render();
-      };
-      row.querySelector('.oopen').onclick=()=>{
-        view = {mode:'order',level:'adresPlat',wijk:wi,ronde:null,straat:null,krant:null};
-        render();
-      };
-      main.appendChild(row);
-    });
+      gemengdBtn.onclick = ()=>{ view={mode:'order', level:'gemengd', wijk:null,ronde:null,straat:null,krant:null}; render(); };
+      main.appendChild(gemengdBtn);
+    } else {
+      const idxs = wijkVolgordeIdxs();
+      const names = idxs.map(i=>DATA[i].wijk);
+      names.forEach((naam,pos)=>{
+        const wi = idxs[pos];
+        const w = DATA[wi];
+        const aantal = w.rondes.reduce((s,r)=>s+r.straten.reduce((q,st)=>q+st.adressen.length,0),0);
+        const row = document.createElement('div');
+        row.className='order-row';
+        row.innerHTML='<div class="opos">'+(pos+1)+'</div>'+
+          '<div class="obody"><div class="onm">'+naam+'</div>'+
+          '<div class="osub">'+w.rondes.length+' rondes · '+aantal+' adressen</div></div>'+
+          '<div class="oarrows">'+
+            '<button class="up" '+(pos===0?'disabled':'')+'>▲</button>'+
+            '<button class="down" '+(pos===names.length-1?'disabled':'')+'>▼</button>'+
+          '</div>'+
+          '<button class="oopen">›</button>';
+        row.querySelector('.up').onclick=()=>{
+          [names[pos-1],names[pos]] = [names[pos],names[pos-1]];
+          wijkOrder = names.slice(); saveWijkOrder(); render();
+        };
+        row.querySelector('.down').onclick=()=>{
+          [names[pos+1],names[pos]] = [names[pos],names[pos+1]];
+          wijkOrder = names.slice(); saveWijkOrder(); render();
+        };
+        row.querySelector('.oopen').onclick=()=>{
+          view = {mode:'order',level:'adresPlat',wijk:wi,ronde:null,straat:null,krant:null};
+          render();
+        };
+        main.appendChild(row);
+      });
+    }
+  }
+  else if(view.level==='gemengd'){
+    back.classList.remove('hidden');
+    crumb.textContent='↕ Gemengde route';
+    title.textContent='Wijken door elkaar';
+    renderVrijeAdresOrdeGemengd();
   }
   else if(view.level==='adresPlat'){
     back.classList.remove('hidden');
