@@ -2126,6 +2126,7 @@ function render(){
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
+  if(view.mode==='bonus') return renderBonus();
   if(view.mode==='tijd') return renderTijd();
   if(view.mode==='vergoeding') return renderVergoeding();
   if(view.mode==='order' && view.level==='bezorg') return renderBezorg();
@@ -3877,6 +3878,25 @@ function renderHome(){
   cardSeg.onclick = ()=>{ view={mode:'segment', level:null}; render(); };
   grid.appendChild(cardSeg);
 
+  // Bonus-module
+  const cardBonus = document.createElement('button');
+  cardBonus.className = 'home-card full';
+  const _bonusInst = (()=>{ try{ return JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)); }catch(e){ return null; } })();
+  let _bonusSub = 'Klachtenpromillage · 8 weken';
+  if(_bonusInst && _bonusInst.start){
+    const v = berekenBonusVenster(_bonusInst.start);
+    _bonusSub = v.promillage.toFixed(2).replace('.',',')+'‰ · '+(v.onderGrens ? 'onder 4‰ ✓' : 'boven 4‰ ⚠️');
+  }
+  cardBonus.innerHTML =
+    '<div class="hc-ic">🎁</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Bonus</div>'+
+      '<div class="hc-sub">'+_bonusSub+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
+  grid.appendChild(cardBonus);
+
   // Tijdregistratie
   const tijdSessie = tijdLaadHuidigeSessie();
   const cardTijd = document.createElement('button');
@@ -4560,6 +4580,102 @@ const STORAGE_SEG_DONE = 'looplijst_v23_seg_done';
 let segDone = {};
 try { segDone = JSON.parse(localStorage.getItem(STORAGE_SEG_DONE))||{}; } catch(e){ segDone={}; }
 function saveSegDone(){ try{localStorage.setItem(STORAGE_SEG_DONE,JSON.stringify(segDone));}catch(e){} }
+
+function renderBonus(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Bonus';
+  document.getElementById('title').textContent = 'Klachtenpromillage';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding-bottom:20px';
+
+  let inst = {};
+  try{ inst = JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)) || {}; }catch(e){}
+
+  // ===== Instellingen-kaart =====
+  const instKaart = document.createElement('div');
+  instKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+  instKaart.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Bonusperiode instellen</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px">'+
+      '<button id="bonusZomer" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid '+(inst.type==='zomer'?'#f57c00':'#e5e7eb')+';background:'+(inst.type==='zomer'?'#fff3e0':'#fff')+';color:'+(inst.type==='zomer'?'#f57c00':'#374151')+';font-weight:800;font-size:13px">☀️ Zomerbonus</button>'+
+      '<button id="bonusWinter" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid '+(inst.type==='winter'?'#1565c0':'#e5e7eb')+';background:'+(inst.type==='winter'?'#e3f2fd':'#fff')+';color:'+(inst.type==='winter'?'#1565c0':'#374151')+';font-weight:800;font-size:13px">❄️ Winterbonus</button>'+
+    '</div>'+
+    '<label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Startdatum (8 weken vanaf deze dag)</label>'+
+    '<input id="bonusStart" type="date" value="'+(inst.start||'')+'" style="width:100%;padding:11px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box">'+
+    '<button id="bonusOpslaan" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:14px">Opslaan</button>';
+  wrap.appendChild(instKaart);
+
+  let type = inst.type || 'zomer';
+  instKaart.querySelector('#bonusZomer').onclick = ()=>{ type='zomer'; instKaart.querySelector('#bonusZomer').style.borderColor='#f57c00'; instKaart.querySelector('#bonusZomer').style.background='#fff3e0'; instKaart.querySelector('#bonusZomer').style.color='#f57c00'; instKaart.querySelector('#bonusWinter').style.borderColor='#e5e7eb'; instKaart.querySelector('#bonusWinter').style.background='#fff'; instKaart.querySelector('#bonusWinter').style.color='#374151'; };
+  instKaart.querySelector('#bonusWinter').onclick = ()=>{ type='winter'; instKaart.querySelector('#bonusWinter').style.borderColor='#1565c0'; instKaart.querySelector('#bonusWinter').style.background='#e3f2fd'; instKaart.querySelector('#bonusWinter').style.color='#1565c0'; instKaart.querySelector('#bonusZomer').style.borderColor='#e5e7eb'; instKaart.querySelector('#bonusZomer').style.background='#fff'; instKaart.querySelector('#bonusZomer').style.color='#374151'; };
+  instKaart.querySelector('#bonusOpslaan').onclick = ()=>{
+    const startVal = instKaart.querySelector('#bonusStart').value;
+    if(!startVal){ toast('Kies eerst een startdatum', true); return; }
+    localStorage.setItem(STORAGE_BONUS_INSTELLING, JSON.stringify({type, start: startVal}));
+    toast('✓ Bonusperiode opgeslagen');
+    renderBonus();
+  };
+
+  // ===== Resultaat-kaart =====
+  try{ inst = JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)) || {}; }catch(e){}
+  if(inst.start){
+    const v = berekenBonusVenster(inst.start);
+    const fmtD = (d)=> d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const kleur = v.onderGrens ? '#2e7d32' : '#c62828';
+    const achtergrond = v.onderGrens ? '#e8f5e9' : '#ffebee';
+
+    const resKaart = document.createElement('div');
+    resKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    resKaart.innerHTML =
+      '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">'+(inst.type==='zomer'?'☀️ Zomerbonus':'❄️ Winterbonus')+' · '+fmtD(v.start)+' t/m '+fmtD(v.eind)+'</div>'+
+      '<div style="display:flex;align-items:center;gap:14px;margin-top:12px">'+
+        '<div style="background:'+achtergrond+';color:'+kleur+';border-radius:14px;padding:14px 18px;text-align:center;flex:0 0 auto">'+
+          '<div style="font-size:26px;font-weight:900;line-height:1">'+v.promillage.toFixed(2).replace('.',',')+'‰</div>'+
+          '<div style="font-size:11px;font-weight:800;margin-top:2px">'+(v.onderGrens?'✓ Onder 4‰':'⚠️ Boven 4‰')+'</div>'+
+        '</div>'+
+        '<div style="flex:1">'+
+          '<div style="font-size:13px;color:#374151;font-weight:700">'+v.klachten+' klacht'+(v.klachten===1?'':'en')+'</div>'+
+          '<div style="font-size:13px;color:#374151;font-weight:700;margin-top:2px">'+v.totaalKranten.toLocaleString('nl-NL')+' kranten bezorgd</div>'+
+          '<div style="font-size:11px;color:#9ca3af;margin-top:4px">'+v.dagenGeteld+' dagen geregistreerd</div>'+
+        '</div>'+
+      '</div>';
+    if(v.dagenOntbrekend.length>0){
+      const warn = document.createElement('div');
+      warn.style.cssText = 'margin-top:12px;padding:10px 12px;background:#fff3cd;border:1.5px solid #ffe08a;border-radius:10px;font-size:12px;color:#7a5c00';
+      warn.textContent = '⚠️ '+v.dagenOntbrekend.length+' dag(en) in deze periode zijn nog niet ingeladen als looplijst — het totaal aantal kranten (en dus de promillage) is nog niet compleet.';
+      resKaart.appendChild(warn);
+    }
+    wrap.appendChild(resKaart);
+
+    // ===== Klachtenlijst in venster =====
+    const log = laadKlachtenLog().filter(k=>{
+      const d = new Date(k.datum+'T00:00:00');
+      return d>=v.start && d<=v.eind;
+    }).sort((a,b)=>b.datum.localeCompare(a.datum));
+    if(log.length>0){
+      const lijstKaart = document.createElement('div');
+      lijstKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+      lijstKaart.innerHTML = '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Klachten in deze periode</div>';
+      log.forEach(k=>{
+        const regel = document.createElement('div');
+        regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px';
+        regel.innerHTML = '<span style="font-weight:700;color:#374151">'+k.type+'</span><span style="color:#9ca3af">'+formatDatumNL(k.datum)+'</span>';
+        lijstKaart.appendChild(regel);
+      });
+      wrap.appendChild(lijstKaart);
+    }
+  } else {
+    const leegKaart = document.createElement('div');
+    leegKaart.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
+    leegKaart.textContent = 'Kies hierboven zomer- of winterbonus en een startdatum om je klachtenpromillage te zien.';
+    wrap.appendChild(leegKaart);
+  }
+
+  main.appendChild(wrap);
+}
 
 function renderSegment(){
   const main = document.getElementById('main');
@@ -8420,13 +8536,14 @@ async function verwerkGekozenPdfBestand(file){
 
     lbl.textContent='Tekst extraheren…';
     const extracted = await pdfExtractLines(arr);
-    console.log('[Looplijst] Tekst-regels:', extracted.allLines.length, '· mutatie-regels:', extracted.mutatieRegels.length);
+    console.log('[Looplijst] Tekst-regels:', extracted.allLines.length, '· mutatie-regels:', extracted.mutatieRegels.length, '· klacht-regels:', extracted.klachtRegels.length);
     if(extracted.allLines.length === 0) throw new Error('Geen tekst gevonden in PDF — is deze gescand of beveiligd?');
     lbl.textContent='Adressen herkennen…';
     const mutaties = parseMutaties(extracted.mutatieRegels);
     const parsed = parseLooplijst(extracted.allLines, mutaties);
     console.log('[Looplijst] Geparseerde adressen:', parsed.adressen.length, '· bezorgwijken:', Object.keys(parsed.bezorgwijken||{}).length);
     if(parsed.adressen.length === 0) throw new Error('Geen adressen herkend. Is dit wel een DPG-looplijst?');
+    verwerkKlachtenEnDagtotaal(extracted.klachtRegels, parsed);
     const built = buildDataStructure(parsed.adressen);
     const onbekendeNamen = Object.keys(built.onbekende);
     console.log('[Looplijst] Wijken gebouwd:', built.data.length, '· onbekende straten:', onbekendeNamen.length);
@@ -8479,6 +8596,7 @@ async function pdfExtractLines(arrayBuffer){
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
   const allLines = [];
   const mutatieRegels = [];  // volle-breedte regels met START/STOP
+  const klachtRegels = [];   // volle-breedte regels met klachten (! NIET/KRANT ...)
   for(let p=1; p<=pdf.numPages; p++){
     const page = await pdf.getPage(p);
     const vp = page.getViewport({scale:1});
@@ -8495,6 +8613,7 @@ async function pdfExtractLines(arrayBuffer){
     Object.keys(byYfull).map(Number).sort((a,b)=>b-a).forEach(y=>{
       const line = byYfull[y].sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim();
       if(/^(START|STOP)\s+Abo\b/i.test(line)) mutatieRegels.push(line);
+      if(/^!\s*\S/.test(line)) klachtRegels.push(line);
     });
 
     // Vaste kolomgrenzen op 0.32 en 0.62 van pagina-breedte
@@ -8522,7 +8641,88 @@ async function pdfExtractLines(arrayBuffer){
       });
     });
   }
-  return {allLines, mutatieRegels};
+  return {allLines, mutatieRegels, klachtRegels};
+}
+
+// ===== Bonus-module: klachten + dagtotalen kranten =====
+const STORAGE_KLACHTEN = 'looplijst_v23_klachten_log';
+const STORAGE_KRANTEN_PER_DAG = 'looplijst_v23_kranten_per_dag';
+const STORAGE_BONUS_INSTELLING = 'looplijst_v23_bonus_instelling';
+
+function laadKlachtenLog(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){ return []; }
+}
+function laadKrantenPerDag(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KRANTEN_PER_DAG)) || {}; }catch(e){ return {}; }
+}
+
+// Verwerk klachten uit een net ingeladen looplijst-PDF + registreer het dagtotaal kranten
+function verwerkKlachtenEnDagtotaal(klachtRegels, parsed){
+  try{
+    const nieuweKlachten = parseKlachten(klachtRegels);
+    if(nieuweKlachten.length){
+      const log = laadKlachtenLog();
+      const bekend = new Set(log.map(k=>k.raw));
+      let toegevoegd = 0;
+      nieuweKlachten.forEach(k=>{
+        if(!bekend.has(k.raw)){ log.push(k); bekend.add(k.raw); toegevoegd++; }
+      });
+      if(toegevoegd>0){
+        localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(log));
+        console.log('[Bonus] '+toegevoegd+' nieuwe klacht(en) opgeslagen');
+      }
+    }
+    // Dagtotaal kranten: aantal individuele adresregels = aantal bezorgde kranten die dag
+    if(parsed && parsed.datum && parsed.adressen && parsed.adressen.length){
+      const datumObj = parseLooplijstDatum(parsed.datum);
+      if(datumObj){
+        const iso = datumObj.getFullYear()+'-'+String(datumObj.getMonth()+1).padStart(2,'0')+'-'+String(datumObj.getDate()).padStart(2,'0');
+        const perDag = laadKrantenPerDag();
+        perDag[iso] = parsed.adressen.length;
+        localStorage.setItem(STORAGE_KRANTEN_PER_DAG, JSON.stringify(perDag));
+      }
+    }
+  }catch(err){ console.error('[Bonus] Verwerken klachten/dagtotaal mislukt:', err); }
+}
+
+// Bereken bonusstatus over een venster van 8 weken (56 dagen) vanaf startdatum (ISO)
+function berekenBonusVenster(startIso, dagenLengte){
+  dagenLengte = dagenLengte || 56;
+  const start = new Date(startIso+'T00:00:00');
+  const eind = new Date(start.getTime() + (dagenLengte-1)*86400000);
+  const log = laadKlachtenLog();
+  const perDag = laadKrantenPerDag();
+  const inVenster = (isoStr)=>{
+    const d = new Date(isoStr+'T00:00:00');
+    return d >= start && d <= eind;
+  };
+  const klachtenInVenster = log.filter(k=>inVenster(k.datum));
+  let totaalKranten = 0, dagenGeteld = 0, dagenOntbrekend = [];
+  for(let i=0;i<dagenLengte;i++){
+    const d = new Date(start.getTime()+i*86400000);
+    const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if(perDag[iso] !== undefined){ totaalKranten += perDag[iso]; dagenGeteld++; }
+    else if(d <= new Date()){ dagenOntbrekend.push(iso); } // alleen dagen die al voorbij zijn tellen als 'ontbrekend'
+  }
+  const promillage = totaalKranten>0 ? (klachtenInVenster.length/totaalKranten)*1000 : 0;
+  return {
+    start, eind, klachten: klachtenInVenster.length, totaalKranten, dagenGeteld,
+    dagenOntbrekend, promillage, onderGrens: promillage < 4
+  };
+}
+// naar {type, datum (Date), datumIso, raw}
+function parseKlachten(regels){
+  const klachten = [];
+  (regels||[]).forEach(regel=>{
+    const m = regel.match(/^!\s*([A-Za-z\/ ]+?)\s+((?:ma|di|wo|do|vr|za|zo)\s+\d{1,2}\s+[a-z]+\s+\d{4})\b(.*)$/i);
+    if(!m) return;
+    const type = m[1].trim().toUpperCase();
+    const datum = parseLooplijstDatum(m[2]);
+    if(!datum) return;
+    const datumIso = datum.getFullYear()+'-'+String(datum.getMonth()+1).padStart(2,'0')+'-'+String(datum.getDate()).padStart(2,'0');
+    klachten.push({type, datum: datumIso, raw: regel.trim()});
+  });
+  return klachten;
 }
 
 // Parse mutatie-regels naar gestructureerde mutaties
