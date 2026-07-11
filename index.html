@@ -4806,6 +4806,25 @@ function renderBonus(){
     }
     wrap.appendChild(resKaart);
 
+    const archiveerBtn = document.createElement('button');
+    archiveerBtn.style.cssText = 'width:100%;padding:12px;margin-bottom:14px;border:1.5px solid #1a2d5a;border-radius:10px;background:#fff;color:#1a2d5a;font-weight:800;font-size:13px';
+    archiveerBtn.textContent = '📦 Periode afronden & archiveren';
+    archiveerBtn.onclick = ()=>{
+      if(!confirm('Deze bonusperiode ('+fmtD(v.start)+' t/m '+fmtD(v.eind)+') archiveren? Je kunt hem daarna altijd terugvinden en vergelijken.')) return;
+      const archief = laadBonusArchief();
+      archief.push({
+        type: inst.type, start: inst.start, eind: v.eind.toISOString().slice(0,10),
+        klachten: v.klachten, totaalKranten: v.totaalKranten, promillage: v.promillage,
+        onderGrens: v.onderGrens, compleet: v.dagenOntbrekend.length===0,
+        gearchiveerdOp: new Date().toISOString()
+      });
+      saveBonusArchief(archief);
+      localStorage.removeItem(STORAGE_BONUS_INSTELLING);
+      toast('✓ Periode gearchiveerd');
+      renderBonus();
+    };
+    wrap.appendChild(archiveerBtn);
+
     // ===== Klachtenlijst in venster =====
     const log = laadKlachtenLog().filter(k=>{
       const d = new Date(k.datum+'T00:00:00');
@@ -4828,6 +4847,40 @@ function renderBonus(){
     leegKaart.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
     leegKaart.textContent = 'Kies hierboven zomer- of winterbonus en een startdatum om je klachtenpromillage te zien.';
     wrap.appendChild(leegKaart);
+  }
+
+  // ===== Archief: eerdere afgeronde bonusperiodes, om te vergelijken =====
+  const bonusArchief = laadBonusArchief();
+  if(bonusArchief.length > 0){
+    const archKaart = document.createElement('div');
+    archKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-top:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    archKaart.innerHTML = '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📦 Archief · eerdere periodes</div>';
+    const fmtD2 = (iso)=> new Date(iso+'T00:00:00').toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
+    bonusArchief.slice().reverse().forEach((a, revIdx)=>{
+      const echtIdx = bonusArchief.length - 1 - revIdx;
+      const regel = document.createElement('div');
+      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6';
+      regel.innerHTML =
+        '<div>'+
+          '<div style="font-size:13px;font-weight:700;color:#374151">'+(a.type==='zomer'?'☀️ Zomerbonus':'❄️ Winterbonus')+'</div>'+
+          '<div style="font-size:11px;color:#9ca3af;margin-top:1px">'+fmtD2(a.start)+' – '+fmtD2(a.eind)+(a.compleet?'':' · onvolledig')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:16px;font-weight:900;color:'+(a.onderGrens?'#2e7d32':'#c62828')+'">'+a.promillage.toFixed(2).replace('.',',')+'‰</div>'+
+          '<div style="font-size:10px;color:#9ca3af">'+a.klachten+' klachten · '+a.totaalKranten.toLocaleString('nl-NL')+' kranten</div>'+
+        '</div>';
+      regel.style.cursor = 'pointer';
+      regel.title = 'Tik en houd vast om te verwijderen';
+      let pressTimer;
+      regel.addEventListener('touchstart', ()=>{ pressTimer = setTimeout(()=>{
+        if(confirm('Deze gearchiveerde periode verwijderen?')){
+          const nieuw = laadBonusArchief(); nieuw.splice(echtIdx,1); saveBonusArchief(nieuw); renderBonus();
+        }
+      }, 700); });
+      regel.addEventListener('touchend', ()=> clearTimeout(pressTimer));
+      archKaart.appendChild(regel);
+    });
+    wrap.appendChild(archKaart);
   }
 
   main.appendChild(wrap);
@@ -8977,6 +9030,11 @@ async function pdfExtractLines(arrayBuffer){
 const STORAGE_KLACHTEN = 'looplijst_v23_klachten_log';
 const STORAGE_KRANTEN_PER_DAG = 'looplijst_v23_kranten_per_dag';
 const STORAGE_BONUS_INSTELLING = 'looplijst_v23_bonus_instelling';
+const STORAGE_BONUS_ARCHIEF = 'looplijst_v23_bonus_archief';
+function laadBonusArchief(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_BONUS_ARCHIEF)) || []; }catch(e){ return []; }
+}
+function saveBonusArchief(lijst){ localStorage.setItem(STORAGE_BONUS_ARCHIEF, JSON.stringify(lijst)); }
 
 function laadKlachtenLog(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){ return []; }
