@@ -3466,7 +3466,7 @@ function bouwTijdEnAgendaSectie(container){
   const periodeSinds = localStorage.getItem('looplijst_v23_nieuwePeriodeSinds');
 
   // Filter sessies op huidige periode: vanaf maandag van W1 van deze periode
-  // Bereken maandag van W1 vanuit de looplijstdatum + huidigePeriodeWeek
+  // Bereken maandag van W1 vanuit de looplijstdatum + vergoedingWeek
   let periodeStartMs = 0;
   try {
     const refDatum = parseLooplijstDatum(meta.date) || new Date();
@@ -3474,8 +3474,8 @@ function bouwTijdEnAgendaSectie(container){
     const maandagHuidigeWeek = new Date(refDatum);
     maandagHuidigeWeek.setDate(refDatum.getDate() - refDag + 1);
     maandagHuidigeWeek.setHours(0,0,0,0);
-    // Ga terug naar maandag van W1 (huidigePeriodeWeek - 1 weken terug)
-    const hPW = huidigePeriodeWeek || 1;
+    // Ga terug naar maandag van W1 (vergoedingWeek - 1 weken terug)
+    const hPW = vergoedingWeek || 1;
     const maandagW1 = new Date(maandagHuidigeWeek);
     maandagW1.setDate(maandagHuidigeWeek.getDate() - (hPW - 1) * 7);
     periodeStartMs = maandagW1.getTime();
