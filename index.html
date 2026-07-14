@@ -1086,7 +1086,7 @@ function registreerWeek(weekNr){
         vergoedingOpgebouwd.archief.unshift(vergoedingOpgebouwd.huidige);
         if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
       }
-      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, weken: []};
+      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, vanaf: (vergoedingPeriode && vergoedingPeriode.vanaf) || null, tot: (vergoedingPeriode && vergoedingPeriode.tot) || null, weken: []};
     }
     const huidigeWeken = vergoedingOpgebouwd.huidige.weken.map(w=>w.nr);
     const laatsteWeek = huidigeWeken.length ? Math.max(...huidigeWeken) : 0;
@@ -1102,7 +1102,7 @@ function registreerWeek(weekNr){
       const archiefEntry = {...vergoedingOpgebouwd.huidige, totaal_tijd_ms: _totMs};
       vergoedingOpgebouwd.archief.unshift(archiefEntry);
       if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
-      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, weken: []};
+      vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, vanaf: (vergoedingPeriode && vergoedingPeriode.vanaf) || null, tot: (vergoedingPeriode && vergoedingPeriode.tot) || null, weken: []};
       localStorage.setItem('looplijst_v23_nieuwePeriodeSinds', String(Date.now()));
     }
     const bestaand = vergoedingOpgebouwd.huidige.weken.find(w => w.nr === weekNr);
@@ -1130,6 +1130,7 @@ function registreerWeek(weekNr){
     vergoedingOpgebouwd.huidige.weken.sort((a,b)=>a.nr - b.nr);
     vergoedingOpgebouwd.huidige.totaal_verwacht = verwachtTotaal;
     if(vergoedingPeriode && vergoedingPeriode.dagen) vergoedingOpgebouwd.huidige.dagen = vergoedingPeriode.dagen;
+    if(vergoedingPeriode && vergoedingPeriode.vanaf){ vergoedingOpgebouwd.huidige.vanaf = vergoedingPeriode.vanaf; vergoedingOpgebouwd.huidige.tot = vergoedingPeriode.tot; }
     saveVergoedingOpgebouwd();
   } catch(err){
     console.error('[registreerWeek] fout:', err);
@@ -2137,6 +2138,7 @@ function render(){
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
   if(view.mode==='bonus') return renderBonus();
+  if(view.mode==='klachten') return renderKlachten();
   if(view.mode==='wijkenmenu') return renderWijkenMenu();
   if(view.mode==='agendahoofd') return renderAgendaHoofd();
   if(view.mode==='vergoedingmenu') return renderVergoedingMenu();
@@ -3921,6 +3923,19 @@ function renderHome(){
   cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
   grid.appendChild(cardBonus);
 
+  // Klachten-module
+  const cardKlachten = document.createElement('button');
+  cardKlachten.className = 'home-card';
+  const _klachtenAantal = laadKlachtenLog().length;
+  cardKlachten.innerHTML =
+    '<div class="hc-ic">📋</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Klachten</div>'+
+      '<div class="hc-sub">'+_klachtenAantal+' totaal · per periode</div>'+
+    '</div>';
+  cardKlachten.onclick = ()=>{ view={mode:'klachten'}; render(); };
+  grid.appendChild(cardKlachten);
+
   // Tijdregistratie
   const tijdSessie = tijdLaadHuidigeSessie();
   const cardTijd = document.createElement('button');
@@ -4726,6 +4741,115 @@ function renderVergoedingMenu(){
   main.appendChild(grid);
 }
 
+// ===== Klachten-module: alle klachten gegroepeerd per DPG-periode (met jaar-fallback) =====
+function parseDatumDDMMYYYY(s){
+  if(!s) return null;
+  const m = String(s).match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if(!m) return null;
+  return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+}
+
+// Verzamel alle periodes waarvan we de exacte vanaf/tot-datum kennen
+// (uit de vergoedings-PDF's die ooit zijn ingeladen)
+function alleBekendePerioden(){
+  const perioden = [];
+  const bronnen = [];
+  if(vergoedingOpgebouwd.huidige) bronnen.push(vergoedingOpgebouwd.huidige);
+  (vergoedingOpgebouwd.archief||[]).forEach(a=>bronnen.push(a));
+  bronnen.forEach(b=>{
+    if(b.periode_label && b.vanaf && b.tot){
+      const vanafD = parseDatumDDMMYYYY(b.vanaf);
+      const totD = parseDatumDDMMYYYY(b.tot);
+      if(vanafD && totD && !perioden.some(p=>p.label===b.periode_label)){
+        perioden.push({label: b.periode_label, vanaf: vanafD, tot: totD});
+      }
+    }
+  });
+  return perioden.sort((a,b)=>b.vanaf-a.vanaf);
+}
+
+function groepeerKlachtenPerPeriode(){
+  const log = laadKlachtenLog();
+  const perioden = alleBekendePerioden();
+  const groepen = {}; // key: periode_label of 'jaar-YYYY'
+  const volgorde = [];
+
+  log.forEach(k=>{
+    const d = new Date(k.datum+'T00:00:00');
+    const passend = perioden.find(p => d >= p.vanaf && d <= new Date(p.tot.getTime()+86399999));
+    let key, titel, sortKey;
+    if(passend){
+      key = 'periode:'+passend.label;
+      titel = 'Periode '+passend.label;
+      sortKey = passend.vanaf.getTime();
+    } else {
+      const jaar = d.getFullYear();
+      key = 'jaar:'+jaar;
+      titel = String(jaar)+' (periode onbekend)';
+      sortKey = new Date(jaar,0,1).getTime() - 1; // onder de bekende periodes van dat jaar tonen
+    }
+    if(!groepen[key]){ groepen[key] = {titel, sortKey, klachten: []}; volgorde.push(key); }
+    groepen[key].klachten.push(k);
+  });
+
+  return Object.values(groepen).sort((a,b)=>b.sortKey-a.sortKey);
+}
+
+function renderKlachten(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Klachten';
+  document.getElementById('title').textContent = 'Klachten per periode';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding-bottom:20px';
+
+  const groepen = groepeerKlachtenPerPeriode();
+  const perDag = laadKrantenPerDag();
+
+  if(groepen.length === 0){
+    const leeg = document.createElement('div');
+    leeg.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
+    leeg.textContent = 'Nog geen klachten geregistreerd. Klachten worden automatisch herkend zodra ze in een ingeladen looplijst-PDF staan.';
+    wrap.appendChild(leeg);
+  }
+
+  groepen.forEach(g=>{
+    // Bereken promillage voor deze periode als we de datums kennen
+    const data = g.klachten.slice().sort((a,b)=>b.datum.localeCompare(a.datum));
+    let totaalKranten = 0;
+    const datums = new Set(data.map(k=>k.datum));
+    // Voor een periode-groep: tel ALLE bekende dagtotalen binnen de klachtdatums-range mee
+    const alleDatums = Object.keys(perDag).sort();
+    if(data.length){
+      const minD = data[data.length-1].datum, maxD = data[0].datum;
+      alleDatums.forEach(dt=>{ if(dt>=minD && dt<=maxD) totaalKranten += perDag[dt]; });
+    }
+    const promillage = totaalKranten>0 ? (data.length/totaalKranten)*1000 : null;
+
+    const kaart = document.createElement('div');
+    kaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    kaart.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+        '<div style="font-size:13px;font-weight:800;color:#374151">'+g.titel+'</div>'+
+        '<div style="text-align:right">'+
+          '<span style="font-size:13px;font-weight:800;color:#374151">'+data.length+' klacht'+(data.length===1?'':'en')+'</span>'+
+          (promillage!==null ? '<div style="font-size:11px;font-weight:800;margin-top:1px;color:'+(promillage<4?'#2e7d32':'#c62828')+'">'+promillage.toFixed(2).replace('.',',')+'‰ '+(promillage<4?'✓':'⚠️')+'</div>' : '')+
+        '</div>'+
+      '</div>';
+    data.forEach(k=>{
+      const regel = document.createElement('div');
+      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
+      regel.innerHTML = '<span style="font-weight:700;color:#374151">'+k.type+'</span><span style="color:#9ca3af">'+formatDatumNL(k.datum)+'</span>';
+      kaart.appendChild(regel);
+    });
+    wrap.appendChild(kaart);
+  });
+
+  main.appendChild(wrap);
+}
+
 function renderBonus(){
   const main = document.getElementById('main');
   document.getElementById('back').classList.remove('hidden');
@@ -4735,6 +4859,12 @@ function renderBonus(){
 
   const wrap = document.createElement('div');
   wrap.style.cssText = 'padding-bottom:20px';
+
+  const klachtenLinkBtn = document.createElement('button');
+  klachtenLinkBtn.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:14px;background:#eef2ff;border:none;border-radius:12px;color:#3730a3;font-weight:700;font-size:13px';
+  klachtenLinkBtn.innerHTML = '<span>📋 Alle klachten per periode bekijken</span><span>›</span>';
+  klachtenLinkBtn.onclick = ()=>{ view={mode:'klachten'}; render(); };
+  wrap.appendChild(klachtenLinkBtn);
 
   let inst = {};
   try{ inst = JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)) || {}; }catch(e){}
