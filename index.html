@@ -4841,7 +4841,7 @@ function renderKlachten(){
     data.forEach(k=>{
       const regel = document.createElement('div');
       regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
-      regel.innerHTML = '<span style="font-weight:700;color:#374151">'+k.type+'</span><span style="color:#9ca3af">'+formatDatumNL(k.datum)+'</span>';
+      regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
       kaart.appendChild(regel);
     });
     wrap.appendChild(kaart);
@@ -4967,7 +4967,7 @@ function renderBonus(){
       log.forEach(k=>{
         const regel = document.createElement('div');
         regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px';
-        regel.innerHTML = '<span style="font-weight:700;color:#374151">'+k.type+'</span><span style="color:#9ca3af">'+formatDatumNL(k.datum)+'</span>';
+        regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
         lijstKaart.appendChild(regel);
       });
       wrap.appendChild(lijstKaart);
@@ -9228,6 +9228,19 @@ function berekenBonusVenster(startIso, dagenLengte){
   };
 }
 // naar {type, datum (Date), datumIso, raw}
+function klachtWeergaveHTML(k){
+  const straat = k.straat || '';
+  const seg = straat ? segmentVoorStraat(straat) : (k.segment || null);
+  const adresTekst = straat
+    ? straat + (k.huisnr ? ' ' + k.huisnr : '') + (k.plaats ? ', ' + k.plaats : '')
+    : k.type; // terugval voor oude klachten zonder adresgegevens
+  const wijkBadge = seg
+    ? '<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px">'+seg+'</span>'
+    : '';
+  return '<span style="font-weight:700;color:#374151">'+wijkBadge+adresTekst+'</span>'+
+    '<span style="color:#9ca3af;font-size:11px;display:block;margin-top:1px">'+k.type+'</span>';
+}
+
 function parseKlachten(regels){
   const klachten = [];
   (regels||[]).forEach(regel=>{
@@ -9237,7 +9250,22 @@ function parseKlachten(regels){
     const datum = parseLooplijstDatum(m[2]);
     if(!datum) return;
     const datumIso = datum.getFullYear()+'-'+String(datum.getMonth()+1).padStart(2,'0')+'-'+String(datum.getDate()).padStart(2,'0');
-    klachten.push({type, datum: datumIso, raw: regel.trim()});
+
+    // Adres/straat/plaats proberen te halen uit het staartje van de regel:
+    // "... Naam, Straat 40, Plaats m d w d v z"
+    let straat = '', huisnr = '', plaats = '';
+    const staart = m[3].replace(/\s*(?:m\s+d\s+w\s+d\s+v\s+z)\s*$/i, '').trim();
+    const delen = staart.split(',').map(d=>d.trim()).filter(Boolean);
+    if(delen.length >= 2){
+      plaats = delen[delen.length-1];
+      const straatNr = delen[delen.length-2];
+      const nrMatch = straatNr.match(/^(.*?)\s+(\d+\S*)$/);
+      if(nrMatch){ straat = nrMatch[1].trim(); huisnr = nrMatch[2].trim(); }
+      else { straat = straatNr; }
+    }
+    const segment = straat ? segmentVoorStraat(straat) : null;
+
+    klachten.push({type, datum: datumIso, straat, huisnr, plaats, segment, raw: regel.trim()});
   });
   return klachten;
 }
