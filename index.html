@@ -9236,11 +9236,30 @@ async function pdfExtractLines(arrayBuffer){
       if(!byYfull[y]) byYfull[y]=[];
       byYfull[y].push({x:it.transform[4], str:it.str});
     });
-    Object.keys(byYfull).map(Number).sort((a,b)=>b-a).forEach(y=>{
-      const line = byYfull[y].sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim();
+    const volleBreedteLijnen = Object.keys(byYfull).map(Number).sort((a,b)=>b-a).map(y=>
+      byYfull[y].sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim()
+    );
+    volleBreedteLijnen.forEach(line=>{
       if(/^(START|STOP)\s+Abo\b/i.test(line)) mutatieRegels.push(line);
-      if(/^!\s*\S/.test(line)) klachtRegels.push(line);
     });
+    // Klachten kunnen over meerdere fysieke regels lopen (lange naam/adres wordt
+    // afgebroken naar een volgende regel). Voeg door tot we het "m d w d v z"
+    // weekdag-staartje tegenkomen (dat sluit elk klacht/mutatie-blok af), of tot
+    // de volgende klacht/mutatie begint.
+    for(let li=0; li<volleBreedteLijnen.length; li++){
+      const line = volleBreedteLijnen[li];
+      if(!/^!\s*\S/.test(line)) continue;
+      let samengevoegd = line;
+      let lj = li+1;
+      while(!/\bm\s+d\s+w\s+d\s+v\s+z\s*$/i.test(samengevoegd) && lj < volleBreedteLijnen.length){
+        const volgende = volleBreedteLijnen[lj];
+        if(/^!\s*\S/.test(volgende) || /^(START|STOP)\s+Abo\b/i.test(volgende)) break; // volgend blok begint al
+        samengevoegd += ' ' + volgende;
+        lj++;
+      }
+      klachtRegels.push(samengevoegd.replace(/\s+/g,' ').trim());
+      li = lj - 1; // sla de samengevoegde vervolgregels over
+    }
 
     // Vaste kolomgrenzen op 0.32 en 0.62 van pagina-breedte
     const c1 = w*0.32, c2 = w*0.62;
