@@ -2139,6 +2139,7 @@ function render(){
   if(view.mode==='segment') return renderSegment();
   if(view.mode==='bonus') return renderBonus();
   if(view.mode==='klachten') return renderKlachten();
+  if(view.mode==='mutaties') return renderMutaties();
   if(view.mode==='wijkenmenu') return renderWijkenMenu();
   if(view.mode==='agendahoofd') return renderAgendaHoofd();
   if(view.mode==='vergoedingmenu') return renderVergoedingMenu();
@@ -3936,6 +3937,21 @@ function renderHome(){
   cardKlachten.onclick = ()=>{ view={mode:'klachten'}; render(); };
   grid.appendChild(cardKlachten);
 
+  // Mutaties-module
+  const cardMutaties = document.createElement('button');
+  cardMutaties.className = 'home-card';
+  const _mutatiesLog = laadMutatiesLog();
+  const _mStarts = _mutatiesLog.filter(m=>m.type==='START').length;
+  const _mStops = _mutatiesLog.filter(m=>m.type==='STOP').length;
+  cardMutaties.innerHTML =
+    '<div class="hc-ic">🔀</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Mutaties</div>'+
+      '<div class="hc-sub">▶'+_mStarts+' · ■'+_mStops+'</div>'+
+    '</div>';
+  cardMutaties.onclick = ()=>{ view={mode:'mutaties'}; render(); };
+  grid.appendChild(cardMutaties);
+
   // Tijdregistratie
   const tijdSessie = tijdLaadHuidigeSessie();
   const cardTijd = document.createElement('button');
@@ -4793,6 +4809,57 @@ function groepeerKlachtenPerPeriode(){
   });
 
   return Object.values(groepen).sort((a,b)=>b.sortKey-a.sortKey);
+}
+
+function renderMutaties(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Mutaties';
+  document.getElementById('title').textContent = 'Start & Stop';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding-bottom:20px';
+
+  const log = laadMutatiesLog().sort((a,b)=>b.datum.localeCompare(a.datum));
+  const starts = log.filter(m=>m.type==='START');
+  const stops = log.filter(m=>m.type==='STOP');
+
+  if(log.length === 0){
+    const leeg = document.createElement('div');
+    leeg.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
+    leeg.textContent = 'Nog geen START/STOP-mutaties gevonden. Die worden automatisch herkend zodra ze in een ingeladen looplijst-PDF staan.';
+    wrap.appendChild(leeg);
+  }
+
+  function bouwSectie(titel, kleur, achtergrond, lijst){
+    if(lijst.length === 0) return;
+    const kaart = document.createElement('div');
+    kaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    kaart.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+      '<span style="background:'+achtergrond+';color:'+kleur+';padding:2px 9px;border-radius:8px;font-size:12px;font-weight:900">'+titel+'</span>'+
+      '<span style="font-size:12px;color:#9ca3af;font-weight:700">'+lijst.length+'×</span></div>';
+    lijst.forEach(m=>{
+      const seg = m.straat ? segmentVoorStraat(m.straat) : null;
+      const regel = document.createElement('div');
+      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
+      regel.innerHTML =
+        '<div>'+
+          (seg ? '<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px">'+seg+'</span>' : '')+
+          '<span style="font-weight:700;color:#374151">'+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
+          '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
+          (m.naam ? '<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+m.naam+'</div>' : '')+
+        '</div>'+
+        '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+      kaart.appendChild(regel);
+    });
+    wrap.appendChild(kaart);
+  }
+
+  bouwSectie('▶ START', '#2e7d32', '#e8f5e9', starts);
+  bouwSectie('■ STOP', '#c62828', '#ffebee', stops);
+
+  main.appendChild(wrap);
 }
 
 function renderKlachten(){
@@ -9055,7 +9122,7 @@ async function verwerkGekozenPdfBestand(file){
     const parsed = parseLooplijst(extracted.allLines, mutaties);
     console.log('[Looplijst] Geparseerde adressen:', parsed.adressen.length, '· bezorgwijken:', Object.keys(parsed.bezorgwijken||{}).length);
     if(parsed.adressen.length === 0) throw new Error('Geen adressen herkend. Is dit wel een DPG-looplijst?');
-    verwerkKlachtenEnDagtotaal(extracted.klachtRegels, parsed);
+    verwerkKlachtenEnDagtotaal(extracted.klachtRegels, parsed, mutaties);
     const built = buildDataStructure(parsed.adressen);
     const onbekendeNamen = Object.keys(built.onbekende);
     console.log('[Looplijst] Wijken gebouwd:', built.data.length, '· onbekende straten:', onbekendeNamen.length);
@@ -9159,6 +9226,10 @@ async function pdfExtractLines(arrayBuffer){
 // ===== Bonus-module: klachten + dagtotalen kranten =====
 const STORAGE_KLACHTEN = 'looplijst_v23_klachten_log';
 const STORAGE_KRANTEN_PER_DAG = 'looplijst_v23_kranten_per_dag';
+const STORAGE_MUTATIES_LOG = 'looplijst_v23_mutaties_log';
+function laadMutatiesLog(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_MUTATIES_LOG)) || []; }catch(e){ return []; }
+}
 const STORAGE_BONUS_INSTELLING = 'looplijst_v23_bonus_instelling';
 const STORAGE_BONUS_ARCHIEF = 'looplijst_v23_bonus_archief';
 function laadBonusArchief(){
@@ -9173,8 +9244,8 @@ function laadKrantenPerDag(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KRANTEN_PER_DAG)) || {}; }catch(e){ return {}; }
 }
 
-// Verwerk klachten uit een net ingeladen looplijst-PDF + registreer het dagtotaal kranten
-function verwerkKlachtenEnDagtotaal(klachtRegels, parsed){
+// Verwerk klachten + mutaties uit een net ingeladen looplijst-PDF + registreer het dagtotaal kranten
+function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
   try{
     const nieuweKlachten = parseKlachten(klachtRegels);
     if(nieuweKlachten.length){
@@ -9197,6 +9268,25 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed){
         const perDag = laadKrantenPerDag();
         perDag[iso] = parsed.adressen.length;
         localStorage.setItem(STORAGE_KRANTEN_PER_DAG, JSON.stringify(perDag));
+
+        // Mutaties (START/STOP) loggen met de datum van deze looplijst
+        if(mutaties && mutaties.length){
+          const mlog = laadMutatiesLog();
+          const bekendM = new Set(mlog.map(x=>x.datum+'|'+x.raw));
+          let toegevoegdM = 0;
+          mutaties.forEach(m=>{
+            const sleutel = iso+'|'+m.raw;
+            if(!bekendM.has(sleutel)){
+              mlog.push({...m, datum: iso});
+              bekendM.add(sleutel);
+              toegevoegdM++;
+            }
+          });
+          if(toegevoegdM>0){
+            localStorage.setItem(STORAGE_MUTATIES_LOG, JSON.stringify(mlog));
+            console.log('[Mutaties] '+toegevoegdM+' nieuwe mutatie(s) opgeslagen');
+          }
+        }
       }
     }
   }catch(err){ console.error('[Bonus] Verwerken klachten/dagtotaal mislukt:', err); }
@@ -9293,7 +9383,7 @@ function parseMutaties(regels){
       straat = parts[parts.length-1];
       naam = parts.slice(0,-1).join(', ');
     }
-    mutaties.push({type, prod, straat, nr, naam});
+    mutaties.push({type, prod, straat, nr, naam, raw: r.trim()});
   });
   return mutaties;
 }
