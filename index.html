@@ -9357,8 +9357,11 @@ function isKlachtRawVerdacht(raw){
   // Een echte klachtregel bevat maar 1 productcode (in "Abo XX ..."). Komt een
   // code als "TT OL"/"NRC"/"TEL"/"HFD"/"VK"/"AD NL" er 2+ keer in voor, dan is
   // dit vrijwel zeker een kapot samengevoegd stuk straatdata.
-  const codes = raw.match(/\b(TT\s?OL|NRC|TEL|HFD|VK|AD\s?NL|TR)\b/gi) || [];
+  const codes = raw.match(/\b(TT\s?OL|NRC|TEL|HFD|VK|AD\s?NL|TR|HP)\b/gi) || [];
   if(codes.length >= 2) return true;
+  // Een klachtregel hoort nooit een sectiekop van de PDF te bevatten — als die
+  // erin voorkomt, is er tekst uit de volgende sectie aan de klacht geplakt.
+  if(/\b(Mutaties|Klachten|Product\s+Abo|Totaal\s+Bezorgwijk|Bezorgwijk\s+\d)\b/i.test(raw)) return true;
   return false;
 }
 function klachtSemantischeSleutel(k){
