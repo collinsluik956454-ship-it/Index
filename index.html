@@ -4952,13 +4952,11 @@ function renderKlachten(){
   wisBtn.style.cssText = 'width:100%;padding:10px;margin-bottom:14px;background:#fdecec;color:var(--red, #c0392b);border:none;border-radius:10px;font-weight:700;font-size:12.5px';
   wisBtn.textContent = '🧹 Kapotte/rare klachten opschonen';
   wisBtn.onclick = ()=>{
-    const voor = laadKlachtenLog().length;
-    let log = [];
-    try{ log = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){}
-    const schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
-    localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(schoon));
-    const verwijderd = log.length - schoon.length;
-    toast(verwijderd>0 ? '✓ '+verwijderd+' rare klacht(en) verwijderd' : '✓ Niets vreemds gevonden');
+    let voorLog = [];
+    try{ voorLog = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){}
+    const naLog = laadKlachtenLog(); // schoont zelf op (rare regels + dubbelen) en slaat direct op
+    const verwijderd = voorLog.length - naLog.length;
+    toast(verwijderd>0 ? '✓ '+verwijderd+' rare/dubbele klacht(en) verwijderd' : '✓ Niets vreemds gevonden');
     renderKlachten();
   };
   wrap.appendChild(wisBtn);
@@ -9363,13 +9361,30 @@ function isKlachtRawVerdacht(raw){
   if(codes.length >= 2) return true;
   return false;
 }
+function klachtSemantischeSleutel(k){
+  const straat = (k.straat||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const huisnr = (k.huisnr||'').toLowerCase().replace(/\s+/g,'').trim();
+  return (k.datum||'')+'|'+(k.type||'')+'|'+straat+'|'+huisnr;
+}
+
 function laadKlachtenLog(){
   try{
     const log = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || [];
     // Zelfherstel: eerdere versie kon door een bug hele straatlijsten aan een klacht
     // plakken. Zulke entries filteren we hier stilzwijgend uit (en slaan de
     // opgeschoonde lijst meteen op).
-    const schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
+    let schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
+    // Zelfherstel: dezelfde klacht kan met licht andere tekst-extractie 2x zijn
+    // opgeslagen (bijv. omdat 'm in meerdere dag-PDF's stond). Dedupliceer op
+    // datum+type+straat+huisnr, behoud de eerst gevonden (oudste) versie.
+    const semGezien = new Set();
+    schoon = schoon.filter(k=>{
+      if(!k.straat) return true; // geen adres bekend, kan niet semantisch vergelijken; laat staan
+      const sleutel = klachtSemantischeSleutel(k);
+      if(semGezien.has(sleutel)) return false;
+      semGezien.add(sleutel);
+      return true;
+    });
     if(schoon.length !== log.length){
       try{ localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(schoon)); }catch(e){}
     }
@@ -9387,10 +9402,13 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
     if(nieuweKlachten.length){
       const log = laadKlachtenLog();
       const bekend = new Set(log.map(k=>k.raw));
+      const bekendSemantisch = new Set(log.map(k=>klachtSemantischeSleutel(k)));
       let toegevoegd = 0;
       nieuweKlachten.forEach(k=>{
         if(isKlachtRawVerdacht(k.raw)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
-        if(!bekend.has(k.raw)){ log.push(k); bekend.add(k.raw); toegevoegd++; }
+        const semSleutel = klachtSemantischeSleutel(k);
+        if(bekend.has(k.raw) || bekendSemantisch.has(semSleutel)) return; // zelfde klacht (evt. licht andere PDF-extractie) al bekend
+        log.push(k); bekend.add(k.raw); bekendSemantisch.add(semSleutel); toegevoegd++;
       });
       if(toegevoegd>0){
         localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(log));
@@ -9502,7 +9520,9 @@ function parseMutaties(regels){
   const mutaties = [];
   regels.forEach(r=>{
     // Patroon: STOP/START Abo PRODUCT [naam,] STRAAT HUISNR, OLDENZAAL
-    const m = r.match(/^(START|STOP)\s+Abo\s+(TT OL|AD NL|HFD|NRC|TEL|TR|VK)\s+(.+?),?\s*OLDENZAAL/i);
+    // Productcode is generiek (1-2 hoofdletter-woorden van 2-6 tekens), zodat nieuwe
+    // codes zoals "HP" niet worden gemist door een vaste lijst.
+    const m = r.match(/^(START|STOP)\s+Abo\s+([A-Z]{2,6}(?:\s[A-Z]{2,6})?)\s+(.+?),?\s*OLDENZAAL/i);
     if(!m) return;
     const type = m[1].toUpperCase();
     const prod = m[2];
@@ -9566,7 +9586,9 @@ function parseLooplijst(lines, mutaties){
   const adressen=[];
   let huidigStraat=null;
   let inMutaties=false;
-  const huisnrRe=/^(\d{1,4}(?:[\s][A-Za-z0-9\.\-]{1,6}){0,3})\s+(TT OL|AD NL|HFD|NRC|TEL|TR|VK)\b(.*)$/;
+  // Productcode generiek herkennen (1-2 hoofdletter-woorden van 2-6 tekens), i.p.v.
+  // een vaste lijst, zodat nieuwe codes (zoals "HP") niet worden gemist.
+  const huisnrRe=/^(\d{1,4}(?:[\s][A-Za-z0-9\.\-]{1,6}){0,3})\s+([A-Z]{2,6}(?:\s[A-Z]{2,6})?)\b(.*)$/;
 
   for(let i=0;i<lines.length;i++){
     let entry=lines[i];
@@ -9630,7 +9652,7 @@ function parseLooplijst(lines, mutaties){
       if(/^0\b/.test(rest)){ isStop = true; rest = rest.replace(/^0\s*/,'').trim(); }
       rest=rest.replace(/^\d+\s*$/,'').replace(/\s+/g,' ').trim();
       let naam=rest;
-      const restCut=naam.match(/^(.{1,30}?)\s+\d+\s+(TT OL|AD NL|HFD|NRC|TEL|TR|VK)\b/);
+      const restCut=naam.match(/^(.{1,30}?)\s+\d+\s+([A-Z]{2,6}(?:\s[A-Z]{2,6})?)\b/);
       if(restCut) naam=restCut[1].trim();
       if(naam.length>30) naam=naam.substring(0,30);
       if(/^\d+$/.test(naam)) naam='';
