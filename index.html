@@ -9251,11 +9251,17 @@ async function pdfExtractLines(arrayBuffer){
       if(!/^!\s*\S/.test(line)) continue;
       let samengevoegd = line;
       let lj = li+1;
-      while(!/\bm\s+d\s+w\s+d\s+v\s+z\s*$/i.test(samengevoegd) && lj < volleBreedteLijnen.length){
+      let bijgevoegd = 0;
+      const MAX_VERVOLGREGELS = 3; // veiligheidslimiet: een klacht-adres wrapt nooit meer dan een paar keer
+      while(!/\bm\s+d\s+w\s+d\s+v\s+z\s*$/i.test(samengevoegd) && lj < volleBreedteLijnen.length && bijgevoegd < MAX_VERVOLGREGELS){
         const volgende = volleBreedteLijnen[lj];
         if(/^!\s*\S/.test(volgende) || /^(START|STOP)\s+Abo\b/i.test(volgende)) break; // volgend blok begint al
+        // Stop ook als de volgende regel er zelf al als een straat-kop of huisnummer-regel uitziet
+        // (dat betekent dat we het klachtblokje al voorbij zijn gelopen)
+        if(/^\d+\s*[A-Za-z]{0,3}\s+(TT OL|NRC|TEL|HFD|VK|AD NL|TR)\b/i.test(volgende)) break;
         samengevoegd += ' ' + volgende;
         lj++;
+        bijgevoegd++;
       }
       klachtRegels.push(samengevoegd.replace(/\s+/g,' ').trim());
       li = lj - 1; // sla de samengevoegde vervolgregels over
@@ -9304,7 +9310,17 @@ function laadBonusArchief(){
 function saveBonusArchief(lijst){ localStorage.setItem(STORAGE_BONUS_ARCHIEF, JSON.stringify(lijst)); }
 
 function laadKlachtenLog(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){ return []; }
+  try{
+    const log = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || [];
+    // Zelfherstel: eerdere versie kon door een bug hele straatlijsten aan een klacht
+    // plakken. Zulke entries herken je aan een abnormaal lange raw-tekst; die filteren
+    // we er hier stilzwijgend uit (en slaan de opgeschoonde lijst meteen op).
+    const schoon = log.filter(k => !k.raw || k.raw.length < 220);
+    if(schoon.length !== log.length){
+      try{ localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(schoon)); }catch(e){}
+    }
+    return schoon;
+  }catch(e){ return []; }
 }
 function laadKrantenPerDag(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KRANTEN_PER_DAG)) || {}; }catch(e){ return {}; }
