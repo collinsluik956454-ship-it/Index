@@ -4919,6 +4919,21 @@ function renderKlachten(){
   const wrap = document.createElement('div');
   wrap.style.cssText = 'padding-bottom:20px';
 
+  const wisBtn = document.createElement('button');
+  wisBtn.style.cssText = 'width:100%;padding:10px;margin-bottom:14px;background:#fdecec;color:var(--red, #c0392b);border:none;border-radius:10px;font-weight:700;font-size:12.5px';
+  wisBtn.textContent = '🧹 Kapotte/rare klachten opschonen';
+  wisBtn.onclick = ()=>{
+    const voor = laadKlachtenLog().length;
+    let log = [];
+    try{ log = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || []; }catch(e){}
+    const schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
+    localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(schoon));
+    const verwijderd = log.length - schoon.length;
+    toast(verwijderd>0 ? '✓ '+verwijderd+' rare klacht(en) verwijderd' : '✓ Niets vreemds gevonden');
+    renderKlachten();
+  };
+  wrap.appendChild(wisBtn);
+
   const groepen = groepeerKlachtenPerPeriode();
   const perDag = laadKrantenPerDag();
 
@@ -9309,13 +9324,23 @@ function laadBonusArchief(){
 }
 function saveBonusArchief(lijst){ localStorage.setItem(STORAGE_BONUS_ARCHIEF, JSON.stringify(lijst)); }
 
+function isKlachtRawVerdacht(raw){
+  if(!raw) return false;
+  if(raw.length >= 150) return true;
+  // Een echte klachtregel bevat maar 1 productcode (in "Abo XX ..."). Komt een
+  // code als "TT OL"/"NRC"/"TEL"/"HFD"/"VK"/"AD NL" er 2+ keer in voor, dan is
+  // dit vrijwel zeker een kapot samengevoegd stuk straatdata.
+  const codes = raw.match(/\b(TT\s?OL|NRC|TEL|HFD|VK|AD\s?NL|TR)\b/gi) || [];
+  if(codes.length >= 2) return true;
+  return false;
+}
 function laadKlachtenLog(){
   try{
     const log = JSON.parse(localStorage.getItem(STORAGE_KLACHTEN)) || [];
     // Zelfherstel: eerdere versie kon door een bug hele straatlijsten aan een klacht
-    // plakken. Zulke entries herken je aan een abnormaal lange raw-tekst; die filteren
-    // we er hier stilzwijgend uit (en slaan de opgeschoonde lijst meteen op).
-    const schoon = log.filter(k => !k.raw || k.raw.length < 220);
+    // plakken. Zulke entries filteren we hier stilzwijgend uit (en slaan de
+    // opgeschoonde lijst meteen op).
+    const schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
     if(schoon.length !== log.length){
       try{ localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(schoon)); }catch(e){}
     }
@@ -9335,6 +9360,7 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
       const bekend = new Set(log.map(k=>k.raw));
       let toegevoegd = 0;
       nieuweKlachten.forEach(k=>{
+        if(isKlachtRawVerdacht(k.raw)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
         if(!bekend.has(k.raw)){ log.push(k); bekend.add(k.raw); toegevoegd++; }
       });
       if(toegevoegd>0){
