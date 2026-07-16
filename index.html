@@ -1055,6 +1055,23 @@ const STORAGE_VERGOEDING_OPGEBOUWD = 'looplijst_v23_vergoeding_opgebouwd';
 // {huidige: {periode_label, totaal_verwacht, weken:[{nr,datum,bedrag}]}, archief: [...]}
 let vergoedingOpgebouwd = { huidige: null, archief: [] };
 try { const x = JSON.parse(localStorage.getItem(STORAGE_VERGOEDING_OPGEBOUWD)); if(x){ vergoedingOpgebouwd = x; } } catch(e){}
+// Zelfherstel: eerdere versie kon dezelfde periode 2x archiveren (via 2
+// verschillende code-paden). Dedupliceer op periode_label, houd de entry
+// met de meeste info (totaal_tijd_ms) per label.
+if(vergoedingOpgebouwd.archief && vergoedingOpgebouwd.archief.length > 1){
+  const perLabel = {};
+  const volgorde = [];
+  vergoedingOpgebouwd.archief.forEach(a=>{
+    if(!a || !a.periode_label) return;
+    if(!perLabel[a.periode_label]){ perLabel[a.periode_label] = a; volgorde.push(a.periode_label); }
+    else { perLabel[a.periode_label] = {...perLabel[a.periode_label], ...a}; }
+  });
+  const gedupliceerd = vergoedingOpgebouwd.archief.length !== volgorde.length;
+  vergoedingOpgebouwd.archief = volgorde.map(l=>perLabel[l]);
+  if(gedupliceerd){
+    try{ localStorage.setItem(STORAGE_VERGOEDING_OPGEBOUWD, JSON.stringify(vergoedingOpgebouwd)); }catch(e){}
+  }
+}
 function saveVergoedingOpgebouwd(){ localStorage.setItem(STORAGE_VERGOEDING_OPGEBOUWD, JSON.stringify(vergoedingOpgebouwd)); }
 
 // Parse "13 jun 2026" uit looplijst-header naar Date
@@ -1066,6 +1083,20 @@ function parseLooplijstDatum(s){
   const maandIdx = maandNamen.indexOf(m[2].toLowerCase().slice(0,3));
   if(maandIdx < 0) return null;
   return new Date(parseInt(m[3]), maandIdx, parseInt(m[1]));
+}
+
+// Archiveer een periode zonder duplicaten: als er al een entry met dit
+// periode_label in het archief staat, wordt die bijgewerkt (gemerged) i.p.v.
+// dat er een dubbele entry bijkomt.
+function archiveerPeriodeZonderDuplicaat(entry){
+  if(!entry || !entry.periode_label) return;
+  const bestaandIdx = vergoedingOpgebouwd.archief.findIndex(a => a.periode_label === entry.periode_label);
+  if(bestaandIdx >= 0){
+    vergoedingOpgebouwd.archief[bestaandIdx] = {...vergoedingOpgebouwd.archief[bestaandIdx], ...entry};
+  } else {
+    vergoedingOpgebouwd.archief.unshift(entry);
+  }
+  if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
 }
 
 // Registreer dat een week is ingeladen (bij looplijst-PDF + week-keuze)
@@ -1083,8 +1114,7 @@ function registreerWeek(weekNr){
     const weekBedrag = verwachtTotaal / 4;
     if(!vergoedingOpgebouwd.huidige || vergoedingOpgebouwd.huidige.periode_label !== periodeLabel){
       if(vergoedingOpgebouwd.huidige){
-        vergoedingOpgebouwd.archief.unshift(vergoedingOpgebouwd.huidige);
-        if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
+        archiveerPeriodeZonderDuplicaat(vergoedingOpgebouwd.huidige);
       }
       vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, vanaf: (vergoedingPeriode && vergoedingPeriode.vanaf) || null, tot: (vergoedingPeriode && vergoedingPeriode.tot) || null, weken: []};
     }
@@ -1100,8 +1130,7 @@ function registreerWeek(weekNr){
         return som+Math.max(0,(e-s.start)-p);
       },0);
       const archiefEntry = {...vergoedingOpgebouwd.huidige, totaal_tijd_ms: _totMs};
-      vergoedingOpgebouwd.archief.unshift(archiefEntry);
-      if(vergoedingOpgebouwd.archief.length > 6) vergoedingOpgebouwd.archief.length = 6;
+      archiveerPeriodeZonderDuplicaat(archiefEntry);
       vergoedingOpgebouwd.huidige = {periode_label: periodeLabel, totaal_verwacht: verwachtTotaal, dagen: (vergoedingPeriode && vergoedingPeriode.dagen) || null, vanaf: (vergoedingPeriode && vergoedingPeriode.vanaf) || null, tot: (vergoedingPeriode && vergoedingPeriode.tot) || null, weken: []};
       localStorage.setItem('looplijst_v23_nieuwePeriodeSinds', String(Date.now()));
     }
