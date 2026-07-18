@@ -3183,6 +3183,151 @@ function toonKerstKeuzePopup(){
   overlay.onclick = (e)=>{ if(e.target===overlay) overlay.remove(); };
 }
 
+function exportKerstPdf(modus){
+  if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+    toast('PDF-bibliotheek nog niet geladen, probeer nog eens', true);
+    return;
+  }
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marge = 14;
+    let y = marge;
+    const nu = new Date();
+    const datumStr = nu.toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
+
+    function nieuwePaginaAlsNodig(minHoogte){
+      if(y + minHoogte > pageH - marge){ doc.addPage(); y = marge; }
+    }
+    function schrijfSubKop(tekst){
+      nieuwePaginaAlsNodig(11);
+      doc.setFillColor(232,178,58); // opvallend goud/oranje, onderscheidend van de wijk-kop
+      doc.roundedRect(marge, y, pageW-2*marge, 8, 1.5, 1.5, 'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(50,35,0);
+      doc.text('▸ '+tekst, marge+3, y+5.6);
+      doc.setTextColor(20,20,20);
+      y += 11;
+    }
+    function schrijfKop(tekst, kleur){
+      nieuwePaginaAlsNodig(16);
+      doc.setFillColor(kleur[0], kleur[1], kleur[2]);
+      doc.roundedRect(marge, y, pageW-2*marge, 9, 1.5, 1.5, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.text(tekst, marge+3, y+6.3);
+      doc.setTextColor(20,20,20);
+      y += 13;
+    }
+    function schrijfStraat(straatNaam, brievenbussen){
+      nieuwePaginaAlsNodig(12);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(20,20,20);
+      doc.text(straatNaam, marge, y);
+      y += 5.5;
+
+      const chipH = 6.2;
+      const gap = 1.6;
+      let x = marge;
+      doc.setFontSize(8.3);
+
+      brievenbussen.forEach(b=>{
+        const k = kerstKey(straatNaam, b.hoofd);
+        const isDone = !!doneKerst[k];
+        const e = fooiEntry(k);
+        const bedrag = e.munt + e.biljet;
+        let label = b.hoofd;
+        if(bedrag>0) label += ' €'+(bedrag/100).toFixed(2).replace('.',',');
+        doc.setFont('helvetica', isDone ? 'bold' : 'normal');
+        const tekstW = doc.getTextWidth(label);
+        const chipW = tekstW + 4.5;
+
+        if(x + chipW > pageW - marge){ x = marge; y += chipH + gap; }
+        nieuwePaginaAlsNodig(chipH + gap);
+        if(x === marge && y === marge) x = marge; // na eventuele nieuwe pagina
+
+        if(isDone){
+          doc.setFillColor(30,45,90);
+          doc.roundedRect(x, y, chipW, chipH, 1.2, 1.2, 'F');
+          doc.setTextColor(255,255,255);
+        } else {
+          doc.setDrawColor(180,180,180);
+          doc.roundedRect(x, y, chipW, chipH, 1.2, 1.2, 'S');
+          doc.setTextColor(20,20,20);
+        }
+        doc.text(label, x + chipW/2, y + chipH/2 + 1.1, {align:'center'});
+        x += chipW + gap;
+      });
+
+      doc.setTextColor(20,20,20);
+      y += chipH + 4;
+    }
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.text('Kerstkaartjes - Brievenbussen', marge, y);
+    y += 6;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text('Geexporteerd op '+datumStr+'  ·  donker blokje = afgevinkt  ·  '+(modus==='oostwest'?'Indeling: Oost & West':'Indeling: per ronde'), marge, y);
+    doc.setTextColor(20);
+    y += 8;
+
+    if(modus === 'oostwest'){
+      const groepen = {OOST: [], WEST: [], OVERIG: []};
+      wijkVolgordeIdxs().forEach(wi=>{
+        const w = DATA[wi];
+        const naamUpper = w.wijk.toUpperCase();
+        const key = naamUpper.includes('WEST') ? 'WEST' : naamUpper.includes('OOST') ? 'OOST' : 'OVERIG';
+        groepen[key].push(wi);
+      });
+      const kleuren = {OOST: [211,47,47], WEST: [21,101,192], OVERIG: [97,97,97]};
+      ['OOST','WEST','OVERIG'].forEach(regio=>{
+        if(groepen[regio].length===0) return;
+        schrijfKop('OLDENZAAL '+regio, kleuren[regio]);
+        groepen[regio].forEach(wi=>{
+          const w = DATA[wi];
+          w.rondes.forEach((r, ri)=>{
+            r.straten.forEach((s, si)=>{
+              const bb = brievenbussenVoorStraat(wi, ri, si);
+              if(bb.length) schrijfStraat(s.naam, bb);
+            });
+          });
+        });
+        y += 3;
+      });
+    } else {
+      wijkVolgordeIdxs().forEach(wi=>{
+        const w = DATA[wi];
+        schrijfKop(w.wijk, [26,45,90]);
+        w.rondes.forEach((r, ri)=>{
+          const bbInRonde = r.straten.reduce((s2,st,si)=>s2+brievenbussenVoorStraat(wi,ri,si).length,0);
+          if(bbInRonde===0) return;
+          schrijfSubKop(r.ronde);
+          r.straten.forEach((s, si)=>{
+            const bb = brievenbussenVoorStraat(wi, ri, si);
+            if(bb.length) schrijfStraat(s.naam, bb);
+          });
+        });
+        y += 3;
+      });
+    }
+
+    const bestandsnaam = 'kerstkaartjes-'+(modus==='oostwest'?'oost-west-':'ronde-')+nu.toISOString().slice(0,10)+'.pdf';
+    doc.save(bestandsnaam);
+    toast('✓ PDF gedownload');
+  }catch(err){
+    console.error(err);
+    toast('PDF maken mislukt, probeer opnieuw', true);
+  }
+}
+
 function renderKerst(){
   const main=document.getElementById('main');
   const back=document.getElementById('back');
@@ -3198,6 +3343,21 @@ function renderKerst(){
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Totaal fooi', fooiTotaal());
     main.appendChild(totBox);
+
+    // PDF-export: kiezen tussen indeling op Oost/West of op ronde-volgorde
+    const exportRij = document.createElement('div');
+    exportRij.style.cssText = 'display:flex;gap:8px;margin-bottom:12px';
+    const btnOostWest = document.createElement('button');
+    btnOostWest.style.cssText = 'flex:1;padding:11px 8px;background:#2e7d32;color:#fff;border:none;border-radius:12px;font-size:12.5px;font-weight:800';
+    btnOostWest.textContent = '⬇ PDF · Oost & West';
+    btnOostWest.onclick = ()=>exportKerstPdf('oostwest');
+    const btnRonde = document.createElement('button');
+    btnRonde.style.cssText = 'flex:1;padding:11px 8px;background:#1a2d5a;color:#fff;border:none;border-radius:12px;font-size:12.5px;font-weight:800';
+    btnRonde.textContent = '⬇ PDF · Per ronde';
+    btnRonde.onclick = ()=>exportKerstPdf('ronde');
+    exportRij.appendChild(btnOostWest);
+    exportRij.appendChild(btnRonde);
+    main.appendChild(exportRij);
 
     wijkVolgordeIdxs().forEach(wi=>{
       const w = DATA[wi];
@@ -5412,9 +5572,48 @@ function exportSegmentPDF(){
     doc.setFont('helvetica','normal');
     doc.setFontSize(9);
     doc.setTextColor(120);
-    doc.text('Geexporteerd op '+datumStr+'  ·  * = aangevinkt', marge, y);
+    doc.text('Geexporteerd op '+datumStr+'  ·  donker blokje = aangevinkt', marge, y);
     doc.setTextColor(20);
     y += 8;
+
+    function schrijfSegStraat(straat, nrs, segNr){
+      nieuwePaginaAlsNodig(12);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(20,20,20);
+      doc.text(straat, marge, y);
+      y += 5.5;
+
+      const chipH = 6.2;
+      const gap = 1.6;
+      let x = marge;
+      doc.setFontSize(8.3);
+
+      nrs.forEach(n=>{
+        const isDone = !!segDone[segNr+':'+straat+':'+n];
+        doc.setFont('helvetica', isDone ? 'bold' : 'normal');
+        const tekstW = doc.getTextWidth(n);
+        const chipW = tekstW + 4.5;
+
+        if(x + chipW > pageW - marge){ x = marge; y += chipH + gap; }
+        nieuwePaginaAlsNodig(chipH + gap);
+
+        if(isDone){
+          doc.setFillColor(30,45,90);
+          doc.roundedRect(x, y, chipW, chipH, 1.2, 1.2, 'F');
+          doc.setTextColor(255,255,255);
+        } else {
+          doc.setDrawColor(180,180,180);
+          doc.roundedRect(x, y, chipW, chipH, 1.2, 1.2, 'S');
+          doc.setTextColor(20,20,20);
+        }
+        doc.text(n, x + chipW/2, y + chipH/2 + 1.1, {align:'center'});
+        x += chipW + gap;
+      });
+
+      doc.setTextColor(20,20,20);
+      y += chipH + 4;
+    }
 
     Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
       const regio = seg.naam.includes('OOST') ? 'OOST' : 'WEST';
@@ -5439,21 +5638,7 @@ function exportSegmentPDF(){
       y += 14;
 
       Object.entries(seg.straten).forEach(([straat, nrs])=>{
-        nieuwePaginaAlsNodig(12);
-        doc.setFont('helvetica','bold');
-        doc.setFontSize(9.5);
-        doc.text(straat, marge, y);
-        y += 4.5;
-        doc.setFont('helvetica','normal');
-        doc.setFontSize(9);
-        const regelTekst = nrs.map(n=> segDone[nr+':'+straat+':'+n] ? (n+'*') : n).join(', ');
-        const regels = doc.splitTextToSize(regelTekst, pageW-2*marge);
-        regels.forEach(regel=>{
-          nieuwePaginaAlsNodig(5);
-          doc.text(regel, marge, y);
-          y += 4.3;
-        });
-        y += 1.5;
+        schrijfSegStraat(straat, nrs, nr);
       });
 
       y += 4;
