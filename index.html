@@ -9732,7 +9732,7 @@ function berekenBonusVenster(startIso, dagenLengte){
     const d = new Date(start.getTime()+i*86400000);
     const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     if(perDag[iso] !== undefined){ totaalKranten += perDag[iso]; dagenGeteld++; }
-    else if(d <= new Date()){ dagenOntbrekend.push(iso); } // alleen dagen die al voorbij zijn tellen als 'ontbrekend'
+    else if(d <= new Date() && d.getDay() !== 0){ dagenOntbrekend.push(iso); } // zondag bestaat niet als bezorgdag, en alleen dagen die al voorbij zijn tellen als 'ontbrekend'
   }
   const promillage = totaalKranten>0 ? (klachtenInVenster.length/totaalKranten)*1000 : 0;
   return {
