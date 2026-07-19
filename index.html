@@ -3202,13 +3202,15 @@ function exportKerstPdf(modus){
       if(y + minHoogte > pageH - marge){ doc.addPage(); y = marge; }
     }
     function schrijfSubKop(tekst){
-      nieuwePaginaAlsNodig(11);
+      nieuwePaginaAlsNodig(13);
+      doc.setFillColor(232,150,20); // opvallende goud/oranje balk, net als de WIJK-balken
+      doc.rect(marge, y, pageW-2*marge, 9.5, 'F');
       doc.setFont('helvetica','bold');
-      doc.setFontSize(10.5);
-      doc.setTextColor(200,120,10); // goud/oranje tekst
-      doc.text('▸ '+tekst, marge+3, y+5.6);
+      doc.setFontSize(11.5);
+      doc.setTextColor(255,255,255);
+      doc.text(tekst, marge+3, y+6.7);
       doc.setTextColor(20,20,20);
-      y += 11;
+      y += 12.5;
     }
     function schrijfKop(tekst, kleur){
       nieuwePaginaAlsNodig(16);
@@ -3234,7 +3236,7 @@ function exportKerstPdf(modus){
       y += 7.5;
 
       // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
-      const cellW = 15, cellH = 7.8;
+      const cellW = 17, cellH = 9;
       const tabelX = marge + 1;
       const tabelBreedte = pageW - 2*marge - 2;
       const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
@@ -3242,7 +3244,7 @@ function exportKerstPdf(modus){
 
       nieuwePaginaAlsNodig(rijen*cellH + 4);
 
-      doc.setFontSize(8.5);
+      doc.setFontSize(9.5);
       doc.setDrawColor(120,120,120);
       doc.setLineWidth(0.25);
 
@@ -5639,7 +5641,7 @@ function exportSegmentPDF(){
       doc.text(straat, marge + 2, y + 4);
       y += 7.5;
 
-      const cellW = 15, cellH = 7.8;
+      const cellW = 17, cellH = 9;
       const tabelX = marge + 1;
       const tabelBreedte = pageW - 2*marge - 2;
       const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
@@ -5647,7 +5649,7 @@ function exportSegmentPDF(){
 
       nieuwePaginaAlsNodig(rijen*cellH + 4);
 
-      doc.setFontSize(8.5);
+      doc.setFontSize(9.5);
       doc.setDrawColor(120,120,120);
       doc.setLineWidth(0.25);
 
