@@ -3222,59 +3222,67 @@ function exportKerstPdf(modus){
       y += 13;
     }
     function schrijfStraat(straatNaam, brievenbussen){
-      nieuwePaginaAlsNodig(14);
-      const kaderStartY = y - 1.5;
+      nieuwePaginaAlsNodig(16);
       const kaderX = marge - 1;
       const kaderBreedte = pageW - 2*marge + 2;
-      let binnenX = marge + 2.5;
+      const kaderStartY = y - 1.5;
 
       doc.setFont('helvetica','bold');
       doc.setFontSize(9.5);
       doc.setTextColor(20,20,20);
-      doc.text(straatNaam, binnenX, y + 4);
-      y += 8;
+      doc.text(straatNaam, marge + 2, y + 4);
+      y += 7.5;
 
-      const chipH = 5.4;
-      const gap = 1.4;
-      let x = binnenX;
-      doc.setFontSize(7.8);
+      // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
+      const cellW = 12.5, cellH = 6.4;
+      const tabelX = marge + 1;
+      const tabelBreedte = pageW - 2*marge - 2;
+      const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
+      const rijen = Math.ceil(brievenbussen.length / kolommen);
 
-      brievenbussen.forEach(b=>{
+      nieuwePaginaAlsNodig(rijen*cellH + 4);
+
+      doc.setFontSize(7.6);
+      doc.setDrawColor(120,120,120);
+      doc.setLineWidth(0.25);
+
+      brievenbussen.forEach((b, idx)=>{
+        const col = idx % kolommen;
+        const rij = Math.floor(idx / kolommen);
+        const cx = tabelX + col*cellW;
+        const cy = y + rij*cellH;
+
         const k = kerstKey(straatNaam, b.hoofd);
         const isDone = !!doneKerst[k];
         const e = fooiEntry(k);
         const bedrag = e.munt + e.biljet;
         let label = b.hoofd;
-        if(bedrag>0) label += ' €'+(bedrag/100).toFixed(2).replace('.',',');
-        doc.setFont('helvetica', isDone ? 'bold' : 'normal');
-        const tekstW = doc.getTextWidth(label);
-        const chipW = tekstW + 4;
-
-        if(x + chipW > pageW - marge - 2){ x = binnenX; y += chipH + gap; }
-        nieuwePaginaAlsNodig(chipH + gap);
+        if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
 
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.roundedRect(x, y, chipW, chipH, 1, 1, 'F');
+          doc.rect(cx, cy, cellW, cellH, 'FD');
           doc.setTextColor(255,255,255);
+          doc.setFont('helvetica','bold');
         } else {
-          doc.setDrawColor(180,180,180);
-          doc.roundedRect(x, y, chipW, chipH, 1, 1, 'S');
+          doc.rect(cx, cy, cellW, cellH, 'S');
           doc.setTextColor(20,20,20);
+          doc.setFont('helvetica','normal');
         }
-        doc.text(label, x + chipW/2, y + chipH/2 + 1, {align:'center'});
-        x += chipW + gap;
+        doc.text(label, cx + cellW/2, cy + cellH/2 + 1, {align:'center'});
       });
 
-      // Knipkader om het hele straatblok (naam + huisnummers)
-      const kaderEindY = y + chipH + 2;
+      y += rijen*cellH;
+
+      // Knipkader om het hele straatblok (naam + tabel)
+      const kaderEindY = y + 2.5;
       doc.setDrawColor(150,150,150);
       doc.setLineWidth(0.3);
-      doc.roundedRect(kaderX, kaderStartY, kaderBreedte, kaderEindY - kaderStartY, 1.5, 1.5, 'S');
+      doc.rect(kaderX, kaderStartY, kaderBreedte, kaderEindY - kaderStartY, 'S');
       doc.setLineWidth(0.2);
 
       doc.setTextColor(20,20,20);
-      y += chipH + 4;
+      y = kaderEindY + 2.5;
     }
 
     doc.setFont('helvetica','bold');
@@ -5620,53 +5628,59 @@ function exportSegmentPDF(){
     y += 8;
 
     function schrijfSegStraat(straat, nrs, segNr){
-      nieuwePaginaAlsNodig(14);
-      const kaderStartY = y - 1.5;
+      nieuwePaginaAlsNodig(16);
       const kaderX = marge - 1;
       const kaderBreedte = pageW - 2*marge + 2;
-      let binnenX = marge + 2.5;
+      const kaderStartY = y - 1.5;
 
       doc.setFont('helvetica','bold');
       doc.setFontSize(9.5);
       doc.setTextColor(20,20,20);
-      doc.text(straat, binnenX, y + 4);
-      y += 8;
+      doc.text(straat, marge + 2, y + 4);
+      y += 7.5;
 
-      const chipH = 5.4;
-      const gap = 1.4;
-      let x = binnenX;
-      doc.setFontSize(7.8);
+      const cellW = 12.5, cellH = 6.4;
+      const tabelX = marge + 1;
+      const tabelBreedte = pageW - 2*marge - 2;
+      const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
+      const rijen = Math.ceil(nrs.length / kolommen);
 
-      nrs.forEach(n=>{
+      nieuwePaginaAlsNodig(rijen*cellH + 4);
+
+      doc.setFontSize(7.6);
+      doc.setDrawColor(120,120,120);
+      doc.setLineWidth(0.25);
+
+      nrs.forEach((n, idx)=>{
+        const col = idx % kolommen;
+        const rij = Math.floor(idx / kolommen);
+        const cx = tabelX + col*cellW;
+        const cy = y + rij*cellH;
         const isDone = !!segDone[segNr+':'+straat+':'+n];
-        doc.setFont('helvetica', isDone ? 'bold' : 'normal');
-        const tekstW = doc.getTextWidth(n);
-        const chipW = tekstW + 4;
-
-        if(x + chipW > pageW - marge - 2){ x = binnenX; y += chipH + gap; }
-        nieuwePaginaAlsNodig(chipH + gap);
 
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.roundedRect(x, y, chipW, chipH, 1, 1, 'F');
+          doc.rect(cx, cy, cellW, cellH, 'FD');
           doc.setTextColor(255,255,255);
+          doc.setFont('helvetica','bold');
         } else {
-          doc.setDrawColor(180,180,180);
-          doc.roundedRect(x, y, chipW, chipH, 1, 1, 'S');
+          doc.rect(cx, cy, cellW, cellH, 'S');
           doc.setTextColor(20,20,20);
+          doc.setFont('helvetica','normal');
         }
-        doc.text(n, x + chipW/2, y + chipH/2 + 1, {align:'center'});
-        x += chipW + gap;
+        doc.text(n, cx + cellW/2, cy + cellH/2 + 1, {align:'center'});
       });
 
-      const kaderEindY = y + chipH + 2;
+      y += rijen*cellH;
+
+      const kaderEindY = y + 2.5;
       doc.setDrawColor(150,150,150);
       doc.setLineWidth(0.3);
-      doc.roundedRect(kaderX, kaderStartY, kaderBreedte, kaderEindY - kaderStartY, 1.5, 1.5, 'S');
+      doc.rect(kaderX, kaderStartY, kaderBreedte, kaderEindY - kaderStartY, 'S');
       doc.setLineWidth(0.2);
 
       doc.setTextColor(20,20,20);
-      y += chipH + 4;
+      y = kaderEindY + 2.5;
     }
 
     Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
