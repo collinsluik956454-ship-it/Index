@@ -3234,7 +3234,7 @@ function exportKerstPdf(modus){
       y += 7.5;
 
       // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
-      const cellW = 12.5, cellH = 6.4;
+      const cellW = 15, cellH = 7.8;
       const tabelX = marge + 1;
       const tabelBreedte = pageW - 2*marge - 2;
       const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
@@ -3242,7 +3242,7 @@ function exportKerstPdf(modus){
 
       nieuwePaginaAlsNodig(rijen*cellH + 4);
 
-      doc.setFontSize(7.6);
+      doc.setFontSize(8.5);
       doc.setDrawColor(120,120,120);
       doc.setLineWidth(0.25);
 
@@ -5639,7 +5639,7 @@ function exportSegmentPDF(){
       doc.text(straat, marge + 2, y + 4);
       y += 7.5;
 
-      const cellW = 12.5, cellH = 6.4;
+      const cellW = 15, cellH = 7.8;
       const tabelX = marge + 1;
       const tabelBreedte = pageW - 2*marge - 2;
       const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
@@ -5647,7 +5647,7 @@ function exportSegmentPDF(){
 
       nieuwePaginaAlsNodig(rijen*cellH + 4);
 
-      doc.setFontSize(7.6);
+      doc.setFontSize(8.5);
       doc.setDrawColor(120,120,120);
       doc.setLineWidth(0.25);
 
