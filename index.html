@@ -4775,50 +4775,94 @@ try{
 function parseWijkenPdf(tekst){
   // Veiligheid: als de laatste regel van een segment vastplakt aan de
   // volgende "Segment N (" header (komt voor bij docx→pdf conversie),
-  // splits die dan alsnog op.
+  // splits die dan alsnog op. De WIJK-header kan met of zonder streepje
+  // komen: "WIJK 249 22 adressen" of "WIJK 226 — 48 adressen".
   tekst = tekst.replace(/(?=Segment\s+\d+\s*\(\d+\s*adressen)/g, '\n');
+  tekst = tekst.replace(/(?=WIJK\s+\d+\s*[—–-]?\s*\d+\s*adressen)/g, '\n');
   const regels = tekst.split('\n').map(l=>l.trim()).filter(l=>l.length);
 
   const resultaat = {};
-  let curSeg = null;
-  let curStraat = null;
   let wijkNaam = '';
-  let inAdressenSectie = false; // alleen tussen "Adressen per segment" en volgende wijk-header lezen we straten
+  // Twee PDF-stijlen komen voor:
+  //  - "leading": header (WIJK NNN / Segment NNN) staat VOOR de straten van dat segment
+  //  - "trailing": header staat ERNA, als totaalregel onderaan het blok
+  //    (bv. Kerstkaartjes/Brievenbussen-export: "Zuidwal ... 80 82 / WIJK 226 — 48 adressen")
+  // We houden een buffer bij van nog-niet-toegewezen straten; komt er een header
+  // terwijl de buffer al gevuld is, dan hoort die data bij DIE header (trailing-stijl).
+  // Is de buffer leeg, dan is het een leading-header en schrijven we er juist ná toe.
+  let buffer = {};
+  let curStraat = null;
+  let curSegActief = null;
 
   for(const regel of regels){
-    if(/^OLDENZAAL\s+(OOST|WEST)/i.test(regel)){
-      wijkNaam = regel;
-      inAdressenSectie = false;
-      curSeg = null;
+    if(/^OLDENZAAL[\s-]+(OOST|WEST)/i.test(regel)){
+      wijkNaam = regel.replace(/-/g,' ');
+      buffer = {};
       curStraat = null;
+      curSegActief = null;
       continue;
     }
-    if(/^Adressen per segment/i.test(regel)){ inAdressenSectie = true; continue; }
-    if(!inAdressenSectie) continue; // negeer product-/vergoedingoverzicht en mutaties
+    // Stopt met opnemen zodra een "niet gevonden"/controleren-sectie begint
+    // (nieuwere PDF's kunnen aan het eind een lijst met niet-toegewezen adressen hebben).
+    if(/controleren.*niet gevonden|niet gevonden in wijkenlijst/i.test(regel)){
+      buffer = {};
+      curStraat = null;
+      curSegActief = null;
+      continue;
+    }
 
-    const segMatch = regel.match(/^Segment\s+(\d+)\s*\((\d+)\s*adressen,\s*(\d+)\s*straten\)/i);
+    // Oude formaat: "Segment 226 (43 adressen, 6 straten)"
+    const segMatchOud = regel.match(/^Segment\s+(\d+)\s*\((\d+)\s*adressen,\s*(\d+)\s*straten\)/i);
+    // Nieuwe formaat: "WIJK 249 22 adressen met bezorging" of "WIJK 226 — 48 adressen"
+    const segMatchNieuw = regel.match(/^WIJK\s+(\d+)\s*[—–-]?\s*(\d+)\s*adressen(?:\s+met\s+bezorging)?/i);
+    const segMatch = segMatchOud || segMatchNieuw;
     if(segMatch){
-      curSeg = segMatch[1];
-      resultaat[curSeg] = {
-        naam: (wijkNaam || 'OLDENZAAL') + ' ' + curSeg,
-        _verwachtAdressen: parseInt(segMatch[2],10),
-        _verwachtStraten: parseInt(segMatch[3],10),
-        straten: {}
-      };
+      const nr = segMatch[1];
+      const verwachtAdressen = parseInt(segMatch[2],10);
+      const verwachtStraten = segMatchOud ? parseInt(segMatch[3],10) : null; // nieuw formaat vermeldt geen straten-aantal
+      const bufferHeeftData = Object.keys(buffer).length > 0;
+      if(bufferHeeftData){
+        // Trailing-stijl: de header hoort bij de data die we net verzameld hebben.
+        resultaat[nr] = {
+          naam: (wijkNaam || 'OLDENZAAL') + ' ' + nr,
+          _verwachtAdressen: verwachtAdressen,
+          _verwachtStraten: verwachtStraten,
+          straten: buffer
+        };
+        buffer = {};
+        curSegActief = null;
+      } else {
+        // Leading-stijl: nieuw segment starten, volgende regels horen hierbij.
+        resultaat[nr] = {
+          naam: (wijkNaam || 'OLDENZAAL') + ' ' + nr,
+          _verwachtAdressen: verwachtAdressen,
+          _verwachtStraten: verwachtStraten,
+          straten: {}
+        };
+        curSegActief = nr;
+      }
       curStraat = null;
       continue;
     }
-    if(!curSeg) continue;
 
     if(/^\d/.test(regel)){
-      // Regel met huisnummers, hoort bij de laatst gezien straatnaam
+      // Regel met huisnummers, hoort bij de laatst gezien straatnaam.
+      // Oude formaat: komma-gescheiden ("14F, 34, 38"). Nieuwe formaat: spatie-gescheiden ("7 9 25 39").
       if(!curStraat) continue;
-      const nrs = regel.split(',').map(s=>s.trim()).filter(Boolean);
-      resultaat[curSeg].straten[curStraat] = (resultaat[curSeg].straten[curStraat]||[]).concat(nrs);
+      const nrs = regel.split(/[,\s]+/).map(s=>s.trim()).filter(Boolean);
+      if(curSegActief){
+        resultaat[curSegActief].straten[curStraat] = (resultaat[curSegActief].straten[curStraat]||[]).concat(nrs);
+      } else {
+        buffer[curStraat] = (buffer[curStraat]||[]).concat(nrs);
+      }
     } else {
       // Straatnaam-regel
       curStraat = regel.toUpperCase();
-      if(!resultaat[curSeg].straten[curStraat]) resultaat[curSeg].straten[curStraat] = [];
+      if(curSegActief){
+        if(!resultaat[curSegActief].straten[curStraat]) resultaat[curSegActief].straten[curStraat] = [];
+      } else {
+        if(!buffer[curStraat]) buffer[curStraat] = [];
+      }
     }
   }
   return resultaat;
@@ -4862,7 +4906,8 @@ function importeerWijkenPdf(file){
         const seg = geparsed[nr];
         const straatCount = Object.keys(seg.straten).length;
         const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
-        if(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen) klopt++;
+        const straatOk = seg._verwachtStraten===null || straatCount===seg._verwachtStraten;
+        if(straatOk && adresCount===seg._verwachtAdressen) klopt++;
         else afwijkend.push(nr);
         delete seg._verwachtStraten; delete seg._verwachtAdressen;
       });
@@ -9437,7 +9482,10 @@ async function verwerkGekozenPdfBestand(file){
         });
         if(line) probeText += line+'\n';
       }
-      if(/Adressen per segment/i.test(probeText) && /Segment\s+\d+\s*\(\d+\s*adressen/i.test(probeText)){
+      if(
+        (/Adressen per segment/i.test(probeText) && /Segment\s+\d+\s*\(\d+\s*adressen/i.test(probeText)) ||
+        /WIJK\s+\d+\s+\d+\s*adressen(?:\s+met\s+bezorging)?/i.test(probeText)
+      ){
         wijkenTekst = probeText;
       }
     }catch(probeErr){ console.warn('[Looplijst] Wijken-detectie mislukt, ga door als normale looplijst', probeErr); }
@@ -9453,7 +9501,8 @@ async function verwerkGekozenPdfBestand(file){
           const seg = geparsed[nr];
           const straatCount = Object.keys(seg.straten).length;
           const adresCount = Object.values(seg.straten).reduce((s,a)=>s+a.length,0);
-          if(!(straatCount===seg._verwachtStraten && adresCount===seg._verwachtAdressen)) afwijkend.push(nr);
+          const straatOk = seg._verwachtStraten===null || straatCount===seg._verwachtStraten;
+          if(!(straatOk && adresCount===seg._verwachtAdressen)) afwijkend.push(nr);
           delete seg._verwachtStraten; delete seg._verwachtAdressen;
         });
         gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
