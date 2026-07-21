@@ -9665,7 +9665,10 @@ function laadBonusArchief(){
 }
 function saveBonusArchief(lijst){ localStorage.setItem(STORAGE_BONUS_ARCHIEF, JSON.stringify(lijst)); }
 
-function isKlachtRawVerdacht(raw){
+function isKlachtRawVerdacht(k){
+  // Accepteert zowel een kale raw-string (oude aanroepstijl) als het volledige
+  // klacht-object {raw, straat, huisnr, plaats, ...} voor extra veldchecks.
+  const raw = (typeof k === 'string') ? k : ((k && k.raw) || '');
   if(!raw) return false;
   if(raw.length >= 150) return true;
   // Een echte klachtregel bevat maar 1 productcode (in "Abo XX ..."). Komt een
@@ -9676,6 +9679,20 @@ function isKlachtRawVerdacht(raw){
   // Een klachtregel hoort nooit een sectiekop van de PDF te bevatten — als die
   // erin voorkomt, is er tekst uit de volgende sectie aan de klacht geplakt.
   if(/\b(Mutaties|Klachten|Product\s+Abo|Totaal\s+Bezorgwijk|Bezorgwijk\s+\d)\b/i.test(raw)) return true;
+  // Eén klacht hoort maar 1 straat te noemen. Komen er 3+ straatnaam-achtige
+  // woorden (op -straat/-laan/-kamp/-plein/-markt/-wal/-dijk/-hof/-weg/-hoek)
+  // in de tekst voor, dan zijn meerdere klacht/mutatie-blokken aan elkaar
+  // geplakt (bv. "Tulpstraat, Steenstraat Wilhelminastraat").
+  const straatAchtig = raw.match(/\b[A-Za-zÀ-ÿ]+(straat|laan|kamp|plein|markt|wal|dijk|hof|weg|hoek)\b/gi) || [];
+  if(straatAchtig.length >= 3) return true;
+  // Extra check op de al-gesplitste velden (indien beschikbaar): een geldige
+  // plaatsnaam bevat geen cijfers, en een straatnaam bestaat zelden uit 4+
+  // losse woorden — komt dat toch voor, dan is er een adres/naam/plaats
+  // door elkaar heen gesplitst.
+  if(typeof k === 'object' && k){
+    if(k.plaats && /\d/.test(k.plaats)) return true;
+    if(k.straat && k.straat.trim().split(/\s+/).length >= 4) return true;
+  }
   return false;
 }
 function klachtSemantischeSleutel(k){
@@ -9690,7 +9707,7 @@ function laadKlachtenLog(){
     // Zelfherstel: eerdere versie kon door een bug hele straatlijsten aan een klacht
     // plakken. Zulke entries filteren we hier stilzwijgend uit (en slaan de
     // opgeschoonde lijst meteen op).
-    let schoon = log.filter(k => !isKlachtRawVerdacht(k.raw));
+    let schoon = log.filter(k => !isKlachtRawVerdacht(k));
     // Zelfherstel: dezelfde klacht kan met licht andere tekst-extractie 2x zijn
     // opgeslagen (bijv. omdat 'm in meerdere dag-PDF's stond). Dedupliceer op
     // datum+type+straat+huisnr, behoud de eerst gevonden (oudste) versie.
@@ -9722,7 +9739,7 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
       const bekendSemantisch = new Set(log.map(k=>klachtSemantischeSleutel(k)));
       let toegevoegd = 0;
       nieuweKlachten.forEach(k=>{
-        if(isKlachtRawVerdacht(k.raw)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
+        if(isKlachtRawVerdacht(k)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
         const semSleutel = klachtSemantischeSleutel(k);
         if(bekend.has(k.raw) || bekendSemantisch.has(semSleutel)) return; // zelfde klacht (evt. licht andere PDF-extractie) al bekend
         log.push(k); bekend.add(k.raw); bekendSemantisch.add(semSleutel); toegevoegd++;
