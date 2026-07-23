@@ -9589,15 +9589,35 @@ async function pdfExtractLines(arrayBuffer){
     const w = vp.width;
 
     // Eerst: volle-breedte regels uitlezen voor mutaties (STOP/START lopen over hele breedte)
-    const byYfull = {};
-    tc.items.forEach(it => {
-      const y = Math.round(it.transform[5]);
-      if(!byYfull[y]) byYfull[y]=[];
-      byYfull[y].push({x:it.transform[4], str:it.str});
+    // Y-waarden clusteren met een kleine tolerantie i.p.v. hard afronden: het
+    // "!"-icoontje vóór een klacht staat soms op een fractie andere baseline
+    // dan de tekst erachter. Met harde Math.round() kon dat het "!" op een
+    // eigen regeltje zetten, waardoor de klachtregel niet meer met "!" begon
+    // en de klacht dus stilletjes NIET herkend werd (bv. klachten van een
+    // andere dag die wél in de PDF stonden, maar nooit in de app verschenen).
+    const Y_TOL = 2.5;
+    const ruweItemsFull = tc.items.map(it => ({x: it.transform[4], y: it.transform[5], str: it.str}))
+      .sort((a,b)=> b.y - a.y || a.x - b.x);
+    const rijenFull = [];
+    ruweItemsFull.forEach(it=>{
+      let rij = rijenFull.length ? rijenFull[rijenFull.length-1] : null;
+      if(!rij || Math.abs(rij.y - it.y) > Y_TOL){
+        rij = {y: it.y, items: []};
+        rijenFull.push(rij);
+      }
+      rij.items.push(it);
     });
-    const volleBreedteLijnen = Object.keys(byYfull).map(Number).sort((a,b)=>b-a).map(y=>
-      byYfull[y].sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim()
+    let volleBreedteLijnen = rijenFull.map(r =>
+      r.items.sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim()
     );
+    // Extra vangnet: staat er toch nog een regel die alléén uit "!" bestaat
+    // (clustering ving 'm niet), plak die dan alsnog aan de volgende regel.
+    for(let vi=volleBreedteLijnen.length-2; vi>=0; vi--){
+      if(volleBreedteLijnen[vi] === '!'){
+        volleBreedteLijnen[vi+1] = '! ' + volleBreedteLijnen[vi+1];
+        volleBreedteLijnen.splice(vi,1);
+      }
+    }
     volleBreedteLijnen.forEach(line=>{
       if(/^(START|STOP)\s+Abo\b/i.test(line)) mutatieRegels.push(line);
     });
