@@ -9718,10 +9718,26 @@ function isKlachtRawVerdacht(k){
   }
   return false;
 }
+// Haalt het abonnement/krantentype (bv. "TT OL", "TEL", "VK") uit de ruwe
+// klachtregel, uit het "Abo XX YYY" stukje vlak na type+datum.
+// Wordt gebruikt om klachten op hetzelfde adres/dezelfde dag maar voor een
+// ANDER abonnement (bv. TT OL én TEL) uit elkaar te houden bij het
+// dedupliceren — dat zijn 2 losse klachten, geen dubbele.
+function klachtProductUitRaw(raw){
+  if(!raw) return '';
+  const m = raw.match(/\bAbo\s+([A-Z]{2,6})\s+[A-Z0-9]{2,8}\b/i);
+  if(!m) return '';
+  const code = m[1].toUpperCase();
+  return (code==='TT') ? 'TT OL' : (code==='AD') ? 'AD NL' : code;
+}
+
 function klachtSemantischeSleutel(k){
   const straat = (k.straat||'').toLowerCase().replace(/\s+/g,' ').trim();
   const huisnr = (k.huisnr||'').toLowerCase().replace(/\s+/g,'').trim();
-  return (k.datum||'')+'|'+(k.type||'')+'|'+straat+'|'+huisnr;
+  // product wordt zo nodig live uit de raw-tekst herleid, zodat dit ook werkt
+  // voor al opgeslagen (oudere) klachten die nog geen apart product-veld hebben.
+  const product = (k.product || klachtProductUitRaw(k.raw) || '').toLowerCase().trim();
+  return (k.datum||'')+'|'+(k.type||'')+'|'+product+'|'+straat+'|'+huisnr;
 }
 
 function laadKlachtenLog(){
@@ -9847,8 +9863,10 @@ function klachtWeergaveHTML(k){
         k.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+
       '</div>'
     : '';
+  const product = k.product || klachtProductUitRaw(k.raw);
+  const subtitel = k.type + (product ? ' · ' + product : '');
   return '<span style="font-weight:700;color:#374151">'+wijkBadge+adresTekst+'</span>'+
-    '<span style="color:#9ca3af;font-size:11px;display:block;margin-top:1px">'+k.type+'</span>'+rawDebug;
+    '<span style="color:#9ca3af;font-size:11px;display:block;margin-top:1px">'+subtitel+'</span>'+rawDebug;
 }
 
 function parseKlachten(regels){
@@ -9874,8 +9892,9 @@ function parseKlachten(regels){
       else { straat = straatNr; }
     }
     const segment = straat ? segmentVoorStraat(straat) : null;
+    const product = klachtProductUitRaw(regel); // krantentype, bv. "TT OL"/"TEL"/"VK" — voor dedup en weergave
 
-    klachten.push({type, datum: datumIso, straat, huisnr, plaats, segment, raw: regel.trim()});
+    klachten.push({type, datum: datumIso, product, straat, huisnr, plaats, segment, raw: regel.trim()});
   });
   return klachten;
 }
