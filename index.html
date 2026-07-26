@@ -1575,6 +1575,7 @@ try { const m = JSON.parse(localStorage.getItem(STORAGE_META)); if(m) meta=Objec
 let view = {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
 let agendaToonAlleWeken = false; // standaard: alleen de huidige week tonen, voor overzicht
 let mutatiesUitgeklapt = {START:false, STOP:false};
+let jaarArchiefUitgeklapt = {};
 
 // Bepaal dag-naam (maandag/dinsdag/...) uit meta.date "13 jun 2026"
 function dagVanLooplijst(){
@@ -2170,6 +2171,7 @@ function render(){
   if(view.mode==='bonus') return renderBonus();
   if(view.mode==='klachten') return renderKlachten();
   if(view.mode==='mutaties') return renderMutaties();
+  if(view.mode==='jaararchief') return renderJaarArchief();
   if(view.mode==='wijkenmenu') return renderWijkenMenu();
   if(view.mode==='agendahoofd') return renderAgendaHoofd();
   if(view.mode==='vergoedingmenu') return renderVergoedingMenu();
@@ -5232,6 +5234,46 @@ function renderKlachten(){
   };
   wrap.appendChild(wisBtn);
 
+  // ===== Jaar afronden: verplaatst afgelopen jaren naar het jaararchief =====
+  const jaarKandidaten = jaarAfrondenKandidaten();
+  const jaarKaart = document.createElement('div');
+  jaarKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+  let jaarHTML = '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📦 Jaar afronden</div>';
+  if(jaarKandidaten.length === 0){
+    jaarHTML += '<div style="font-size:12.5px;color:#9ca3af">Geen afgeronde jaren om te archiveren — alle data hoort bij het lopende jaar.</div>';
+  } else {
+    jaarHTML += '<div style="font-size:12.5px;color:#6b7280;margin-bottom:10px">Er staat nog data van een eerder jaar in de klachten/mutaties/kranten-tellers. Archiveer die, dan tellen de modules weer vanaf 0 voor het lopende jaar — niets gaat verloren.</div>';
+  }
+  jaarKaart.innerHTML = jaarHTML;
+  jaarKandidaten.forEach(jaar=>{
+    const btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:12px;margin-top:8px;border:1.5px solid #1a2d5a;border-radius:10px;background:#fff;color:#1a2d5a;font-weight:800;font-size:13px';
+    btn.textContent = '📦 Jaar '+jaar+' afronden & archiveren';
+    btn.onclick = ()=>{
+      let waarschuwing = '';
+      try{
+        const inst = JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING));
+        if(inst && inst.start){
+          const v = berekenBonusVenster(inst.start, 56);
+          if(v.start.getFullYear()===jaar || v.eind.getFullYear()===jaar){
+            waarschuwing = '\n\n⚠️ Let op: je lopende bonusperiode ('+fmtD(v.start)+' t/m '+fmtD(v.eind)+') loopt door dit jaar. Archiveren kan de promillage-berekening van die periode beïnvloeden.';
+          }
+        }
+      }catch(e){}
+      if(!confirm('Jaar '+jaar+' archiveren? Klachten, mutaties, kranten-tellingen (en de huidige fooi-stand) van dat jaar verhuizen naar het jaararchief en verdwijnen uit de lopende lijsten.'+waarschuwing)) return;
+      const res = voerJaarAfrondingUit(jaar);
+      toast('✓ Jaar '+jaar+' gearchiveerd · '+res.klachten+' klacht(en) · '+res.mutaties+' mutatie(s)');
+      renderKlachten();
+    };
+    jaarKaart.appendChild(btn);
+  });
+  const archiefLinkBtn = document.createElement('button');
+  archiefLinkBtn.style.cssText = 'width:100%;padding:10px;margin-top:8px;border:none;border-radius:10px;background:#f3f4f6;color:#374151;font-weight:700;font-size:12.5px';
+  archiefLinkBtn.textContent = '📚 Bekijk jaararchief';
+  archiefLinkBtn.onclick = ()=>{ view = {mode:'jaararchief', level:null, wijk:null, ronde:null, straat:null, krant:null}; render(); };
+  jaarKaart.appendChild(archiefLinkBtn);
+  wrap.appendChild(jaarKaart);
+
   const groepen = groepeerKlachtenPerPeriode();
   const perDag = laadKrantenPerDag();
 
@@ -5277,10 +5319,121 @@ function renderKlachten(){
   main.appendChild(wrap);
 }
 
-function renderBonus(){
+function renderJaarArchief(){
   const main = document.getElementById('main');
   document.getElementById('back').classList.remove('hidden');
-  document.getElementById('crumb').textContent = 'Bonus';
+  document.getElementById('crumb').textContent = 'Klachten · Jaararchief';
+  document.getElementById('title').textContent = 'Jaararchief';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding-bottom:20px';
+
+  const archief = laadJaarArchief();
+  const jaren = Object.keys(archief).map(Number).sort((a,b)=>b-a);
+
+  if(jaren.length === 0){
+    const leeg = document.createElement('div');
+    leeg.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
+    leeg.textContent = 'Nog geen jaren gearchiveerd. Gebruik "📦 Jaar afronden" op de klachten-pagina om een afgesloten jaar hierheen te verplaatsen.';
+    wrap.appendChild(leeg);
+  }
+
+  jaren.forEach(jaar=>{
+    const a = archief[jaar];
+    const uitgeklapt = !!jaarArchiefUitgeklapt[jaar];
+    const totaalKranten = Object.values(a.krantenPerDag||{}).reduce((s,n)=>s+n,0);
+    const promillage = totaalKranten>0 ? (a.klachten.length/totaalKranten)*1000 : null;
+    const fooiTotaal = a.fooi ? Object.values(a.fooi).reduce((s,e)=>{
+      const v = (typeof e==='number') ? e : ((e.munt||0)+(e.biljet||0));
+      return s+v;
+    },0) : 0;
+
+    const kaart = document.createElement('div');
+    kaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;cursor:pointer;'+(uitgeklapt?'margin-bottom:12px':'');
+    header.innerHTML =
+      '<div>'+
+        '<div style="font-size:16px;font-weight:900;color:#1a2d5a">'+jaar+'</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">Gearchiveerd op '+formatDatumNL((a.gearchiveerdOp||'').slice(0,10))+'</div>'+
+      '</div>'+
+      '<span style="font-size:13px;color:#9ca3af;font-weight:800">'+(uitgeklapt?'▲ verberg':'▼ toon')+'</span>';
+    header.onclick = ()=>{ jaarArchiefUitgeklapt[jaar] = !jaarArchiefUitgeklapt[jaar]; renderJaarArchief(); };
+    kaart.appendChild(header);
+
+    const statsWrap = document.createElement('div');
+    statsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;'+(uitgeklapt?'margin-bottom:12px':'');
+    statsWrap.innerHTML =
+      '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:#374151">'+a.klachten.length+'</div>'+
+        '<div style="font-size:10px;color:#9ca3af;font-weight:700">klachten</div>'+
+      '</div>'+
+      '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:#374151">'+a.mutaties.length+'</div>'+
+        '<div style="font-size:10px;color:#9ca3af;font-weight:700">mutaties</div>'+
+      '</div>'+
+      '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:#374151">'+totaalKranten.toLocaleString('nl-NL')+'</div>'+
+        '<div style="font-size:10px;color:#9ca3af;font-weight:700">kranten</div>'+
+      '</div>'+
+      (promillage!==null ? (
+      '<div style="flex:1;min-width:80px;background:'+(promillage<4?'#e8f5e9':'#ffebee')+';border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:'+(promillage<4?'#2e7d32':'#c62828')+'">'+promillage.toFixed(2).replace('.',',')+'‰</div>'+
+        '<div style="font-size:10px;color:'+(promillage<4?'#2e7d32':'#c62828')+';font-weight:700">promillage</div>'+
+      '</div>') : '')+
+      (fooiTotaal>0 ? (
+      '<div style="flex:1;min-width:80px;background:#fff3cd;border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:#7a5c00">'+formatEuroBudget(fooiTotaal)+'</div>'+
+        '<div style="font-size:10px;color:#7a5c00;font-weight:700">fooi</div>'+
+      '</div>') : '');
+    kaart.appendChild(statsWrap);
+
+    if(uitgeklapt){
+      const klachtenSorted = a.klachten.slice().sort((x,y)=>y.datum.localeCompare(x.datum));
+      if(klachtenSorted.length){
+        const sub = document.createElement('div');
+        sub.style.cssText = 'font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px';
+        sub.textContent = 'Klachten';
+        kaart.appendChild(sub);
+        klachtenSorted.forEach(k=>{
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
+          regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
+          kaart.appendChild(regel);
+        });
+      }
+      const mutatiesSorted = a.mutaties.slice().sort((x,y)=>y.datum.localeCompare(x.datum));
+      if(mutatiesSorted.length){
+        const sub = document.createElement('div');
+        sub.style.cssText = 'font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px';
+        sub.textContent = 'Mutaties';
+        kaart.appendChild(sub);
+        mutatiesSorted.forEach(m=>{
+          const seg = m.straat ? segmentVoorStraat(m.straat) : null;
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
+          regel.innerHTML =
+            '<div>'+
+              (seg ? '<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px">'+seg+'</span>' : '')+
+              '<span style="font-weight:700;color:#374151">'+(m.type==='START'?'▶':'■')+' '+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
+              '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
+            '</div>'+
+            '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+          kaart.appendChild(regel);
+        });
+      }
+    }
+
+    wrap.appendChild(kaart);
+  });
+
+  main.appendChild(wrap);
+}
+
+
+function renderBonus(){
+  const main = document.getElementById('main');
   document.getElementById('title').textContent = 'Klachtenpromillage';
   main.innerHTML = '';
 
@@ -9687,6 +9840,77 @@ function laadBonusArchief(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_BONUS_ARCHIEF)) || []; }catch(e){ return []; }
 }
 function saveBonusArchief(lijst){ localStorage.setItem(STORAGE_BONUS_ARCHIEF, JSON.stringify(lijst)); }
+
+// ===== Jaararchief: aan het eind van een jaar de opgebouwde data uit alle =====
+// ===== modules (klachten, mutaties, kranten-per-dag, fooi) verplaatsen    =====
+// ===== naar een archief per jaartal, zodat de lopende tellers weer op 0   =====
+// ===== beginnen zonder dat er iets verloren gaat. Werkt via een          =====
+// ===== handmatige knop ("Jaar afronden"), net als bij Bonus-periodes.    =====
+const STORAGE_JAARARCHIEF = 'looplijst_v23_jaararchief';
+function laadJaarArchief(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_JAARARCHIEF)) || {}; }catch(e){ return {}; }
+}
+function saveJaarArchief(a){ localStorage.setItem(STORAGE_JAARARCHIEF, JSON.stringify(a)); }
+
+// Jaartallen (kleiner dan het huidige kalenderjaar) waar nog "losse" data van
+// in de live modules staat en dus nog niet gearchiveerd is.
+function jaarAfrondenKandidaten(){
+  const huidigJaar = new Date().getFullYear();
+  const jaren = new Set();
+  laadKlachtenLog().forEach(k=>{ const j=parseInt((k.datum||'').slice(0,4),10); if(j && j<huidigJaar) jaren.add(j); });
+  laadMutatiesLog().forEach(m=>{ const j=parseInt((m.datum||'').slice(0,4),10); if(j && j<huidigJaar) jaren.add(j); });
+  Object.keys(laadKrantenPerDag()).forEach(iso=>{ const j=parseInt(iso.slice(0,4),10); if(j && j<huidigJaar) jaren.add(j); });
+  return Array.from(jaren).sort((a,b)=>a-b);
+}
+
+// Verplaatst alle data van het opgegeven jaartal uit de live modules naar het
+// jaararchief (gemerged met eventueel al eerder gearchiveerde data van dat
+// jaar, zonder duplicaten), en laat de rest van de live data ongemoeid staan.
+function voerJaarAfrondingUit(jaar){
+  const archief = laadJaarArchief();
+  const bestaand = archief[jaar] || {klachten:[], mutaties:[], krantenPerDag:{}, fooi:null, gearchiveerdOp:null};
+
+  // Klachten
+  const klachtenLog = laadKlachtenLog();
+  const klachtenOud = klachtenLog.filter(k=>(k.datum||'').slice(0,4) === String(jaar));
+  const klachtenBlijft = klachtenLog.filter(k=>(k.datum||'').slice(0,4) !== String(jaar));
+  const klachtenSleutelsBekend = new Set(bestaand.klachten.map(k=>k.raw));
+  klachtenOud.forEach(k=>{ if(!klachtenSleutelsBekend.has(k.raw)){ bestaand.klachten.push(k); klachtenSleutelsBekend.add(k.raw); } });
+  localStorage.setItem(STORAGE_KLACHTEN, JSON.stringify(klachtenBlijft));
+
+  // Mutaties
+  const mutatiesLog = laadMutatiesLog();
+  const mutatiesOud = mutatiesLog.filter(m=>(m.datum||'').slice(0,4) === String(jaar));
+  const mutatiesBlijft = mutatiesLog.filter(m=>(m.datum||'').slice(0,4) !== String(jaar));
+  const mutatiesSleutelsBekend = new Set(bestaand.mutaties.map(m=>m.datum+'|'+m.raw));
+  mutatiesOud.forEach(m=>{ const s=m.datum+'|'+m.raw; if(!mutatiesSleutelsBekend.has(s)){ bestaand.mutaties.push(m); mutatiesSleutelsBekend.add(s); } });
+  localStorage.setItem(STORAGE_MUTATIES_LOG, JSON.stringify(mutatiesBlijft));
+
+  // Kranten per dag
+  const perDag = laadKrantenPerDag();
+  Object.keys(perDag).forEach(iso=>{
+    if(iso.slice(0,4) === String(jaar)){ bestaand.krantenPerDag[iso] = perDag[iso]; delete perDag[iso]; }
+  });
+  localStorage.setItem(STORAGE_KRANTEN_PER_DAG, JSON.stringify(perDag));
+
+  // Fooi (niet per-datum opgeslagen, dus: wat er nu in zit gaat mee als
+  // momentopname bij het meest recente jaar dat wordt afgerond)
+  if(Object.keys(fooi).length > 0){
+    bestaand.fooi = Object.assign(bestaand.fooi||{}, fooi);
+    fooi = {};
+    saveFooi();
+  }
+
+  bestaand.gearchiveerdOp = new Date().toISOString();
+  archief[jaar] = bestaand;
+  saveJaarArchief(archief);
+
+  return {
+    klachten: klachtenOud.length,
+    mutaties: mutatiesOud.length,
+    krantenDagen: Object.keys(perDag).length >= 0 ? Object.keys(bestaand.krantenPerDag).length : 0
+  };
+}
 
 function isKlachtRawVerdacht(k){
   // Accepteert zowel een kale raw-string (oude aanroepstijl) als het volledige
