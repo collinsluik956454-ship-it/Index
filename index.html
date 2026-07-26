@@ -3229,7 +3229,22 @@ function exportKerstPdf(modus){
       y += 13;
     }
     function schrijfStraat(straatNaam, brievenbussen){
-      nieuwePaginaAlsNodig(16);
+      // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
+      const cellW = 17, cellH = 9;
+      const tabelX = marge + 1;
+      const tabelBreedte = pageW - 2*marge - 2;
+      const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
+      const rijen = Math.ceil(brievenbussen.length / kolommen);
+
+      // Belangrijk: eerst de TOTALE bloklengte (naam + hele tabel) uitrekenen
+      // en in één keer checken of dat nog op deze pagina past, VOORDAT er iets
+      // getekend wordt. Deed dit niet: dan kon de straatnaam nog net onderaan
+      // een pagina passen, terwijl de nummer-tabel daarna alsnog naar de
+      // volgende pagina sprong — straatnaam en nummers raakten dan gescheiden
+      // (bv. bij Kretalaan).
+      const blokHoogte = 7.5 + rijen*cellH + 4;
+      nieuwePaginaAlsNodig(blokHoogte);
+
       const kaderX = marge - 1;
       const kaderBreedte = pageW - 2*marge + 2;
       const kaderStartY = y - 1.5;
@@ -3239,15 +3254,6 @@ function exportKerstPdf(modus){
       doc.setTextColor(20,20,20);
       doc.text(straatNaam, marge + 2, y + 4);
       y += 7.5;
-
-      // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
-      const cellW = 17, cellH = 9;
-      const tabelX = marge + 1;
-      const tabelBreedte = pageW - 2*marge - 2;
-      const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
-      const rijen = Math.ceil(brievenbussen.length / kolommen);
-
-      nieuwePaginaAlsNodig(rijen*cellH + 4);
 
       doc.setFontSize(9.5);
       doc.setDrawColor(120,120,120);
