@@ -5289,12 +5289,14 @@ function renderMutaties(){
         regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
         regel.innerHTML =
           '<div>'+
-            (seg ? '<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px">'+seg+'</span>' : '')+
+            (seg ? '<span data-seg="'+seg+'" style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px;cursor:pointer">'+seg+' ›</span>' : '')+
             '<span style="font-weight:700;color:#374151">'+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
             '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
             (m.naam ? '<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+m.naam+'</div>' : '')+
           '</div>'+
           '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+        const badgeEl = regel.querySelector('[data-seg]');
+        if(badgeEl){ badgeEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
         kaart.appendChild(regel);
       });
     }
@@ -5537,11 +5539,13 @@ function renderJaarArchief(){
             regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
             regel.innerHTML =
               '<div>'+
-                (seg ? '<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px">'+seg+'</span>' : '')+
+                (seg ? '<span data-seg="'+seg+'" style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px;cursor:pointer">'+seg+' ›</span>' : '')+
                 '<span style="font-weight:700;color:#374151">'+(m.type==='START'?'▶':'■')+' '+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
                 '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
               '</div>'+
               '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+            const badgeEl = regel.querySelector('[data-seg]');
+            if(badgeEl){ badgeEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
             kaart.appendChild(regel);
           });
         });
@@ -10131,14 +10135,22 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
         if(mutaties && mutaties.length){
           const mlog = laadMutatiesLog();
           const bekendM = new Set(mlog.map(x=>x.datum+'|'+x.raw));
+          // Extra semantische sleutel (los van de exacte raw-tekst): dezelfde
+          // mutatie kan in een latere PDF opnieuw meegenomen zijn met net iets
+          // andere tekst-extractie (bv. wel/niet een naam erbij) — dan matcht
+          // de raw-sleutel niet, maar is het wél dezelfde mutatie. Zonder deze
+          // check kwamen zo dubbele regels als "Kretalaan 23" of "Look 9" twee
+          // keer in de lijst te staan.
+          const bekendSemM = new Set(mlog.map(x=>mutatieSemantischeSleutel(x)));
           let toegevoegdM = 0;
           mutaties.forEach(m=>{
             const sleutel = iso+'|'+m.raw;
-            if(!bekendM.has(sleutel)){
-              mlog.push({...m, datum: iso});
-              bekendM.add(sleutel);
-              toegevoegdM++;
-            }
+            const semSleutel = mutatieSemantischeSleutel({...m, datum: iso});
+            if(bekendM.has(sleutel) || bekendSemM.has(semSleutel)) return;
+            mlog.push({...m, datum: iso});
+            bekendM.add(sleutel);
+            bekendSemM.add(semSleutel);
+            toegevoegdM++;
           });
           if(toegevoegdM>0){
             localStorage.setItem(STORAGE_MUTATIES_LOG, JSON.stringify(mlog));
@@ -10230,6 +10242,16 @@ function parseKlachten(regels){
 }
 
 // Parse mutatie-regels naar gestructureerde mutaties
+// Semantische sleutel voor mutatie-dedup: negeert kleine verschillen in de
+// ruwe PDF-tekst (bv. wel/geen naam erbij) en kijkt alleen naar wat de
+// mutatie inhoudelijk uniek maakt.
+function mutatieSemantischeSleutel(m){
+  const straat = (m.straat||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const nr = (m.nr||'').toLowerCase().replace(/\s+/g,'').trim();
+  const prod = (m.prod||'').toLowerCase().replace(/\s+/g,'').trim();
+  return (m.datum||'')+'|'+(m.type||'')+'|'+prod+'|'+straat+'|'+nr;
+}
+
 function parseMutaties(regels){
   const mutaties = [];
   regels.forEach(r=>{
@@ -10624,6 +10646,46 @@ document.getElementById('pdfDoelKlaar').onclick = ()=>{
 };
 
 // Vraag bij nieuwe looplijst-import welke week van de 4-wekenperiode het is
+function toonSegmentInfoPopup(nr){
+  const seg = SEGMENT_DATA[nr];
+  const bg = document.createElement('div');
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#fff;border-radius:18px;max-width:420px;width:100%;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,.2);max-height:80vh;overflow-y:auto';
+  if(!seg){
+    sheet.innerHTML =
+      '<div style="text-align:center;margin-bottom:14px">'+
+        '<div style="font-size:32px">📍</div>'+
+        '<div style="font-size:16px;font-weight:800;margin-top:4px">Segment '+nr+'</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:6px">Geen straatgegevens bekend voor dit segment.</div>'+
+      '</div>'+
+      '<button id="seginfo-close" style="width:100%;padding:11px;background:#1a2d5a;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer">Sluiten</button>';
+  } else {
+    const straten = Object.entries(seg.straten||{}).sort((a,b)=>a[0].localeCompare(b[0]));
+    const totaalAdressen = straten.reduce((s,[,nrs])=>s+nrs.length,0);
+    sheet.innerHTML =
+      '<div style="text-align:center;margin-bottom:14px">'+
+        '<div style="font-size:32px">📍</div>'+
+        '<div style="font-size:16px;font-weight:800;margin-top:4px">Segment '+nr+'</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:2px">'+straten.length+' stra'+(straten.length===1?'at':'ten')+' · '+totaalAdressen+' adressen</div>'+
+      '</div>'+
+      '<div style="margin-bottom:12px">'+
+        straten.map(([naam,nrs])=>
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #f3f4f6;font-size:13px">'+
+            '<span style="font-weight:700;color:#374151">'+naam.charAt(0)+naam.slice(1).toLowerCase()+'</span>'+
+            '<span style="color:#9ca3af;font-size:12px">'+nrs.length+' adres'+(nrs.length===1?'':'sen')+'</span>'+
+          '</div>'
+        ).join('')+
+      '</div>'+
+      '<button id="seginfo-close" style="width:100%;padding:11px;background:#1a2d5a;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer">Sluiten</button>';
+  }
+  bg.appendChild(sheet);
+  document.body.appendChild(bg);
+  const sluit = ()=>{ document.body.removeChild(bg); };
+  sheet.querySelector('#seginfo-close').onclick = sluit;
+  bg.onclick = (e)=>{ if(e.target === bg) sluit(); };
+}
+
 function toonWeekKeuzePopup(){
   // Suggestie: volgende week na de huidige (cyclisch 1→2→3→4→1)
   const huidig = vergoedingWeek || 1;
