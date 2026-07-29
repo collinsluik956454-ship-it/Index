@@ -830,9 +830,6 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
   <button class="action danger" id="resetBtn">
     <span class="ic">🔄</span><span>Alle vinkjes wissen</span>
   </button>
-  <button class="action danger" id="resetZaterdagBtn">
-    <span class="ic">📅</span><span>Alleen Zaterdag-vinkjes wissen</span>
-  </button>
   <button class="action" id="reorderBtn">
     <span class="ic">↕️</span><span>Volgorde wijken aanpassen</span>
   </button>
@@ -1009,11 +1006,21 @@ catch(e){ DATA = DEFAULT_DATA; }
 let done = {};
 try { done = JSON.parse(localStorage.getItem(STORAGE_DONE)) || {}; } catch(e){ done = {}; }
 
-// Zaterdag-modus heeft eigen vinkjes, NIET gedeeld met Looplijst/Bezorgen/Krant/Kaart
+// Vroeger had de Zaterdag/route-weergave (het "Woensdag/Donderdag/..."-tegeltje op
+// Home) eigen vinkjes, los van Looplijst/Bezorgen/Krant. Dat zorgde ervoor dat
+// eenzelfde adres in de ene weergave wél en de andere weergave niét afgevinkt
+// leek te zijn. Eenmalig samenvoegen in `done`, zodat alle weergaves voortaan
+// precies dezelfde vinkjes delen (afvinken in de één = meteen zichtbaar in de ander).
 const STORAGE_DONE_ZATERDAG = 'looplijst_v23_doneZaterdag';
 let doneZaterdag = {};
 try { doneZaterdag = JSON.parse(localStorage.getItem(STORAGE_DONE_ZATERDAG)) || {}; } catch(e){ doneZaterdag = {}; }
 function saveZaterdag(){ localStorage.setItem(STORAGE_DONE_ZATERDAG, JSON.stringify(doneZaterdag)); }
+if(Object.keys(doneZaterdag).length){
+  Object.keys(doneZaterdag).forEach(k=>{ done[k] = doneZaterdag[k]; });
+  localStorage.setItem(STORAGE_DONE, JSON.stringify(done));
+  doneZaterdag = {};
+  saveZaterdag();
+}
 
 // ===== Vergoeding: DPG Media tariefcodes per ronde =====
 const STORAGE_TARIEFCODES = 'looplijst_v23_tariefcodes';
@@ -1616,8 +1623,9 @@ function saveData(){ localStorage.setItem(STORAGE_DATA, JSON.stringify(DATA)); }
 function saveMeta(){ localStorage.setItem(STORAGE_META, JSON.stringify(meta)); }
 
 // Helper: gebruik de juiste done-map op basis van de huidige modus
-// (Zaterdag = doneZaterdag, alle andere modi = done)
-function getDoneMap(){ return (view.mode === 'route') ? doneZaterdag : done; }
+// Alle weergaves (Looplijst, Volgorde & Bezorgen, Woensdag/route) delen nu
+// dezelfde vinkjes in `done` — zie de eenmalige samenvoeging hierboven.
+function getDoneMap(){ return done; }
 function countStraat(wi,ri,si){
   if(!DATA[wi] || !DATA[wi].rondes[ri] || !DATA[wi].rondes[ri].straten[si]) return {done:0,total:0};
   const s = DATA[wi].rondes[ri].straten[si];
@@ -2342,9 +2350,9 @@ function renderRoute(){
   main.innerHTML='';
   // Beide afvink-modi (looplijst en route/zaterdag) respecteren de 🙈-toggle
   const hideChk = hideChecked;
-  // Zaterdag heeft eigen vinkjes (apart van Looplijst/Bezorgen/Krant)
-  const doneMap = (view.mode === 'route') ? doneZaterdag : done;
-  const saveDoneMap = (view.mode === 'route') ? saveZaterdag : save;
+  // Looplijst en route (Woensdag e.d.) delen nu dezelfde vinkjes.
+  const doneMap = done;
+  const saveDoneMap = save;
   if(view.level==='wijk'){
     back.classList.add('hidden');
     crumb.textContent='Looplijst · '+meta.date;
@@ -7931,7 +7939,7 @@ let exportOpts = {
   toonTijd: true,
   alleenAfgevinkt: false,
   alleenNietAfgevinkt: false,
-  vinkBron: 'looplijst'  // 'looplijst' (=done), 'zaterdag' (=doneZaterdag), 'kerst' (=doneKerst)
+  vinkBron: 'looplijst'  // 'looplijst' (=done, gedeeld met route/Woensdag), 'kerst' (=doneKerst)
 };
 function alleKrantTypes(){
   const s = new Set();
@@ -7995,7 +8003,6 @@ function toonExportPdfPopup(){
   bronSec.innerHTML = '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px">Welke vinkjes tonen?</div>';
   const bronnen = [
     {key:'looplijst', label:'📋 Looplijst / Bezorgen', desc:'Wat je hebt afgevinkt tijdens het bezorgen'},
-    {key:'zaterdag', label:'📅 Zaterdag-overzicht', desc:'Apart bijgehouden vinkjes van Zaterdag-modus'},
     {key:'kerst', label:'🎄 Kerstkaarten & fooi', desc:'Vinkjes uit Kaart-modus'},
   ];
   bronnen.forEach(b=>{
@@ -8071,12 +8078,8 @@ function maakPdfPrintView(){
   const pv = document.getElementById('printView');
   pv.innerHTML = '';
   const isKerst = (exportOpts.vinkBron === 'kerst');
-  const bronMap = (exportOpts.vinkBron === 'zaterdag') ? doneZaterdag :
-                  isKerst ? doneKerst :
-                  done;
-  const bronLabel = (exportOpts.vinkBron === 'zaterdag') ? '📅 Zaterdag-vinkjes' :
-                    isKerst ? '🎄 Kerstkaart-vinkjes + fooi' :
-                    '📋 Looplijst-vinkjes';
+  const bronMap = isKerst ? doneKerst : done;
+  const bronLabel = isKerst ? '🎄 Kerstkaart-vinkjes + fooi' : '📋 Looplijst-vinkjes';
   // Header
   const actBar = document.createElement('div');
   actBar.className = 'pv-actions';
@@ -9543,18 +9546,6 @@ function toast(msg,isErr){
   t.textContent=msg; t.className='toast'+(isErr?' err':'')+' show';
   clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3500);
 }
-
-document.getElementById('resetZaterdagBtn').onclick=()=>{
-  closeSheet();
-  setTimeout(()=>{
-    if(confirm('Alle Zaterdag-vinkjes wissen? (Looplijst/Bezorgen/Krant blijven staan)')){
-      doneZaterdag = {};
-      saveZaterdag();
-      render();
-      toast('Zaterdag-vinkjes gewist');
-    }
-  },200);
-};
 
 document.getElementById('resetBtn').onclick=()=>{
   closeSheet();
