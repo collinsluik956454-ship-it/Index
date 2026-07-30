@@ -4018,9 +4018,16 @@ function renderHome(){
 
   // Tel statistieken
   let totaal = 0, klaar = 0;
+  let totaalExtra = 0, klaarExtra = 0;
+  const extraStratenHome = laadExtraStraten();
   DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
     totaal++;
-    if(done[keyFor(wi,ri,si,ai)]) klaar++;
+    const isDone = !!done[keyFor(wi,ri,si,ai)];
+    if(isDone) klaar++;
+    if(extraStratenHome.has((s.naam||'').toUpperCase())){
+      totaalExtra++;
+      if(isDone) klaarExtra++;
+    }
   }))));
   const pct = totaal ? Math.round(klaar/totaal*100) : 0;
   const totaalAangevinkt = Object.values(volgordeVink).reduce((s,arr)=>s+(arr||[]).length, 0);
@@ -4032,7 +4039,8 @@ function renderHome(){
   welk.innerHTML = '<div class="home-dag">'+dag+'</div>'+
     '<div class="home-datum">'+(meta.date||'')+'</div>'+
     '<div class="home-progress"><div class="home-progress-fill" style="width:'+pct+'%"></div></div>'+
-    '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>';
+    '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>'+
+    (totaalExtra>0 ? '<div style="font-size:11px;color:#ffd54f;font-weight:700;margin-top:2px">📍 waarvan '+klaarExtra+' / '+totaalExtra+' extra wijk</div>' : '');
   main.appendChild(welk);
 
   bouwTijdEnAgendaSectie(main);
@@ -4371,6 +4379,18 @@ function renderTijd(){
     btnStart.onclick = ()=>{
       const d = tijdLaadData();
       d.huidig = {start:Date.now(), pauzes:[], pauzeStart:null, eind:null};
+      // Was er al een 'extra wijk'-detectie uit een PDF voor vandaag, maar nog
+      // geen sessie om 'm op te zetten? Alsnog toepassen.
+      try{
+        const dagKey = new Date(d.huidig.start).toDateString();
+        const pend = JSON.parse(localStorage.getItem(STORAGE_EXTRAWIJK_PENDING)||'[]');
+        const treffers = pend.filter(p=>p.dagKey===dagKey);
+        if(treffers.length){
+          d.huidig.extraWijk = true;
+          d.huidig.extraWijkNotitie = treffers.map(t=>t.notitie).join(' · ');
+          localStorage.setItem(STORAGE_EXTRAWIJK_PENDING, JSON.stringify(pend.filter(p=>p.dagKey!==dagKey)));
+        }
+      }catch(e){}
       tijdSlaOp(d);
       herrender();
     };
@@ -4416,6 +4436,39 @@ function renderTijd(){
     knoppen.appendChild(btnStop);
     wrap.appendChild(knoppen);
 
+    // Extra wijk op het laatste moment — alleen relevant terwijl een sessie loopt
+    if(isBezig){
+      const extraWrap = document.createElement('div');
+      extraWrap.style.cssText = 'background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)';
+      const extraAan = !!s.extraWijk;
+      extraWrap.innerHTML =
+        '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">'+
+          '<input type="checkbox" class="extrawijk-check" '+(extraAan?'checked':'')+' style="width:20px;height:20px;flex:0 0 auto">'+
+          '<div>'+
+            '<div style="font-weight:800;font-size:13.5px;color:var(--ink)">📍 Extra wijk gedaan (laatste moment)</div>'+
+            '<div style="font-size:11.5px;color:var(--muted);margin-top:1px">Vink aan als je vandaag een wijk erbij kreeg die niet in je normale planning stond</div>'+
+          '</div>'+
+        '</label>'+
+        '<input type="text" class="extrawijk-notitie" placeholder="Welke wijk / reden (optioneel)" value="'+(s.extraWijkNotitie||'').replace(/"/g,'&quot;')+'" style="width:100%;margin-top:10px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;display:'+(extraAan?'block':'none')+'">';
+      const checkEl = extraWrap.querySelector('.extrawijk-check');
+      const notitieEl = extraWrap.querySelector('.extrawijk-notitie');
+      checkEl.addEventListener('change', ()=>{
+        const d = tijdLaadData();
+        if(!d.huidig) return;
+        d.huidig.extraWijk = checkEl.checked;
+        tijdSlaOp(d);
+        notitieEl.style.display = checkEl.checked ? 'block' : 'none';
+        if(checkEl.checked) notitieEl.focus();
+      });
+      notitieEl.addEventListener('blur', ()=>{
+        const d = tijdLaadData();
+        if(!d.huidig) return;
+        d.huidig.extraWijkNotitie = notitieEl.value.trim();
+        tijdSlaOp(d);
+      });
+      wrap.appendChild(extraWrap);
+    }
+
     // Handmatig sessie toevoegen (terugwerkse kracht)
     const handmatigBtn = document.createElement('button');
     handmatigBtn.style.cssText = 'width:100%;padding:12px;background:#fff;border:2px dashed var(--line);border-radius:14px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:14px';
@@ -4447,8 +4500,17 @@ function renderTijd(){
         '<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">PAUZE (minuten, optioneel)</label>'+
         '<input type="number" class="hm-pauze" value="0" min="0" max="120" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit">'+
       '</div>'+
+      '<label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">'+
+        '<input type="checkbox" class="hm-extrawijk" style="width:18px;height:18px;flex:0 0 auto">'+
+        '<span style="font-size:12.5px;font-weight:700;color:var(--ink)">📍 Extra wijk gedaan (laatste moment)</span>'+
+      '</label>'+
+      '<input type="text" class="hm-extrawijk-notitie" placeholder="Welke wijk / reden (optioneel)" style="display:none;width:100%;margin-bottom:12px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit">'+
       '<button class="hm-opslaan" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">✓ Opslaan</button>'+
       '<div class="hm-fout" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;color:#c62828;border-radius:8px;font-size:12px;font-weight:700"></div>';
+
+    handmatigForm.querySelector('.hm-extrawijk').addEventListener('change', function(){
+      handmatigForm.querySelector('.hm-extrawijk-notitie').style.display = this.checked ? 'block' : 'none';
+    });
 
     // Knop toggle
     handmatigBtn.onclick = ()=>{
@@ -4496,12 +4558,16 @@ function renderTijd(){
       d.sessies = (d.sessies||[]).filter(s=> new Date(s.start).toDateString() !== doelDag);
 
       const pauzeMs = pauzeMin*60000;
+      const extraWijkAan = handmatigForm.querySelector('.hm-extrawijk').checked;
+      const extraWijkNotitie = handmatigForm.querySelector('.hm-extrawijk-notitie').value.trim();
       const nieuweSessie = {
         start: startMs,
         eind: eindMs,
         nettoMs: eindMs - startMs - pauzeMs,
         pauzes: pauzeMin>0 ? [{start: eindMs-pauzeMs, eind: eindMs-1}] : [],
-        handmatig: true
+        handmatig: true,
+        extraWijk: extraWijkAan,
+        extraWijkNotitie: extraWijkAan ? extraWijkNotitie : ''
       };
 
       // Invoegen op chronologische positie (nieuwste eerst)
@@ -4591,6 +4657,16 @@ function renderTijd(){
       nieuwBtn.onclick = ()=>{
         const d = tijdLaadData();
         d.huidig = {start:Date.now(), pauzes:[], pauzeStart:null, eind:null};
+        try{
+          const dagKey = new Date(d.huidig.start).toDateString();
+          const pend = JSON.parse(localStorage.getItem(STORAGE_EXTRAWIJK_PENDING)||'[]');
+          const treffers = pend.filter(p=>p.dagKey===dagKey);
+          if(treffers.length){
+            d.huidig.extraWijk = true;
+            d.huidig.extraWijkNotitie = treffers.map(t=>t.notitie).join(' · ');
+            localStorage.setItem(STORAGE_EXTRAWIJK_PENDING, JSON.stringify(pend.filter(p=>p.dagKey!==dagKey)));
+          }
+        }catch(e){}
         tijdSlaOp(d);
         herrender();
       };
@@ -4621,10 +4697,29 @@ function renderTijd(){
                 ' – '+new Date(sess.eind).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+
                 (pMs>0?' · '+sess.pauzes.length+' pauze(s)':'')+
               '</div>'+
+              '<div class="tijd-gesch-extrawijk" style="margin-top:4px;font-size:10.5px;font-weight:800;color:'+(sess.extraWijk?'#7a5c00':'#c7cdd6')+';background:'+(sess.extraWijk?'#fff3cd':'#f3f4f6')+';display:inline-block;padding:2px 7px;border-radius:6px;cursor:pointer">'+
+                (sess.extraWijk ? '📍 Extra wijk'+(sess.extraWijkNotitie?' · '+sess.extraWijkNotitie:'') : '+ extra wijk')+
+              '</div>'+
             '</div>'+
             '<div class="tijd-gesch-duur">'+tijdFormatDuur(netto)+'</div>'+
             '<button style="flex:0 0 auto;background:#fee2e2;color:#c62828;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;line-height:1" title="Verwijder deze sessie">🗑</button>'+
           '</div>';
+        // Extra-wijk badge: tik om aan/uit te zetten (met optionele notitie)
+        item.querySelector('.tijd-gesch-extrawijk').addEventListener('click', ()=>{
+          const d4 = tijdLaadData();
+          const target = (d4.sessies||[]).find(x=>x.start===sess.start);
+          if(!target) return;
+          if(target.extraWijk){
+            target.extraWijk = false;
+            target.extraWijkNotitie = '';
+          } else {
+            const notitie = prompt('Welke wijk / reden? (optioneel)', '') || '';
+            target.extraWijk = true;
+            target.extraWijkNotitie = notitie.trim();
+          }
+          tijdSlaOp(d4);
+          herrender();
+        });
         // Verwijder knop handler
         item.querySelector('button').addEventListener('click', ()=>{
           const bevestig = confirm('Sessie van '+tijdFormatDatumTijd(sess.start)+' verwijderen?');
@@ -5144,7 +5239,7 @@ function groepeerOpPeriode(items){
 
 
 function groepeerKlachtenPerPeriode(){
-  const log = laadKlachtenLog();
+  const log = laadKlachtenLog().filter(k=>!k.extraWijk);
   const perioden = alleBekendePerioden();
   const groepen = {}; // key: periode_label of 'jaar-YYYY'
   const volgorde = [];
@@ -5170,6 +5265,12 @@ function groepeerKlachtenPerPeriode(){
   return Object.values(groepen).sort((a,b)=>b.sortKey-a.sortKey);
 }
 
+// Klachten van een als "extra" geclassificeerde wijk — apart van de normale
+// per-periode-indeling, want deze tellen niet mee bij de bonus.
+function klachtenExtraWijk(){
+  return laadKlachtenLog().filter(k=>k.extraWijk).sort((a,b)=>b.datum.localeCompare(a.datum));
+}
+
 function renderMutaties(){
   const main = document.getElementById('main');
   document.getElementById('back').classList.remove('hidden');
@@ -5180,7 +5281,9 @@ function renderMutaties(){
   const wrap = document.createElement('div');
   wrap.style.cssText = 'padding-bottom:20px';
 
-  const log = laadMutatiesLog().sort((a,b)=>b.datum.localeCompare(a.datum));
+  const logAlles = laadMutatiesLog().sort((a,b)=>b.datum.localeCompare(a.datum));
+  const log = logAlles.filter(m=>!m.extraWijk);
+  const logExtra = logAlles.filter(m=>m.extraWijk);
   const starts = log.filter(m=>m.type==='START');
   const stops = log.filter(m=>m.type==='STOP');
 
@@ -5220,7 +5323,19 @@ function renderMutaties(){
     wrap.appendChild(typeKaart);
   }
 
-  if(log.length === 0){
+  // ===== Extra wijk (apart, telt niet mee in de tellingen hierboven) =====
+  if(logExtra.length > 0){
+    const extraStartsN = logExtra.filter(m=>m.type==='START').length;
+    const extraStopsN = logExtra.filter(m=>m.type==='STOP').length;
+    const extraKaart = document.createElement('div');
+    extraKaart.style.cssText = 'background:#fff3cd;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    extraKaart.innerHTML =
+      '<div style="font-size:11px;font-weight:800;color:#7a5c00;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📍 Extra wijk</div>'+
+      '<div style="font-size:13px;color:#7a5c00;font-weight:700">▶ '+extraStartsN+' start · ■ '+extraStopsN+' stop</div>';
+    wrap.appendChild(extraKaart);
+  }
+
+  if(log.length === 0 && logExtra.length === 0){
     const leeg = document.createElement('div');
     leeg.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
     leeg.textContent = 'Nog geen START/STOP-mutaties gevonden. Die worden automatisch herkend zodra ze in een ingeladen looplijst-PDF staan.';
@@ -5322,6 +5437,8 @@ function renderMutaties(){
 
   bouwSectie('START', '▶ START', '#2e7d32', '#e8f5e9', sorteerOpSegmentStraat(starts));
   bouwSectie('STOP', '■ STOP', '#c62828', '#ffebee', sorteerOpSegmentStraat(stops));
+  bouwSectie('EXTRA_START', '📍 Extra wijk · ▶ START', '#7a5c00', '#fff3cd', sorteerOpSegmentStraat(logExtra.filter(m=>m.type==='START')));
+  bouwSectie('EXTRA_STOP', '📍 Extra wijk · ■ STOP', '#7a5c00', '#fff3cd', sorteerOpSegmentStraat(logExtra.filter(m=>m.type==='STOP')));
 
   main.appendChild(wrap);
 }
@@ -5431,6 +5548,22 @@ function renderKlachten(){
     wrap.appendChild(kaart);
   });
 
+  // ===== Extra wijk klachten (apart, tellen niet mee bij bonus) =====
+  const extraKlachten = klachtenExtraWijk();
+  if(extraKlachten.length){
+    const extraKaart = document.createElement('div');
+    extraKaart.style.cssText = 'background:#fff3cd;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    extraKaart.innerHTML =
+      '<div style="font-size:13px;font-weight:800;color:#7a5c00;margin-bottom:10px">📍 Extra wijk · '+extraKlachten.length+' klacht'+(extraKlachten.length===1?'':'en')+' (telt niet mee bij bonus)</div>';
+    extraKlachten.forEach(k=>{
+      const regel = document.createElement('div');
+      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid rgba(0,0,0,.06);font-size:12.5px';
+      regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#8a6d1a;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
+      extraKaart.appendChild(regel);
+    });
+    wrap.appendChild(extraKaart);
+  }
+
   main.appendChild(wrap);
 }
 
@@ -5457,8 +5590,12 @@ function renderJaarArchief(){
   jaren.forEach(jaar=>{
     const a = archief[jaar];
     const uitgeklapt = !!jaarArchiefUitgeklapt[jaar];
+    const klachtenNormaal = a.klachten.filter(k=>!k.extraWijk);
+    const klachtenExtra = a.klachten.filter(k=>k.extraWijk);
+    const mutatiesNormaal = a.mutaties.filter(m=>!m.extraWijk);
+    const mutatiesExtra = a.mutaties.filter(m=>m.extraWijk);
     const totaalKranten = Object.values(a.krantenPerDag||{}).reduce((s,n)=>s+n,0);
-    const promillage = totaalKranten>0 ? (a.klachten.length/totaalKranten)*1000 : null;
+    const promillage = totaalKranten>0 ? (klachtenNormaal.length/totaalKranten)*1000 : null;
     const fooiTotaal = a.fooi ? Object.values(a.fooi).reduce((s,e)=>{
       const v = (typeof e==='number') ? e : ((e.munt||0)+(e.biljet||0));
       return s+v;
@@ -5481,11 +5618,11 @@ function renderJaarArchief(){
     statsWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;'+(uitgeklapt?'margin-bottom:12px':'');
     statsWrap.innerHTML =
       '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
-        '<div style="font-size:18px;font-weight:900;color:#374151">'+a.klachten.length+'</div>'+
+        '<div style="font-size:18px;font-weight:900;color:#374151">'+klachtenNormaal.length+'</div>'+
         '<div style="font-size:10px;color:#9ca3af;font-weight:700">klachten</div>'+
       '</div>'+
       '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
-        '<div style="font-size:18px;font-weight:900;color:#374151">'+a.mutaties.length+'</div>'+
+        '<div style="font-size:18px;font-weight:900;color:#374151">'+mutatiesNormaal.length+'</div>'+
         '<div style="font-size:10px;color:#9ca3af;font-weight:700">mutaties</div>'+
       '</div>'+
       '<div style="flex:1;min-width:80px;background:#f3f4f6;border-radius:10px;padding:10px;text-align:center">'+
@@ -5501,16 +5638,21 @@ function renderJaarArchief(){
       '<div style="flex:1;min-width:80px;background:#fff3cd;border-radius:10px;padding:10px;text-align:center">'+
         '<div style="font-size:18px;font-weight:900;color:#7a5c00">'+formatEuroBudget(fooiTotaal)+'</div>'+
         '<div style="font-size:10px;color:#7a5c00;font-weight:700">fooi</div>'+
+      '</div>') : '')+
+      ((klachtenExtra.length || mutatiesExtra.length) ? (
+      '<div style="flex:1;min-width:80px;background:#fff3cd;border-radius:10px;padding:10px;text-align:center">'+
+        '<div style="font-size:18px;font-weight:900;color:#7a5c00">'+klachtenExtra.length+'/'+mutatiesExtra.length+'</div>'+
+        '<div style="font-size:10px;color:#7a5c00;font-weight:700">📍 extra wijk</div>'+
       '</div>') : '');
     kaart.appendChild(statsWrap);
 
     if(uitgeklapt){
-      if(a.klachten.length){
+      if(klachtenNormaal.length){
         const sub = document.createElement('div');
         sub.style.cssText = 'font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px';
         sub.textContent = 'Klachten';
         kaart.appendChild(sub);
-        groepeerOpPeriode(a.klachten).forEach(groep=>{
+        groepeerOpPeriode(klachtenNormaal).forEach(groep=>{
           const periodeKop = document.createElement('div');
           periodeKop.style.cssText = 'font-size:11px;font-weight:800;color:#3730a3;background:#eef2ff;padding:4px 8px;border-radius:6px;margin:8px 0 4px;display:inline-block';
           periodeKop.textContent = groep.titel+' · '+groep.items.length;
@@ -5523,12 +5665,12 @@ function renderJaarArchief(){
           });
         });
       }
-      if(a.mutaties.length){
+      if(mutatiesNormaal.length){
         const sub = document.createElement('div');
         sub.style.cssText = 'font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px';
         sub.textContent = 'Mutaties';
         kaart.appendChild(sub);
-        groepeerOpPeriode(a.mutaties).forEach(groep=>{
+        groepeerOpPeriode(mutatiesNormaal).forEach(groep=>{
           const periodeKop = document.createElement('div');
           periodeKop.style.cssText = 'font-size:11px;font-weight:800;color:#3730a3;background:#eef2ff;padding:4px 8px;border-radius:6px;margin:8px 0 4px;display:inline-block';
           periodeKop.textContent = groep.titel+' · '+groep.items.length;
@@ -5548,6 +5690,26 @@ function renderJaarArchief(){
             if(badgeEl){ badgeEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
             kaart.appendChild(regel);
           });
+        });
+      }
+      if(klachtenExtra.length || mutatiesExtra.length){
+        const sub = document.createElement('div');
+        sub.style.cssText = 'font-size:11px;font-weight:800;color:#7a5c00;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px';
+        sub.textContent = '📍 Extra wijk (telde niet mee)';
+        kaart.appendChild(sub);
+        klachtenExtra.slice().sort((x,y)=>y.datum.localeCompare(x.datum)).forEach(k=>{
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #fff3cd;font-size:12.5px';
+          regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#8a6d1a;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
+          kaart.appendChild(regel);
+        });
+        mutatiesExtra.slice().sort((x,y)=>y.datum.localeCompare(x.datum)).forEach(m=>{
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #fff3cd;font-size:12.5px';
+          regel.innerHTML =
+            '<span style="font-weight:700;color:#374151">'+(m.type==='START'?'▶':'■')+' '+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
+            '<span style="color:#8a6d1a;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+          kaart.appendChild(regel);
         });
       }
     }
@@ -5642,6 +5804,17 @@ function renderBonus(){
       resKaart.appendChild(ruimteEl);
     }
     wrap.appendChild(resKaart);
+
+    // ===== Extra wijk (apart, telt niet mee) =====
+    if(v.extra && (v.extra.klachten > 0 || v.extra.kranten > 0)){
+      const extraKaart = document.createElement('div');
+      extraKaart.style.cssText = 'background:#fff3cd;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+      extraKaart.innerHTML =
+        '<div style="font-size:11px;font-weight:800;color:#7a5c00;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📍 Extra wijk (telt niet mee)</div>'+
+        '<div style="font-size:13px;color:#7a5c00;font-weight:700">'+v.extra.klachten+' klacht'+(v.extra.klachten===1?'':'en')+' · '+v.extra.kranten.toLocaleString('nl-NL')+' kranten</div>'+
+        '<div style="font-size:11.5px;color:#8a6d1a;margin-top:4px">Kranten en klachten van wijken die je op het laatste moment erbij kreeg. Deze staan los van je promillage hierboven.</div>';
+      wrap.appendChild(extraKaart);
+    }
 
     const archiveerBtn = document.createElement('button');
     archiveerBtn.style.cssText = 'width:100%;padding:12px;margin-bottom:14px;border:1.5px solid #1a2d5a;border-radius:10px;background:#fff;color:#1a2d5a;font-weight:800;font-size:13px';
@@ -6710,15 +6883,21 @@ function renderVergoeding(){
 
   // Periode-info + week-keuze
   const periode = vergoedingPeriode;
-  // Totaal en cumulatief alleen over segmenten in JOUW looplijst (Oost + West)
+  // Totaal en cumulatief alleen over segmenten in JOUW looplijst (Oost + West),
+  // en zonder segmenten die als "extra wijk" geclassificeerd zijn (die tel je
+  // apart, zie hieronder).
   const looplijstSegSet = new Set();
   if(meta.bezorgwijken){
     Object.values(meta.bezorgwijken).forEach(lijst=>lijst.forEach(b => looplijstSegSet.add(b.segment)));
   }
-  // Als looplijst nog niet geladen: val terug op alle wijken
+  const segClassificaties = laadSegmentClassificaties();
+  const isExtraSegment = seg => segClassificaties[seg] === 'extra';
   const totaalPeriode = looplijstSegSet.size > 0
-    ? Object.values(vergoedingsdata).filter(v=>looplijstSegSet.has(v.segment)).reduce((s,v)=>s+v.totaal, 0)
-    : Object.values(vergoedingsdata).reduce((s,v)=>s+v.totaal, 0);
+    ? Object.values(vergoedingsdata).filter(v=>looplijstSegSet.has(v.segment) && !isExtraSegment(v.segment)).reduce((s,v)=>s+v.totaal, 0)
+    : Object.values(vergoedingsdata).filter(v=>!isExtraSegment(v.segment)).reduce((s,v)=>s+v.totaal, 0);
+  const totaalPeriodeExtra = Object.values(vergoedingsdata)
+    .filter(v=>(looplijstSegSet.size===0 || looplijstSegSet.has(v.segment)) && isExtraSegment(v.segment))
+    .reduce((s,v)=>s+v.totaal, 0);
   const perWeek = totaalPeriode / 4;
 
   // Check of de periode al afgelopen is — toon waarschuwingsbanner
@@ -6766,6 +6945,17 @@ function renderVergoeding(){
       '</div>'+
     '</div>';
   main.appendChild(headerBlok);
+
+  // ===== Extra wijk (apart, niet in "Verwacht totaal" hierboven) =====
+  if(totaalPeriodeExtra > 0){
+    const extraBlok = document.createElement('div');
+    extraBlok.style.cssText = 'background:#fff3cd;border-radius:11px;padding:12px 14px;margin-bottom:12px';
+    extraBlok.innerHTML =
+      '<div style="font-size:11px;font-weight:800;color:#7a5c00;text-transform:uppercase;letter-spacing:.05em">📍 Extra wijk</div>'+
+      '<div style="font-size:18px;font-weight:800;color:#7a5c00;margin-top:2px">€'+totaalPeriodeExtra.toFixed(2).replace('.',',')+'</div>'+
+      '<div style="font-size:11px;color:#8a6d1a;margin-top:2px">Vergoeding voor wijken die op het laatste moment erbij kwamen, los van je vaste periodetotaal hierboven.</div>';
+    main.appendChild(extraBlok);
+  }
 
   // Week-keuze (✓ voor reeds ingeladen weken)
   const weekDiv = document.createElement('div');
@@ -6937,13 +7127,14 @@ function renderVergoeding(){
     // Rijen per segment in volgorde van de looplijst-header
     lijst.forEach(s=>{
       const d = vergoedingsdata[s.segment];
+      const isExtra = isExtraSegment(s.segment);
       const row = document.createElement('button');
       row.style.cssText = 'width:100%;background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;margin-bottom:6px';
       if(d){
         row.innerHTML =
           '<div style="font-weight:800;color:var(--green);background:#e3ecf8;padding:3px 9px;border-radius:6px;font-size:13px;min-width:46px;text-align:center">'+s.kort+'</div>'+
           '<div style="flex:1">'+
-            '<div style="font-weight:700;font-size:13px">'+d.naam+'</div>'+
+            '<div style="font-weight:700;font-size:13px">'+d.naam+(isExtra?' <span style="background:#fff3cd;color:#7a5c00;font-size:9px;font-weight:800;padding:1px 6px;border-radius:6px;vertical-align:middle">📍 extra</span>':'')+'</div>'+
             '<div style="font-size:10px;color:var(--muted)">'+s.segment+' · '+Object.keys(d.codes).length+' codes</div>'+
           '</div>'+
           '<div style="font-weight:800;color:var(--green);font-variant-numeric:tabular-nums">€'+d.totaal.toFixed(2).replace('.', ',')+'</div>'+
@@ -9791,6 +9982,13 @@ async function verwerkGekozenPdfBestand(file){
     const parsed = parseLooplijst(extracted.allLines, mutaties);
     console.log('[Looplijst] Geparseerde adressen:', parsed.adressen.length, '· bezorgwijken:', Object.keys(parsed.bezorgwijken||{}).length);
     if(parsed.adressen.length === 0) throw new Error('Geen adressen herkend. Is dit wel een DPG-looplijst?');
+    // Nieuw/onbekend segment in deze PDF? Vraag (indien nog niet eerder
+    // beantwoord) of dit een vaste of een extra (eenmalige) wijk is, VOORDAT
+    // de dagtotalen/klachten berekend worden — zo telt een extra wijk meteen
+    // correct niet mee.
+    lbl.textContent='Segmenten controleren…';
+    parsing.classList.add('show');
+    await verwerkNieuweSegmentenMetPopup(parsed);
     verwerkKlachtenEnDagtotaal(extracted.klachtRegels, parsed, mutaties);
     const built = buildDataStructure(parsed.adressen);
     const onbekendeNamen = Object.keys(built.onbekende);
@@ -10101,10 +10299,17 @@ function laadKlachtenLog(){
 function laadKrantenPerDag(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KRANTEN_PER_DAG)) || {}; }catch(e){ return {}; }
 }
+// Kranten van "extra" (niet-vaste) wijken, apart per dag — telt niet mee in
+// de hoofd-bonusberekening maar blijft wel gewoon inzichtelijk.
+const STORAGE_KRANTEN_PER_DAG_EXTRA = 'looplijst_v23_kranten_per_dag_extra';
+function laadKrantenPerDagExtra(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KRANTEN_PER_DAG_EXTRA)) || {}; }catch(e){ return {}; }
+}
 
 // Verwerk klachten + mutaties uit een net ingeladen looplijst-PDF + registreer het dagtotaal kranten
 function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
   try{
+    const extraStraten = laadExtraStraten();
     const nieuweKlachten = parseKlachten(klachtRegels);
     if(nieuweKlachten.length){
       const log = laadKlachtenLog();
@@ -10115,6 +10320,9 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
         if(isKlachtRawVerdacht(k)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
         const semSleutel = klachtSemantischeSleutel(k);
         if(bekend.has(k.raw) || bekendSemantisch.has(semSleutel)) return; // zelfde klacht (evt. licht andere PDF-extractie) al bekend
+        // Klacht van een straat die bij een als "extra" geclassificeerde wijk
+        // hoort: apart houden, niet meetellen in de hoofd-bonusberekening.
+        k.extraWijk = !!(k.straat && extraStraten.has(k.straat.toUpperCase()));
         log.push(k); bekend.add(k.raw); bekendSemantisch.add(semSleutel); toegevoegd++;
       });
       if(toegevoegd>0){
@@ -10122,14 +10330,26 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
         console.log('[Bonus] '+toegevoegd+' nieuwe klacht(en) opgeslagen');
       }
     }
-    // Dagtotaal kranten: aantal individuele adresregels = aantal bezorgde kranten die dag
+    // Dagtotaal kranten: aantal individuele adresregels = aantal bezorgde kranten die dag.
+    // Adressen van een "extra" wijk tellen niet mee in het hoofdtotaal, maar
+    // worden apart bijgehouden in STORAGE_KRANTEN_PER_DAG_EXTRA.
     if(parsed && parsed.datum && parsed.adressen && parsed.adressen.length){
       const datumObj = parseLooplijstDatum(parsed.datum);
       if(datumObj){
         const iso = datumObj.getFullYear()+'-'+String(datumObj.getMonth()+1).padStart(2,'0')+'-'+String(datumObj.getDate()).padStart(2,'0');
+        const isExtraAdres = a => extraStraten.has((a.straat||'').toUpperCase());
+        const aantalNormaal = parsed.adressen.filter(a=>!isExtraAdres(a)).length;
+        const aantalExtra = parsed.adressen.length - aantalNormaal;
+
         const perDag = laadKrantenPerDag();
-        perDag[iso] = parsed.adressen.length;
+        perDag[iso] = aantalNormaal;
         localStorage.setItem(STORAGE_KRANTEN_PER_DAG, JSON.stringify(perDag));
+
+        if(aantalExtra > 0){
+          const perDagExtra = laadKrantenPerDagExtra();
+          perDagExtra[iso] = aantalExtra;
+          localStorage.setItem(STORAGE_KRANTEN_PER_DAG_EXTRA, JSON.stringify(perDagExtra));
+        }
 
         // Mutaties (START/STOP) loggen met de datum van deze looplijst
         if(mutaties && mutaties.length){
@@ -10147,7 +10367,7 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
             const sleutel = iso+'|'+m.raw;
             const semSleutel = mutatieSemantischeSleutel({...m, datum: iso});
             if(bekendM.has(sleutel) || bekendSemM.has(semSleutel)) return;
-            mlog.push({...m, datum: iso});
+            mlog.push({...m, datum: iso, extraWijk: !!(m.straat && extraStraten.has(m.straat.toUpperCase()))});
             bekendM.add(sleutel);
             bekendSemM.add(semSleutel);
             toegevoegdM++;
@@ -10168,23 +10388,29 @@ function berekenBonusVenster(startIso, dagenLengte){
   const start = new Date(startIso+'T00:00:00');
   const eind = new Date(start.getTime() + (dagenLengte-1)*86400000);
   const log = laadKlachtenLog();
-  const perDag = laadKrantenPerDag();
+  const perDag = laadKrantenPerDag();       // al exclusief "extra"-wijk-adressen
+  const perDagExtra = laadKrantenPerDagExtra();
   const inVenster = (isoStr)=>{
     const d = new Date(isoStr+'T00:00:00');
     return d >= start && d <= eind;
   };
-  const klachtenInVenster = log.filter(k=>inVenster(k.datum));
-  let totaalKranten = 0, dagenGeteld = 0, dagenOntbrekend = [];
+  // Klachten van een "extra" wijk tellen niet mee in de hoofdberekening,
+  // maar worden wel apart opgeteld zodat ze niet zomaar verdwijnen.
+  const klachtenInVenster = log.filter(k=>inVenster(k.datum) && !k.extraWijk);
+  const klachtenExtraInVenster = log.filter(k=>inVenster(k.datum) && k.extraWijk);
+  let totaalKranten = 0, totaalKrantenExtra = 0, dagenGeteld = 0, dagenOntbrekend = [];
   for(let i=0;i<dagenLengte;i++){
     const d = new Date(start.getTime()+i*86400000);
     const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     if(perDag[iso] !== undefined){ totaalKranten += perDag[iso]; dagenGeteld++; }
     else if(d <= new Date() && d.getDay() !== 0){ dagenOntbrekend.push(iso); } // zondag bestaat niet als bezorgdag, en alleen dagen die al voorbij zijn tellen als 'ontbrekend'
+    if(perDagExtra[iso] !== undefined) totaalKrantenExtra += perDagExtra[iso];
   }
   const promillage = totaalKranten>0 ? (klachtenInVenster.length/totaalKranten)*1000 : 0;
   return {
     start, eind, klachten: klachtenInVenster.length, totaalKranten, dagenGeteld,
-    dagenOntbrekend, promillage, onderGrens: promillage < 4
+    dagenOntbrekend, promillage, onderGrens: promillage < 4,
+    extra: { klachten: klachtenExtraInVenster.length, kranten: totaalKrantenExtra }
   };
 }
 // naar {type, datum (Date), datumIso, raw}
@@ -10483,6 +10709,166 @@ function buildDataStructure(adressen){
   return {data:result, totaal, onbekende};
 }
 
+
+const STORAGE_BEKENDE_SEGMENTEN = 'looplijst_v23_bekende_segmenten';
+const STORAGE_EXTRAWIJK_PENDING = 'looplijst_v23_extrawijk_pending';
+
+function laadBekendeSegmenten(){
+  try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_BEKENDE_SEGMENTEN))||[]); }catch(e){ return new Set(); }
+}
+function saveBekendeSegmenten(set){ localStorage.setItem(STORAGE_BEKENDE_SEGMENTEN, JSON.stringify(Array.from(set))); }
+
+// Verzamelt alle segmentnummers (de "kort"-code, bv. "226") die in de
+// PDF-header van deze looplijst genoemd staan, over alle wijken heen.
+function alleSegmentenUitBezorgwijken(bezorgwijken){
+  const set = new Set();
+  Object.values(bezorgwijken||{}).forEach(lijst=>{
+    (lijst||[]).forEach(p=>{ if(p && p.kort) set.add(String(p.kort)); });
+  });
+  return set;
+}
+
+// Vast/extra-classificatie per segment: {segmentNr: 'vast'|'extra'}. Eenmaal
+// beantwoord, wordt een segment nooit meer opnieuw gevraagd.
+const STORAGE_SEGMENT_CLASSIFICATIE = 'looplijst_v23_segment_classificatie';
+function laadSegmentClassificaties(){ try{ return JSON.parse(localStorage.getItem(STORAGE_SEGMENT_CLASSIFICATIE))||{}; }catch(e){ return {}; } }
+function saveSegmentClassificaties(c){ localStorage.setItem(STORAGE_SEGMENT_CLASSIFICATIE, JSON.stringify(c)); }
+
+// Straatnamen die bij een als "extra" geclassificeerd segment horen. Kranten
+// en klachten van deze straten tellen niet mee in de hoofd-bonusberekening,
+// maar worden wel apart bijgehouden.
+const STORAGE_EXTRA_STRATEN = 'looplijst_v23_extra_straten';
+function laadExtraStraten(){ try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_EXTRA_STRATEN))||[]); }catch(e){ return new Set(); } }
+function saveExtraStraten(s){ localStorage.setItem(STORAGE_EXTRA_STRATEN, JSON.stringify(Array.from(s))); }
+
+// Alle straatnamen die ooit in een looplijst zijn voorgekomen — gebruikt om
+// te bepalen welke straten NIEUW zijn bij een net-gedetecteerd nieuw segment
+// (dat werkt ook voor wijken die nog niet in SEGMENT_DATA staan).
+const STORAGE_BEKENDE_STRATEN = 'looplijst_v23_bekende_straten';
+function laadBekendeStraten(){ try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_BEKENDE_STRATEN))||[]); }catch(e){ return new Set(); } }
+function saveBekendeStraten(s){ localStorage.setItem(STORAGE_BEKENDE_STRATEN, JSON.stringify(Array.from(s))); }
+
+// Popup: vraagt of een nieuw-gedetecteerd segment een vaste (voortaan gewoon
+// meetellende) of extra (eenmalig, apart houden) wijk is. Geeft een Promise
+// die resolvet naar 'vast' of 'extra'.
+function vraagVasteOfExtraWijk(segmentNr){
+  return new Promise(resolve=>{
+    const bg = document.createElement('div');
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    const sheet = document.createElement('div');
+    sheet.style.cssText = 'background:#fff;border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 16px 48px rgba(0,0,0,.25)';
+    sheet.innerHTML =
+      '<div style="text-align:center;margin-bottom:16px">'+
+        '<div style="font-size:36px">📍</div>'+
+        '<div style="font-size:17px;font-weight:900;margin-top:6px">Nieuw segment: '+segmentNr+'</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5">Dit segment stond niet in je eerdere looplijsten.<br>Hoort dit er voortaan gewoon bij, of is dit eenmalig/op het laatste moment erbij gekomen?</div>'+
+      '</div>'+
+      '<button id="vw-vast" style="width:100%;padding:14px;margin-bottom:10px;background:var(--green);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">✓ Vaste wijk — telt gewoon mee bij bonus</button>'+
+      '<button id="vw-extra" style="width:100%;padding:14px;background:#fff3cd;color:#7a5c00;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">📍 Extra wijk — apart houden, niet meetellen</button>';
+    document.body.appendChild(bg);
+    bg.appendChild(sheet);
+    sheet.querySelector('#vw-vast').onclick = ()=>{ document.body.removeChild(bg); resolve('vast'); };
+    sheet.querySelector('#vw-extra').onclick = ()=>{ document.body.removeChild(bg); resolve('extra'); };
+  });
+}
+
+// Hoofdroutine: vergelijkt de segmenten/straten van de zojuist ingeladen
+// looplijst met wat we ooit eerder gezien hebben. Nieuwe segmenten die nog
+// niet eerder geclassificeerd zijn, worden via een popup gevraagd (vast/
+// extra); segmenten die al eerder beantwoord zijn, worden automatisch op
+// dezelfde manier behandeld — er wordt dan NIET opnieuw gevraagd.
+// Let op: bij meerdere tegelijk-nieuwe segmenten in dezelfde PDF waarvan er
+// ÉÉN als extra en ÉÉN als vast wordt geclassificeerd, worden de nieuwe
+// straten (bij gebrek aan een betrouwbare straat→segment-koppeling in de
+// brontekst) allemaal als "extra" behandeld zodra er minstens één extra
+// segment bij zit — in de praktijk komt maar zelden meer dan 1 nieuw segment
+// tegelijk voor.
+async function verwerkNieuweSegmentenMetPopup(parsed){
+  const huidigeSegmenten = alleSegmentenUitBezorgwijken(parsed.bezorgwijken);
+  const huidigeStraten = new Set((parsed.adressen||[]).map(a=>(a.straat||'').toUpperCase()).filter(Boolean));
+
+  const bekendeSegmenten = laadBekendeSegmenten();
+  const bekendeStraten = laadBekendeStraten();
+  const eersteKeerOoit = bekendeSegmenten.size === 0;
+
+  const nieuweSegmenten = Array.from(huidigeSegmenten).filter(s=>!bekendeSegmenten.has(s));
+  const nieuweStraten = Array.from(huidigeStraten).filter(s=>!bekendeStraten.has(s));
+
+  huidigeSegmenten.forEach(s=>bekendeSegmenten.add(s));
+  huidigeStraten.forEach(s=>bekendeStraten.add(s));
+  saveBekendeSegmenten(bekendeSegmenten);
+  saveBekendeStraten(bekendeStraten);
+
+  if(eersteKeerOoit || nieuweSegmenten.length===0) return; // eerste import ooit: dit ís de baseline
+
+  const classificaties = laadSegmentClassificaties();
+  const extraStraten = laadExtraStraten();
+  let ietsExtra = false;
+  let ietsGevraagd = false;
+
+  for(const seg of nieuweSegmenten){
+    let keuze = classificaties[seg];
+    if(!keuze){
+      ietsGevraagd = true;
+      keuze = await vraagVasteOfExtraWijk(seg);
+      classificaties[seg] = keuze;
+      saveSegmentClassificaties(classificaties);
+      toast(keuze==='vast'
+        ? '✓ Segment '+seg+' toegevoegd als vaste wijk'
+        : '📍 Segment '+seg+' gemarkeerd als extra wijk (telt niet mee bij bonus)');
+    }
+    if(keuze==='extra') ietsExtra = true;
+  }
+
+  if(ietsExtra){
+    nieuweStraten.forEach(st=>extraStraten.add(st));
+    saveExtraStraten(extraStraten);
+  }
+
+  if(!ietsGevraagd && nieuweSegmenten.length){
+    // Automatisch (al eerder beantwoord) toegepast — toch even melden
+    toast('Segment'+(nieuweSegmenten.length>1?'en ':' ')+nieuweSegmenten.join(', ')+' herkend als '+(ietsExtra?'extra wijk':'vaste wijk')+' (eerdere keuze toegepast)');
+  }
+
+  // Tijdregistratie blijft automatisch gemarkeerd bij een nieuw segment,
+  // ongeacht of het vast of extra is (het gaat hier om "dit was niet je
+  // normale planning", wat voor tijdregistratie-doeleinden bij beide geldt).
+  const datumObj = parseLooplijstDatum(parsed.datum);
+  const notitie = 'Segment'+(nieuweSegmenten.length>1?'en ':' ')+nieuweSegmenten.join(', ')+' — nieuw t.o.v. eerdere looplijsten';
+  pasExtraWijkToeOpTijd(datumObj, notitie);
+}
+
+// Zet extraWijk+notitie op de tijd-sessie van de betreffende dag (actief of
+// al afgerond). Bestaat die sessie nog niet, bewaar dan als "pending" zodat
+// het alsnog wordt toegepast zodra er een sessie voor die dag start.
+function pasExtraWijkToeOpTijd(datumObj, notitie){
+  if(!datumObj) return false;
+  const dagKey = datumObj.toDateString();
+  const d = tijdLaadData();
+  let toegepast = false;
+  if(d.huidig && new Date(d.huidig.start).toDateString() === dagKey){
+    d.huidig.extraWijk = true;
+    d.huidig.extraWijkNotitie = d.huidig.extraWijkNotitie ? d.huidig.extraWijkNotitie+' · '+notitie : notitie;
+    toegepast = true;
+  } else {
+    const sess = (d.sessies||[]).find(s=> new Date(s.start).toDateString() === dagKey);
+    if(sess){
+      sess.extraWijk = true;
+      sess.extraWijkNotitie = sess.extraWijkNotitie ? sess.extraWijkNotitie+' · '+notitie : notitie;
+      toegepast = true;
+    }
+  }
+  if(toegepast){
+    tijdSlaOp(d);
+  } else {
+    try{
+      const pend = JSON.parse(localStorage.getItem(STORAGE_EXTRAWIJK_PENDING)||'[]');
+      pend.push({dagKey, notitie});
+      localStorage.setItem(STORAGE_EXTRAWIJK_PENDING, JSON.stringify(pend));
+    }catch(e){}
+  }
+  return toegepast;
+}
 
 // Verwerk en activeer een geparste looplijst
 function finalizeLooplijst(parsed){
