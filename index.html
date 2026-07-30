@@ -1583,6 +1583,47 @@ let view = {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:n
 let agendaToonAlleWeken = false; // standaard: alleen de huidige week tonen, voor overzicht
 let mutatiesUitgeklapt = {START:false, STOP:false};
 let mutatiesSegmentUitgeklapt = {}; // key: sectieSleutel+'|'+segmentNr -> bool
+let klachtenSegmentUitgeklapt = {}; // key: groepPrefix+'|'+segmentNr -> bool
+
+// Rendert een lijst klachten gegroepeerd per segment (net als bij Mutaties):
+// een klikbaar segment-kopje met aantal, dat uitklapt naar de losse klachten.
+function renderKlachtenGegroepeerdPerSegment(kaart, klachtenLijst, groepPrefix, herrenderFn){
+  const segGroepen = [];
+  klachtenLijst.forEach(k=>{
+    const seg = k.straat ? segmentVoorStraat(k.straat) : null;
+    let groep = segGroepen.find(g=>g.seg===seg);
+    if(!groep){ groep = {seg, items: []}; segGroepen.push(groep); }
+    groep.items.push(k);
+  });
+  segGroepen.forEach(({seg, items})=>{
+    const segKey = groepPrefix+'|'+(seg||'onbekend');
+    const segUitgeklapt = !!klachtenSegmentUitgeklapt[segKey];
+    const segHeader = document.createElement('div');
+    segHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-top:1px solid #f3f4f6;cursor:pointer';
+    segHeader.innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        (seg
+          ? '<span style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:800">'+seg+'</span>'+
+            '<span data-seginfo="'+seg+'" style="color:#9ca3af;font-size:13px;cursor:pointer;padding:2px 4px">ℹ️</span>'
+          : '<span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:7px;font-size:11px;font-weight:800">onbekend</span>')+
+        '<span style="font-size:12px;color:#9ca3af;font-weight:700">'+items.length+' klacht'+(items.length===1?'':'en')+'</span>'+
+      '</div>'+
+      '<span style="font-size:12px;color:#cfd5e0;font-weight:800">'+(segUitgeklapt?'▲':'▼')+'</span>';
+    segHeader.onclick = ()=>{ klachtenSegmentUitgeklapt[segKey] = !klachtenSegmentUitgeklapt[segKey]; herrenderFn(); };
+    const segInfoEl = segHeader.querySelector('[data-seginfo]');
+    if(segInfoEl){ segInfoEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
+    kaart.appendChild(segHeader);
+    if(segUitgeklapt){
+      items.forEach(k=>{
+        const regel = document.createElement('div');
+        regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0 7px 12px;border-top:1px dotted #f3f4f6;font-size:12.5px';
+        regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
+        kaart.appendChild(regel);
+      });
+    }
+  });
+}
+
 let jaarArchiefUitgeklapt = {};
 
 // Bepaal dag-naam (maandag/dinsdag/...) uit meta.date "13 jun 2026"
@@ -5566,12 +5607,7 @@ function renderKlachten(){
           (promillage!==null ? '<div style="font-size:11px;font-weight:800;margin-top:1px;color:'+(promillage<4?'#2e7d32':'#c62828')+'">'+promillage.toFixed(2).replace('.',',')+'‰ '+(promillage<4?'✓':'⚠️')+'</div>' : '')+
         '</div>'+
       '</div>';
-    data.forEach(k=>{
-      const regel = document.createElement('div');
-      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
-      regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
-      kaart.appendChild(regel);
-    });
+    renderKlachtenGegroepeerdPerSegment(kaart, data, 'periode:'+g.titel, renderKlachten);
     wrap.appendChild(kaart);
   });
 
@@ -5582,12 +5618,7 @@ function renderKlachten(){
     extraKaart.style.cssText = 'background:#fff3cd;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
     extraKaart.innerHTML =
       '<div style="font-size:13px;font-weight:800;color:#7a5c00;margin-bottom:10px">📍 Extra wijk · '+extraKlachten.length+' klacht'+(extraKlachten.length===1?'':'en')+' (telt niet mee bij bonus)</div>';
-    extraKlachten.forEach(k=>{
-      const regel = document.createElement('div');
-      regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid rgba(0,0,0,.06);font-size:12.5px';
-      regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#8a6d1a;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
-      extraKaart.appendChild(regel);
-    });
+    renderKlachtenGegroepeerdPerSegment(extraKaart, extraKlachten, 'extra', renderKlachten);
     wrap.appendChild(extraKaart);
   }
 
@@ -5684,12 +5715,8 @@ function renderJaarArchief(){
           periodeKop.style.cssText = 'font-size:11px;font-weight:800;color:#3730a3;background:#eef2ff;padding:4px 8px;border-radius:6px;margin:8px 0 4px;display:inline-block';
           periodeKop.textContent = groep.titel+' · '+groep.items.length;
           kaart.appendChild(periodeKop);
-          groep.items.slice().sort((x,y)=>y.datum.localeCompare(x.datum)).forEach(k=>{
-            const regel = document.createElement('div');
-            regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
-            regel.innerHTML = klachtWeergaveHTML(k)+'<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(k.datum)+'</span>';
-            kaart.appendChild(regel);
-          });
+          groep.items.sort((x,y)=>y.datum.localeCompare(x.datum));
+          renderKlachtenGegroepeerdPerSegment(kaart, groep.items, 'archief:'+jaar+':'+groep.titel, renderJaarArchief);
         });
       }
       if(mutatiesNormaal.length){
