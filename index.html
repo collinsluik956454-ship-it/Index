@@ -1582,6 +1582,7 @@ try { const m = JSON.parse(localStorage.getItem(STORAGE_META)); if(m) meta=Objec
 let view = {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
 let agendaToonAlleWeken = false; // standaard: alleen de huidige week tonen, voor overzicht
 let mutatiesUitgeklapt = {START:false, STOP:false};
+let mutatiesSegmentUitgeklapt = {}; // key: sectieSleutel+'|'+segmentNr -> bool
 let jaarArchiefUitgeklapt = {};
 
 // Bepaal dag-naam (maandag/dinsdag/...) uit meta.date "13 jun 2026"
@@ -5398,21 +5399,47 @@ function renderMutaties(){
     header.onclick = ()=>{ mutatiesUitgeklapt[sleutel] = !mutatiesUitgeklapt[sleutel]; renderMutaties(); };
     kaart.appendChild(header);
     if(uitgeklapt){
+      // Groepeer op segmentnummer (lijst is al gesorteerd op segment→straat,
+      // dus items van hetzelfde segment staan al bij elkaar).
+      const segGroepen = []; // [{seg, items}]
       lijst.forEach(m=>{
         const seg = m.straat ? segmentVoorStraat(m.straat) : null;
-        const regel = document.createElement('div');
-        regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #f3f4f6;font-size:12.5px';
-        regel.innerHTML =
-          '<div>'+
-            (seg ? '<span data-seg="'+seg+'" style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px;cursor:pointer">'+seg+' ›</span>' : '')+
-            '<span style="font-weight:700;color:#374151">'+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
-            '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
-            (m.naam ? '<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+m.naam+'</div>' : '')+
+        let groep = segGroepen.find(g=>g.seg===seg);
+        if(!groep){ groep = {seg, items: []}; segGroepen.push(groep); }
+        groep.items.push(m);
+      });
+      segGroepen.forEach(({seg, items})=>{
+        const segKey = sleutel+'|'+(seg||'onbekend');
+        const segUitgeklapt = !!mutatiesSegmentUitgeklapt[segKey];
+        const segHeader = document.createElement('div');
+        segHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 4px;border-top:1px solid #f3f4f6;cursor:pointer';
+        segHeader.innerHTML =
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            (seg
+              ? '<span style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:800">'+seg+'</span>'+
+                '<span data-seginfo="'+seg+'" style="color:#9ca3af;font-size:13px;cursor:pointer;padding:2px 4px">ℹ️</span>'
+              : '<span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:7px;font-size:11px;font-weight:800">onbekend</span>')+
+            '<span style="font-size:12px;color:#9ca3af;font-weight:700">'+items.length+' straat'+(items.length===1?'':'en')+'</span>'+
           '</div>'+
-          '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
-        const badgeEl = regel.querySelector('[data-seg]');
-        if(badgeEl){ badgeEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
-        kaart.appendChild(regel);
+          '<span style="font-size:12px;color:#cfd5e0;font-weight:800">'+(segUitgeklapt?'▲':'▼')+'</span>';
+        segHeader.onclick = ()=>{ mutatiesSegmentUitgeklapt[segKey] = !mutatiesSegmentUitgeklapt[segKey]; renderMutaties(); };
+        const segInfoEl = segHeader.querySelector('[data-seginfo]');
+        if(segInfoEl){ segInfoEl.onclick = (e)=>{ e.stopPropagation(); toonSegmentInfoPopup(seg); }; }
+        kaart.appendChild(segHeader);
+        if(segUitgeklapt){
+          items.forEach(m=>{
+            const regel = document.createElement('div');
+            regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0 8px 12px;border-top:1px dotted #f3f4f6;font-size:12.5px';
+            regel.innerHTML =
+              '<div>'+
+                '<span style="font-weight:700;color:#374151">'+(m.straat||'?')+(m.nr?' '+m.nr:'')+'</span>'+
+                '<span style="color:#9ca3af;margin-left:6px">'+m.prod+'</span>'+
+                (m.naam ? '<div style="color:#9ca3af;font-size:11px;margin-top:1px">'+m.naam+'</div>' : '')+
+              '</div>'+
+              '<span style="color:#9ca3af;flex:0 0 auto;margin-left:8px">'+formatDatumNL(m.datum)+'</span>';
+            kaart.appendChild(regel);
+          });
+        }
       });
     }
     wrap.appendChild(kaart);
