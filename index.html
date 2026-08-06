@@ -1576,6 +1576,7 @@ function formatEuro(centen){
   return '€ ' + eu.toFixed(2).replace('.',',');
 }
 let hideChecked = true;
+let stratenZoekTerm = '';
 try { const p = JSON.parse(localStorage.getItem(STORAGE_PREF)); if(p && typeof p.hide==='boolean') hideChecked=p.hide; } catch(e){}
 let meta = {"date": "13 jun 2026", "bezorger": "Charlotte Rekers", "mutaties": [{"type": "START", "prod": "TT OL", "straat": "Steenstraat", "nr": "49", "naam": "Platvoet"}, {"type": "START", "prod": "TT OL", "straat": "Beatrixstraat 64 0.", "nr": "25", "naam": null}, {"type": "STOP", "prod": "HFD", "straat": "Sportlaan", "nr": "30", "naam": "Gerimex BV"}]};
 try { const m = JSON.parse(localStorage.getItem(STORAGE_META)); if(m) meta=Object.assign(meta,m); } catch(e){}
@@ -2231,6 +2232,8 @@ function render(){
   if(view.mode==='order') return renderOrder();
   if(view.mode==='kerst') return renderKerst();
   if(view.mode==='krant') return renderKrant();
+  if(view.mode==='straten' && view.level==='adres') return renderRoute(); // hergebruik generieke adres-lijst (checkboxes etc.)
+  if(view.mode==='straten') return renderStraten();
   if(view.mode==='looplijst') return renderRoute();
   return renderRoute();
 }
@@ -2848,7 +2851,7 @@ function renderRoute(){
       const row=document.createElement('div');
       row.className='row';
       const isLooplijstMode = (view.mode === 'looplijst');
-      const isAfvinkMode = (view.mode === 'looplijst' || view.mode === 'route');
+      const isAfvinkMode = (view.mode === 'looplijst' || view.mode === 'route' || view.mode === 'straten');
       // In afvink-modi (looplijst en zaterdag): vinkjes per groep, tikbaar.
       // Verschil: looplijst leert auto-volgorde en verbergt afgevinkte; route doet beide niet.
       const checkClass = allDone?'done':(someDone?'partial':'');
@@ -2912,6 +2915,70 @@ function renderRoute(){
 }
 
 // ===== Krant-modus: krant -> ronde -> straat -> adres =====
+// Platte stratenlijst: alle straten uit de hele looplijst op een rijtje, zonder
+// wijk- of ronde-indeling — alleen straatnamen, alfabetisch, met zoekveld.
+function renderStraten(){
+  const main=document.getElementById('main');
+  const back=document.getElementById('back');
+  const crumb=document.getElementById('crumb');
+  const title=document.getElementById('title');
+  main.innerHTML='';
+  back.classList.add('hidden');
+  crumb.textContent='Straten · '+(meta.date||'');
+  title.textContent='Alle straten';
+
+  const alleStraten = [];
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
+    alleStraten.push({naam:s.naam, wi, ri, si});
+  })));
+  alleStraten.sort((a,b)=>a.naam.localeCompare(b.naam,'nl'));
+
+  const zoekWrap = document.createElement('div');
+  zoekWrap.style.cssText='margin-bottom:12px';
+  zoekWrap.innerHTML = '<input type="text" id="stratenZoek" placeholder="🔍 Zoek een straat…" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-family:inherit;box-sizing:border-box">';
+  main.appendChild(zoekWrap);
+  const zoekInput = zoekWrap.querySelector('#stratenZoek');
+  zoekInput.value = stratenZoekTerm;
+  zoekInput.oninput = ()=>{ stratenZoekTerm = zoekInput.value; renderStratenLijst(); };
+
+  const lijstWrap = document.createElement('div');
+  main.appendChild(lijstWrap);
+
+  function renderStratenLijst(){
+    lijstWrap.innerHTML = '';
+    const term = stratenZoekTerm.toLowerCase().trim();
+    const gefilterd = term ? alleStraten.filter(s=>s.naam.toLowerCase().includes(term)) : alleStraten;
+    let shown = 0;
+    gefilterd.forEach(st=>{
+      const c = countStraat(st.wi, st.ri, st.si);
+      const complete = c.done>=c.total;
+      if(hideChecked && complete && !term) return;
+      shown++;
+      const tel = productsForStraat(st.wi, st.ri, st.si);
+      const seg = segmentVoorStraat(st.naam);
+      const row=document.createElement('div');
+      row.className='row';
+      row.innerHTML='<div class="navrow '+(complete?'complete':'')+'">'+
+        ringSVG(c.done,c.total)+
+        '<div class="txt"><div class="nm">'+(seg?'<span style="background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;margin-right:6px;vertical-align:middle">'+seg+'</span>':'')+st.naam+'</div>'+
+        '<div class="sub">'+(c.total-c.done)+' van '+c.total+' te gaan</div>'+
+        prodPillsHTML(tel)+
+        '</div>'+
+        (complete?'<span class="donebadge">klaar</span>':'<span class="chev">›</span>')+
+        '</div>';
+      row.querySelector('.navrow').onclick=()=>{
+        view={mode:'straten', level:'adres', wijk:st.wi, ronde:st.ri, straat:st.si, krant:null};
+        render();
+      };
+      lijstWrap.appendChild(row);
+    });
+    if(shown===0){
+      lijstWrap.innerHTML = '<div class="empty"><div class="big">🔍</div><h2>Niets gevonden</h2><p>'+(term?'Geen straat gevonden voor "'+term+'".':'Alle straten zijn al afgevinkt.')+'</p></div>';
+    }
+  }
+  renderStratenLijst();
+}
+
 function renderKrant(){
   const main=document.getElementById('main');
   const back=document.getElementById('back');
@@ -5131,6 +5198,7 @@ function renderWijkenMenu(){
 
   maakKaart('🗺️', 'Wijkenkaart', 'Kaart + navigeren', null, ()=>{ view={mode:'kaart', level:null}; render(); });
   maakKaart('📋', 'Looplijst', 'Afvinken per adres', 'looplijst', ()=>{ if(!isModeActief('looplijst')) return; view={mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); });
+  maakKaart('🔤', 'Straten', 'Alle straten op een rijtje', null, ()=>{ view={mode:'straten',level:'straat',wijk:null,ronde:null,straat:null,krant:null}; render(); });
   maakKaart('📰', 'Per krant', krantSet.size+' krantensoorten', 'krant', ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); });
   maakKaart('📅', dag, totaal+' adressen', 'route', ()=>{ if(!isModeActief('route')) return; view={mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); });
 
@@ -9527,6 +9595,9 @@ document.getElementById('back').onclick=()=>{
     else if(view.level==='straat'){ view={mode:'krant',level:'ronde',krant:view.krant,wijk:null,ronde:null,straat:null}; }
     else if(view.level==='ronde'){ view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; }
     else if(view.level==='wijk'){ goHome(); return; }
+  } else if(view.mode==='straten'){
+    if(view.level==='adres'){ view={mode:'straten',level:'straat',wijk:null,ronde:null,straat:null,krant:null}; }
+    else { goHome(); return; }
   } else {
     if(view.level==='adres'){ view={mode:'route',level:'straat',wijk:view.wijk,ronde:view.ronde,rondeIdxs:view.rondeIdxs,rondeLabel:view.rondeLabel,straat:null,krant:null}; }
     else if(view.level==='straat'){ view={mode:'route',level:'ronde',wijk:view.wijk,ronde:null,straat:null,krant:null}; }
@@ -10280,10 +10351,12 @@ function isKlachtRawVerdacht(k){
   const raw = (typeof k === 'string') ? k : ((k && k.raw) || '');
   if(!raw) return false;
   if(raw.length >= 150) return true;
-  // Een echte klachtregel bevat maar 1 productcode (in "Abo XX ..."). Komt een
-  // code als "TT OL"/"NRC"/"TEL"/"HFD"/"VK"/"AD NL" er 2+ keer in voor, dan is
-  // dit vrijwel zeker een kapot samengevoegd stuk straatdata.
-  const codes = raw.match(/\b(TT\s?OL|NRC|TEL|HFD|VK|AD\s?NL|TR|HP)\b/gi) || [];
+  // Een echte klachtregel bevat maar 1 productcode. Het "Abo XX YYY"-stukje
+  // vlak na de datum bevat zelf al vaak de code (soms zelfs dubbel, bv.
+  // "Abo NRC NRC" of "Abo TT TTOL") — dat is normaal en telt niet mee.
+  // Alleen codes die DAARNA nog eens opduiken wijzen op samengeplakte data.
+  const zonderAboPrefix = raw.replace(/\bAbo\s+[A-Z]{2,6}\s+[A-Z0-9]{2,8}\b/i, '');
+  const codes = zonderAboPrefix.match(/\b(TT\s?OL|NRC|TEL|HFD|VK|AD\s?NL|TR|HP)\b/gi) || [];
   if(codes.length >= 2) return true;
   // Een klachtregel hoort nooit een sectiekop van de PDF te bevatten — als die
   // erin voorkomt, is er tekst uit de volgende sectie aan de klacht geplakt.
