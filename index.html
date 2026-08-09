@@ -1000,9 +1000,14 @@ let EXTRA_MAP = {};
 try { EXTRA_MAP = JSON.parse(localStorage.getItem(STORAGE_EXTRA)) || {}; } catch(e){ EXTRA_MAP = {}; }
 function saveExtraMap(){ localStorage.setItem(STORAGE_EXTRA, JSON.stringify(EXTRA_MAP)); }
 
-let DATA;
-try { const s = localStorage.getItem(STORAGE_DATA); DATA = s? JSON.parse(s) : DEFAULT_DATA; }
-catch(e){ DATA = DEFAULT_DATA; }
+let DATA_ECHT;
+try { const s = localStorage.getItem(STORAGE_DATA); DATA_ECHT = s? JSON.parse(s) : DEFAULT_DATA; }
+catch(e){ DATA_ECHT = DEFAULT_DATA; }
+// `DATA` is wat alle render-functies lezen. Normaal wijst dit gewoon naar de
+// echte, actuele looplijst — behalve in Kerstkaartjes-modus, waar het (na
+// jouw keuze) ook naar een bevroren momentopname kan wijzen. Zie
+// bepaalKerstDataBron() en de router in render().
+let DATA = DATA_ECHT;
 let done = {};
 try { done = JSON.parse(localStorage.getItem(STORAGE_DONE)) || {}; } catch(e){ done = {}; }
 
@@ -1349,6 +1354,77 @@ let doneKerst = {};
 try { doneKerst = JSON.parse(localStorage.getItem(STORAGE_KERST)) || {}; } catch(e){ doneKerst = {}; }
 function saveKerst(){ localStorage.setItem(STORAGE_KERST, JSON.stringify(doneKerst)); }
 
+// ===== Kerstkaartjes: bevroren adressen-momentopname =====
+// De Kerstkaartjes-ronde loopt weken door, terwijl er ondertussen elke dag
+// een nieuwe (gewone) looplijst wordt ingeladen. Zonder maatregel zou de
+// adressenlijst van Kerstkaartjes daardoor stilzwijgend meeveranderen met
+// elke nieuwe PDF. In plaats daarvan: Kerstkaartjes gebruikt een bevroren
+// momentopname van de adressen, die alleen ververst wordt als je dat zelf
+// bevestigt (zie bepaalKerstDataBron()).
+const STORAGE_KERST_SNAPSHOT = 'looplijst_v23_kerst_snapshot';
+const STORAGE_KERST_SNAPSHOT_DATUM = 'looplijst_v23_kerst_snapshot_datum';
+const STORAGE_KERST_SNAPSHOT_BEANTWOORD = 'looplijst_v23_kerst_snapshot_beantwoord';
+let kerstSnapshotData = null;
+try { const s = localStorage.getItem(STORAGE_KERST_SNAPSHOT); kerstSnapshotData = s ? JSON.parse(s) : null; } catch(e){ kerstSnapshotData = null; }
+let kerstSnapshotDatum = localStorage.getItem(STORAGE_KERST_SNAPSHOT_DATUM) || '';
+let kerstSnapshotBeantwoordVoor = localStorage.getItem(STORAGE_KERST_SNAPSHOT_BEANTWOORD) || '';
+function saveKerstSnapshot(){
+  localStorage.setItem(STORAGE_KERST_SNAPSHOT, JSON.stringify(kerstSnapshotData));
+  localStorage.setItem(STORAGE_KERST_SNAPSHOT_DATUM, kerstSnapshotDatum);
+}
+function saveKerstSnapshotBeantwoord(){ localStorage.setItem(STORAGE_KERST_SNAPSHOT_BEANTWOORD, kerstSnapshotBeantwoordVoor); }
+
+// Bepaalt welke data-bron Kerstkaartjes nu moet gebruiken. Retourneert de
+// data (om als `DATA` te gebruiken), of de string 'wacht' als er eerst een
+// keuze-popup getoond wordt (render() moet dan stoppen).
+function bepaalKerstDataBron(){
+  const huidigeDatum = meta.date || '';
+  // Eerste gebruik ooit: neem de huidige looplijst als startpunt.
+  if(!kerstSnapshotData){
+    kerstSnapshotData = JSON.parse(JSON.stringify(DATA_ECHT));
+    kerstSnapshotDatum = huidigeDatum;
+    saveKerstSnapshot();
+    return kerstSnapshotData;
+  }
+  // Looplijst is niet gewijzigd sinds de laatste (bevestigde) snapshot.
+  if(kerstSnapshotDatum === huidigeDatum) return kerstSnapshotData;
+  // Al eerder "nee" gezegd voor precies déze nieuwe looplijst: niet opnieuw vragen.
+  if(kerstSnapshotBeantwoordVoor === huidigeDatum) return kerstSnapshotData;
+  // Nieuwe looplijst, nog geen keuze gemaakt: vraag het.
+  toonKerstSnapshotPopup(huidigeDatum);
+  return 'wacht';
+}
+
+function toonKerstSnapshotPopup(nieuweDatum){
+  const bg = document.createElement('div');
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#fff;border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 16px 48px rgba(0,0,0,.25)';
+  sheet.innerHTML =
+    '<div style="text-align:center;margin-bottom:16px">'+
+      '<div style="font-size:36px">🎄</div>'+
+      '<div style="font-size:17px;font-weight:900;margin-top:6px">Nieuwe looplijst gevonden</div>'+
+      '<div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5">Sinds je laatst in Kerstkaartjes was (looplijst van '+(kerstSnapshotDatum||'?')+'), is er een nieuwere looplijst ingeladen ('+nieuweDatum+'). Adressen kunnen gewijzigd zijn (mutaties, extra wijk).<br><br>Wil je de Kerstkaartjes-lijst bijwerken met deze nieuwe looplijst?</div>'+
+    '</div>'+
+    '<button id="ks-ja" style="width:100%;padding:14px;margin-bottom:10px;background:var(--green);color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">✓ Ja, meenemen</button>'+
+    '<button id="ks-nee" style="width:100%;padding:14px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">Nee, huidige lijst laten staan</button>';
+  document.body.appendChild(bg);
+  bg.appendChild(sheet);
+  sheet.querySelector('#ks-ja').onclick = ()=>{
+    document.body.removeChild(bg);
+    kerstSnapshotData = JSON.parse(JSON.stringify(DATA_ECHT));
+    kerstSnapshotDatum = nieuweDatum;
+    saveKerstSnapshot();
+    render();
+  };
+  sheet.querySelector('#ks-nee').onclick = ()=>{
+    document.body.removeChild(bg);
+    kerstSnapshotBeantwoordVoor = nieuweDatum;
+    saveKerstSnapshotBeantwoord();
+    render();
+  };
+}
+
 // Fooi-bedragen per brievenbus, opgeslagen in centen (integer)
 // Key = zelfde als doneKerst (straat|hoofdnr)
 let fooi = {};
@@ -1662,7 +1738,7 @@ function prodStyle(p){ return prodColors[p] || {bg:'#eef1ef',fg:'#5a6b63'}; }
 function keyFor(wi,ri,si,ai){ return wi+'|'+ri+'|'+si+'|'+ai; }
 function save(){ localStorage.setItem(STORAGE_DONE, JSON.stringify(done)); }
 function savePref(){ localStorage.setItem(STORAGE_PREF, JSON.stringify({hide:hideChecked})); }
-function saveData(){ localStorage.setItem(STORAGE_DATA, JSON.stringify(DATA)); }
+function saveData(){ localStorage.setItem(STORAGE_DATA, JSON.stringify(DATA_ECHT)); }
 function saveMeta(){ localStorage.setItem(STORAGE_META, JSON.stringify(meta)); }
 
 // Helper: gebruik de juiste done-map op basis van de huidige modus
@@ -2222,6 +2298,13 @@ function render(){
   }
   // Privé-modi (start, prive, agenda, budget) zijn tijdelijk uitgeschakeld;
   // de code blijft staan zodat ze later weer geactiveerd kunnen worden.
+  if(view.mode==='kerst'){
+    const bron = bepaalKerstDataBron();
+    if(bron === 'wacht') return; // keuze-popup staat open, hier stoppen
+    DATA = bron;
+  } else {
+    DATA = DATA_ECHT; // buiten Kerstkaartjes altijd de echte, actuele looplijst
+  }
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
@@ -3351,7 +3434,24 @@ function exportKerstPdf(modus){
       doc.setTextColor(20,20,20);
       y += 13;
     }
+    // Huisnummers oplopend sorteren (numeriek, met letter/toevoeging erachter),
+    // alleen voor déze PDF — de looplijst-volgorde (loopvolgorde) elders in de
+    // app blijft gewoon ongewijzigd.
+    function huisnrSorteerWaarde(nr){
+      const s = String(nr).trim();
+      const m = s.match(/^(\d+)\s*(.*)$/);
+      if(m) return [parseInt(m[1],10), m[2].toLowerCase()];
+      return [Infinity, s.toLowerCase()];
+    }
+    function vergelijkHuisnr(a,b){
+      const [na, sa] = huisnrSorteerWaarde(a.hoofd);
+      const [nb, sb] = huisnrSorteerWaarde(b.hoofd);
+      if(na !== nb) return na - nb;
+      return sa.localeCompare(sb);
+    }
+
     function schrijfStraat(straatNaam, brievenbussen){
+      brievenbussen = brievenbussen.slice().sort(vergelijkHuisnr);
       // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
       const cellW = 17, cellH = 9;
       const tabelX = marge + 1;
@@ -11100,7 +11200,8 @@ function pasExtraWijkToeOpTijd(datumObj, notitie){
 function finalizeLooplijst(parsed){
   const built = buildDataStructure(parsed.adressen);
   if(built.totaal === 0) { toast('Geen bekende straten gevonden', true); return; }
-  DATA = built.data;
+  DATA_ECHT = built.data;
+  DATA = DATA_ECHT;
   const actieveWijken = new Set(DATA.map(w => w.wijk));
 
   // Wis alle vinkjes (Looplijst en Zaterdag) — adressen kunnen veranderd zijn
