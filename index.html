@@ -1911,6 +1911,12 @@ function countKerstAll(){
   return {done:d, total:t};
 }
 
+// Einddatum (deadline) voor de Kerstkaartjes-ronde, zodat we kunnen uitrekenen
+// hoeveel brievenbussen er per dag nog moeten om op tijd klaar te zijn.
+const STORAGE_KERST_EINDDATUM = 'looplijst_v23_kerst_einddatum';
+function laadKerstEinddatum(){ try{ return localStorage.getItem(STORAGE_KERST_EINDDATUM) || ''; }catch(e){ return ''; } }
+function saveKerstEinddatum(iso){ localStorage.setItem(STORAGE_KERST_EINDDATUM, iso); }
+
 // === Fooi-totalen per niveau (in centen) - geeft {munt, biljet, totaal} terug ===
 function fooiInStraat(wi,ri,si){
   if(!DATA[wi] || !DATA[wi].rondes[ri] || !DATA[wi].rondes[ri].straten[si]) return {munt:0,biljet:0,totaal:0};
@@ -3524,6 +3530,55 @@ function renderKerst(){
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Totaal fooi', fooiTotaal());
     main.appendChild(totBox);
+
+    // ===== Einddatum + benodigd tempo per dag =====
+    const kerstAll = countKerstAll();
+    const teGaanBb = kerstAll.total - kerstAll.done;
+    const eindKaart = document.createElement('div');
+    eindKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+    const opgeslagenEinddatum = laadKerstEinddatum();
+    let tempoHTML = '';
+    if(opgeslagenEinddatum && teGaanBb > 0){
+      const vandaag = new Date(); vandaag.setHours(0,0,0,0);
+      const eind = new Date(opgeslagenEinddatum+'T00:00:00');
+      const dagenOver = Math.round((eind - vandaag) / 86400000) + 1; // vandaag telt nog mee
+      if(dagenOver <= 0){
+        tempoHTML = '<div style="margin-top:10px;padding:10px 12px;background:#ffebee;border-radius:10px">'+
+          '<div style="font-size:13px;font-weight:800;color:#c62828">⚠️ Einddatum is verstreken</div>'+
+          '<div style="font-size:12px;color:#c62828;margin-top:2px">Nog '+teGaanBb+' brievenbussen te gaan, geen dagen meer over.</div>'+
+        '</div>';
+      } else {
+        const perDag = Math.ceil(teGaanBb / dagenOver);
+        // Bezorgdagen (zonder zondag) apart, want dat is realistischer
+        let bezorgdagenOver = 0;
+        for(let i=0;i<dagenOver;i++){ const d=new Date(vandaag.getTime()+i*86400000); if(d.getDay()!==0) bezorgdagenOver++; }
+        const perBezorgdag = bezorgdagenOver>0 ? Math.ceil(teGaanBb / bezorgdagenOver) : perDag;
+        tempoHTML = '<div style="display:flex;gap:8px;margin-top:10px">'+
+          '<div style="flex:1;background:#eef2ff;border-radius:10px;padding:10px;text-align:center">'+
+            '<div style="font-size:20px;font-weight:900;color:#3730a3">'+dagenOver+'</div>'+
+            '<div style="font-size:10px;color:#3730a3;font-weight:700">dagen te gaan</div>'+
+          '</div>'+
+          '<div style="flex:1;background:#e8f5e9;border-radius:10px;padding:10px;text-align:center">'+
+            '<div style="font-size:20px;font-weight:900;color:#2e7d32">'+perBezorgdag+'</div>'+
+            '<div style="font-size:10px;color:#2e7d32;font-weight:700">per bezorgdag nodig</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:6px">'+bezorgdagenOver+' bezorgdagen over (zondag niet meegeteld) · '+perDag+' per dag als je élke dag zou doen</div>';
+      }
+    } else if(opgeslagenEinddatum && teGaanBb === 0){
+      tempoHTML = '<div style="margin-top:10px;padding:10px 12px;background:#e8f5e9;border-radius:10px;font-size:13px;font-weight:800;color:#2e7d32">🎄 Alle brievenbussen zijn al gedaan!</div>';
+    }
+    eindKaart.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
+        '<div>'+
+          '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Einddatum kerstronde</div>'+
+          '<div style="font-size:13px;color:var(--muted);margin-top:2px">'+teGaanBb+' van '+kerstAll.total+' brievenbussen nog te gaan</div>'+
+        '</div>'+
+        '<input type="date" id="kerstEinddatumInput" value="'+opgeslagenEinddatum+'" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;font-family:inherit">'+
+      '</div>'+
+      tempoHTML;
+    main.appendChild(eindKaart);
+    eindKaart.querySelector('#kerstEinddatumInput').onchange = (e)=>{ saveKerstEinddatum(e.target.value); renderKerst(); };
 
     // PDF-export: kiezen tussen indeling op Oost/West of op ronde-volgorde
     const exportRij = document.createElement('div');
@@ -5171,6 +5226,53 @@ let segDone = {};
 try { segDone = JSON.parse(localStorage.getItem(STORAGE_SEG_DONE))||{}; } catch(e){ segDone={}; }
 function saveSegDone(){ try{localStorage.setItem(STORAGE_SEG_DONE,JSON.stringify(segDone));}catch(e){} }
 
+// ===== Segmenten automatisch synchroniseren met de ingeladen looplijst =====
+// De Segmenten-module gebruikt SEGMENT_DATA (vaste, handmatig bijgehouden
+// straat/huisnr-lijst per segment) voor de adressen, en hield daar vroeger
+// een eigen, losse vinkjes-set (segDone) bij — los van wat je al via
+// Looplijst/Straten had afgevinkt. Om dat niet meer dubbel te hoeven doen:
+// zoek voor elk segment-adres het bijbehorende adres in de huidige looplijst
+// (DATA) op straat+huisnr, en lees/schrijf gewoon de normale `done`-vinkjes.
+// Bestaat zo'n adres niet in de huidige looplijst (bv. nog geen PDF geladen,
+// of een net-niet-matchend huisnummer), dan valt het terug op de oude losse
+// segDone-vinkjes, zodat de module ook dan gewoon blijft werken.
+let _segAdresIndexCache = null;
+let _segAdresIndexData = null; // referentie naar DATA waarvoor de cache gebouwd is
+function segAdresSleutel(straat, huisnr){
+  return (straat||'').toUpperCase().trim()+'|'+String(huisnr||'').toUpperCase().replace(/\s+/g,'');
+}
+function segAdresIndex(){
+  if(_segAdresIndexCache && _segAdresIndexData === DATA) return _segAdresIndexCache;
+  const idx = {};
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
+    const key = segAdresSleutel(s.naam, a.nr);
+    if(!(key in idx)) idx[key] = {wi,ri,si,ai};
+  }))));
+  _segAdresIndexCache = idx;
+  _segAdresIndexData = DATA;
+  return idx;
+}
+function vindLooplijstAdresVoorSegment(straatNaam, huisnr){
+  return segAdresIndex()[segAdresSleutel(straatNaam, huisnr)] || null;
+}
+function isSegAdresGedaan(segNr, straatNaam, huisnr){
+  const loc = vindLooplijstAdresVoorSegment(straatNaam, huisnr);
+  if(loc) return !!done[keyFor(loc.wi,loc.ri,loc.si,loc.ai)];
+  return !!segDone[segNr+':'+straatNaam+':'+huisnr];
+}
+function toggleSegAdres(segNr, straatNaam, huisnr){
+  const loc = vindLooplijstAdresVoorSegment(straatNaam, huisnr);
+  if(loc){
+    const k = keyFor(loc.wi,loc.ri,loc.si,loc.ai);
+    if(done[k]) delete done[k]; else done[k] = true;
+    save();
+  } else {
+    const key = segNr+':'+straatNaam+':'+huisnr;
+    if(segDone[key]) delete segDone[key]; else segDone[key] = true;
+    saveSegDone();
+  }
+}
+
 function renderWijkenMenu(){
   const main = document.getElementById('main');
   document.getElementById('back').classList.remove('hidden');
@@ -6089,7 +6191,7 @@ function renderSegment(){
       // Tel voortgang
       let totaal=0, gedaan=0;
       Object.entries(seg.straten).forEach(([s,nrs])=>
-        nrs.forEach(n=>{totaal++;if(segDone[nr+':'+s+':'+n])gedaan++;}));
+        nrs.forEach(n=>{totaal++;if(isSegAdresGedaan(nr,s,n))gedaan++;}));
       const pct = totaal>0?Math.round(gedaan/totaal*100):0;
       const isOpen = (openSegment===nr) || !!filter;
       const SEG_KLEUREN = {
@@ -6163,13 +6265,11 @@ function renderSegment(){
           const nrRij = document.createElement('div');
           nrRij.className = 'seg-nrs';
           nrs.forEach(nr2=>{
-            const key = openNr+':'+straat+':'+nr2;
             const btn = document.createElement('button');
-            btn.className = 'seg-nr-btn'+(segDone[key]?' done':'');
+            btn.className = 'seg-nr-btn'+(isSegAdresGedaan(openNr,straat,nr2)?' done':'');
             btn.textContent = nr2;
             btn.onclick = ()=>{
-              if(segDone[key]) delete segDone[key]; else segDone[key]=true;
-              saveSegDone();
+              toggleSegAdres(openNr, straat, nr2);
               openSegment = openNr;
               bouwSegmenten(zoek.value);
             };
@@ -6194,8 +6294,7 @@ function exportSegmentCSV(){
     const regio = seg.naam.includes('OOST') ? 'Oost' : 'West';
     Object.entries(seg.straten).forEach(([straat, nrs])=>{
       nrs.forEach(nr2=>{
-        const key = nr+':'+straat+':'+nr2;
-        csv += '"'+nr+'","'+regio+'","'+straat+'","'+nr2+'",'+(segDone[key]?'Ja':'Nee')+'\n';
+        csv += '"'+nr+'","'+regio+'","'+straat+'","'+nr2+'",'+(isSegAdresGedaan(nr,straat,nr2)?'Ja':'Nee')+'\n';
       });
     });
   });
@@ -6281,7 +6380,7 @@ function exportSegmentPDF(){
         const rij = Math.floor(idx / kolommen);
         const cx = tabelX + col*cellW;
         const cy = y + rij*cellH;
-        const isDone = !!segDone[segNr+':'+straat+':'+n];
+        const isDone = isSegAdresGedaan(segNr, straat, n);
 
         if(isDone){
           doc.setFillColor(30,45,90);
@@ -6315,7 +6414,7 @@ function exportSegmentPDF(){
       const wijkNaam = seg.naam.replace(/OLDENZAAL[- ]*(OOST|WEST)\s*/i,'').trim();
 
       let totaal=0, gedaan=0;
-      Object.entries(seg.straten).forEach(([s,nrs])=> nrs.forEach(n=>{totaal++; if(segDone[nr+':'+s+':'+n]) gedaan++;}));
+      Object.entries(seg.straten).forEach(([s,nrs])=> nrs.forEach(n=>{totaal++; if(isSegAdresGedaan(nr,s,n)) gedaan++;}));
 
       nieuwePaginaAlsNodig(20);
 
@@ -6400,7 +6499,7 @@ function exportSegmentPDFPrint(){
 
     let totaal=0, gedaan=0;
     Object.entries(seg.straten).forEach(([s,nrs])=>
-      nrs.forEach(n=>{totaal++;if(segDone[nr+':'+s+':'+n])gedaan++;}));
+      nrs.forEach(n=>{totaal++;if(isSegAdresGedaan(nr,s,n))gedaan++;}));
 
     html += `<div class="segment">
   <div class="seg-head">
@@ -6421,7 +6520,7 @@ function exportSegmentPDFPrint(){
     <div class="straat-titel">${straat}</div>
     <div class="nrs-rij">`;
       nrs.forEach(n=>{
-        const isDone = !!segDone[nr+':'+straat+':'+n];
+        const isDone = isSegAdresGedaan(nr, straat, n);
         html += `<span class="nr-chip${isDone?' done':''}">${isDone?'✓ ':''}${n}</span>`;
       });
       html += `</div></div>`;
