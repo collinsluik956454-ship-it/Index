@@ -1349,6 +1349,11 @@ function saveBudgetTrans(){ localStorage.setItem(STORAGE_BUDGET_TRANS, JSON.stri
 function saveBudgetCats(){ localStorage.setItem(STORAGE_BUDGET_CATS, JSON.stringify(budgetCats)); }
 function saveBudgetBudgets(){ localStorage.setItem(STORAGE_BUDGET_BUDGETS, JSON.stringify(budgetBudgets)); }
 
+function vandaagIso(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
 // Kerstkaartjes-vinkjes: aparte set, key = "straat|hoofdnr"
 let doneKerst = {};
 try { doneKerst = JSON.parse(localStorage.getItem(STORAGE_KERST)) || {}; } catch(e){ doneKerst = {}; }
@@ -1653,6 +1658,7 @@ function formatEuro(centen){
 }
 let hideChecked = true;
 let stratenZoekTerm = '';
+let kerstDagenUitgeklapt = false;
 try { const p = JSON.parse(localStorage.getItem(STORAGE_PREF)); if(p && typeof p.hide==='boolean') hideChecked=p.hide; } catch(e){}
 let meta = {"date": "13 jun 2026", "bezorger": "Charlotte Rekers", "mutaties": [{"type": "START", "prod": "TT OL", "straat": "Steenstraat", "nr": "49", "naam": "Platvoet"}, {"type": "START", "prod": "TT OL", "straat": "Beatrixstraat 64 0.", "nr": "25", "naam": null}, {"type": "STOP", "prod": "HFD", "straat": "Sportlaan", "nr": "30", "naam": "Gerimex BV"}]};
 try { const m = JSON.parse(localStorage.getItem(STORAGE_META)); if(m) meta=Object.assign(meta,m); } catch(e){}
@@ -2295,6 +2301,7 @@ function render(){
     main.style.maxWidth = '';
     main.style.height = '';
     if(kaartMap){ kaartMap.remove(); kaartMap = null; }
+    if(kaartResizeHandler){ window.removeEventListener('resize', kaartResizeHandler); window.removeEventListener('orientationchange', kaartResizeHandler); kaartResizeHandler = null; }
   }
   // Privé-modi (start, prive, agenda, budget) zijn tijdelijk uitgeschakeld;
   // de code blijft staan zodat ze later weer geactiveerd kunnen worden.
@@ -3680,6 +3687,45 @@ function renderKerst(){
     main.appendChild(eindKaart);
     eindKaart.querySelector('#kerstEinddatumInput').onchange = (e)=>{ saveKerstEinddatum(e.target.value); renderKerst(); };
 
+    // ===== Per dag: hoeveel brievenbussen heb je op welke dag afgevinkt? =====
+    const perDagTelling = {}; // iso-datum -> aantal
+    let onbekendeDatumAantal = 0;
+    Object.values(doneKerst).forEach(v=>{
+      if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) perDagTelling[v] = (perDagTelling[v]||0)+1;
+      else onbekendeDatumAantal++; // oude vinkjes van vóór deze functie (waren alleen 'true'/1)
+    });
+    const dagenSorted = Object.keys(perDagTelling).sort().reverse();
+    if(dagenSorted.length > 0 || onbekendeDatumAantal > 0){
+      const dagKaart = document.createElement('div');
+      dagKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+      const dagUitgeklapt = kerstDagenUitgeklapt;
+      const kop = document.createElement('div');
+      kop.style.cssText = 'display:flex;align-items:center;justify-content:space-between;cursor:pointer;'+(dagUitgeklapt?'margin-bottom:10px':'');
+      kop.innerHTML =
+        '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">📅 Per dag afgevinkt</div>'+
+        '<span style="font-size:13px;color:#9ca3af;font-weight:800">'+(dagUitgeklapt?'▲':'▼')+'</span>';
+      kop.onclick = ()=>{ kerstDagenUitgeklapt = !kerstDagenUitgeklapt; renderKerst(); };
+      dagKaart.appendChild(kop);
+      if(dagUitgeklapt){
+        dagenSorted.forEach(iso=>{
+          const isVandaag = iso === vandaagIso();
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:13px';
+          regel.innerHTML =
+            '<span style="font-weight:'+(isVandaag?'800':'600')+';color:'+(isVandaag?'#1a2d5a':'#374151')+'">'+formatDatumNL(iso)+(isVandaag?' · vandaag':'')+'</span>'+
+            '<span style="font-weight:800;color:#2e7d32">'+perDagTelling[iso]+'</span>';
+          dagKaart.appendChild(regel);
+        });
+        if(onbekendeDatumAantal > 0){
+          const regel = document.createElement('div');
+          regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12px;color:#9ca3af';
+          regel.innerHTML = '<span>Onbekende datum (van vóór deze telling)</span><span style="font-weight:800">'+onbekendeDatumAantal+'</span>';
+          dagKaart.appendChild(regel);
+        }
+      }
+      main.appendChild(dagKaart);
+    }
+
     // PDF-export: kiezen tussen indeling op Oost/West of op ronde-volgorde
     const exportRij = document.createElement('div');
     exportRij.style.cssText = 'display:flex;gap:8px;margin-bottom:12px';
@@ -3970,7 +4016,7 @@ function renderKerst(){
       checkEl.onclick = (e)=>{
         e.stopPropagation();
         if(doneKerst[k]) delete doneKerst[k];
-        else doneKerst[k] = true;
+        else doneKerst[k] = vandaagIso();
         saveKerst();
         render();
         updateHeaderProgress();
@@ -6671,6 +6717,7 @@ function saveGeoCache(){ try{ localStorage.setItem(STORAGE_GEOCACHE, JSON.string
 
 // Kaart-state
 let kaartMap = null;
+let kaartResizeHandler = null;
 let kaartNavIdx = 0;
 let kaartPins = [];    // [{lat,lng,straat,nr,prod,naam,wijk,segment,marker}]
 let kaartPolygonen = {};
@@ -6930,6 +6977,19 @@ async function renderKaart(){
   setTimeout(async ()=>{
     kaartMap = L.map('kaartMap',{zoomControl:true,attributionControl:false}).setView([52.3180,6.9180],14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(kaartMap);
+
+    // Leaflet meet de containergrootte bij het aanmaken. Op een tablet (ander
+    // formaat/verhouding dan een telefoon, en vaker van staand naar liggend
+    // gedraaid) klopt die eerste meting soms niet — de kaart blijft dan te
+    // klein/verkeerd uitgesneden staan. invalidateSize() dwingt een herme-
+    // ting af, en de resize/orientatie-listener houdt 'm kloppend als het
+    // scherm van formaat verandert (bv. rotatie of het openklappen van een
+    // vouwbare tablet).
+    setTimeout(()=>{ if(kaartMap) kaartMap.invalidateSize(); }, 60);
+    if(kaartResizeHandler) window.removeEventListener('resize', kaartResizeHandler);
+    kaartResizeHandler = ()=>{ if(kaartMap) kaartMap.invalidateSize(); };
+    window.addEventListener('resize', kaartResizeHandler);
+    window.addEventListener('orientationchange', kaartResizeHandler);
 
     // Legenda
     const leg = L.control({position:'bottomright'});
@@ -9911,7 +9971,7 @@ document.getElementById('fooiClear').onclick = ()=>{
 };
 // Klaar = afvinken (ook bij 0 euro = geen fooi)
 document.getElementById('fooiDone').onclick = ()=>{
-  doneKerst[fooiCurrentKey] = 1;
+  doneKerst[fooiCurrentKey] = vandaagIso();
   saveKerst();
   closeFooiPopup();
   render();
