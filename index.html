@@ -10936,7 +10936,7 @@ function parseLooplijst(lines, mutaties){
   let inMutaties=false;
   // Productcode generiek herkennen (1-2 hoofdletter-woorden van 2-6 tekens), i.p.v.
   // een vaste lijst, zodat nieuwe codes (zoals "HP") niet worden gemist.
-  const huisnrRe=/^(\d{1,4}(?:[\s][A-Za-z0-9\.\-]{1,6}){0,3}?)\s+(TT\s?OL|AD\s?NL|(?!APP\b)[A-Z]{2,6})\b(.*)$/;
+  const huisnrRe=/^(\d{1,4}(?:[\s][A-Za-z0-9\.\-]{1,6}){0,3}?)\s+(TT\s?OL|AD\s?NL|(?!APP\b|ADVD\b|NWKVD\b|TELVD\b|VKVD\b|TRVD\b|ZOVD\b|INST\b)[A-Z]{2,6})\b(.*)$/;
 
   for(let i=0;i<lines.length;i++){
     let entry=lines[i];
@@ -11000,7 +11000,7 @@ function parseLooplijst(lines, mutaties){
       if(/^0\b/.test(rest)){ isStop = true; rest = rest.replace(/^0\s*/,'').trim(); }
       rest=rest.replace(/^\d+\s*$/,'').replace(/\s+/g,' ').trim();
       let naam=rest;
-      const restCut=naam.match(/^(.{1,30}?)\s+\d+\s+(TT\s?OL|AD\s?NL|(?!APP\b)[A-Z]{2,6})\b/);
+      const restCut=naam.match(/^(.{1,30}?)\s+\d+\s+(TT\s?OL|AD\s?NL|(?!APP\b|ADVD\b|NWKVD\b|TELVD\b|VKVD\b|TRVD\b|ZOVD\b|INST\b)[A-Z]{2,6})\b/);
       if(restCut) naam=restCut[1].trim();
       if(naam.length>30) naam=naam.substring(0,30);
       if(/^\d+$/.test(naam)) naam='';
