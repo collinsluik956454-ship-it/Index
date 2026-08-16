@@ -10983,7 +10983,7 @@ function parseLooplijst(lines, mutaties){
   let inMutaties=false;
   // Productcode generiek herkennen (1-2 hoofdletter-woorden van 2-6 tekens), i.p.v.
   // een vaste lijst, zodat nieuwe codes (zoals "HP") niet worden gemist.
-  const huisnrRe=/^(\d{1,4}(?:[\s][A-Za-z0-9\.\-]{1,6}){0,3}?)\s+(TT\s?OL|AD\s?NL|(?!APP\b|ADVD\b|NWKVD\b|TELVD\b|VKVD\b|TRVD\b|ZOVD\b|INST\b)[A-Z]{2,6})\b(.*)$/;
+  const huisnrRe=/^(\d{1,4}(?:\s(?!(?:APP|ADVD|NWKVD|TELVD|VKVD|TRVD|ZOVD|INST)\b)[A-Za-z0-9\.\-]{1,6}){0,3}?)\s+(TT\s?OL|AD\s?NL|(?!APP\b|ADVD\b|NWKVD\b|TELVD\b|VKVD\b|TRVD\b|ZOVD\b|INST\b)[A-Z]{2,6})\b(.*)$/;
 
   for(let i=0;i<lines.length;i++){
     let entry=lines[i];
