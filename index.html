@@ -1003,6 +1003,31 @@ function saveExtraMap(){ localStorage.setItem(STORAGE_EXTRA, JSON.stringify(EXTR
 let DATA_ECHT;
 try { const s = localStorage.getItem(STORAGE_DATA); DATA_ECHT = s? JSON.parse(s) : DEFAULT_DATA; }
 catch(e){ DATA_ECHT = DEFAULT_DATA; }
+
+// Opschonen: verwijder spook-adressen die per ongeluk zijn ontstaan doordat
+// losse vinkje-codes (ADVD, NWKVD, TELVD, VKVD, TRVD, ZOVD, INST — deze staan
+// in de PDF los, zonder eigen huisnummer) ooit verkeerd aan een huisnummer
+// gekoppeld werden (bv. "18 VKVD" bij Nagelstraat). De parser is gefixt zodat
+// dit niet meer opnieuw gebeurt, maar bestaande, al opgeslagen data moet nog
+// één keer schoongemaakt worden.
+(function opschonenSpookAdressen(){
+  const spookCodes = /^(ADVD|NWKVD|TELVD|VKVD|TRVD|ZOVD|INST)$/i;
+  let gewijzigd = false;
+  try{
+    (DATA_ECHT||[]).forEach(w=>{
+      (w.rondes||[]).forEach(r=>{
+        (r.straten||[]).forEach(s=>{
+          const voor = (s.adressen||[]).length;
+          s.adressen = (s.adressen||[]).filter(a=> !spookCodes.test((a.prod||'').trim()));
+          if(s.adressen.length !== voor) gewijzigd = true;
+        });
+      });
+    });
+  }catch(e){ /* bij twijfel niets wijzigen */ }
+  if(gewijzigd){
+    try{ localStorage.setItem(STORAGE_DATA, JSON.stringify(DATA_ECHT)); }catch(e){}
+  }
+})();
 // `DATA` is wat alle render-functies lezen. Normaal wijst dit gewoon naar de
 // echte, actuele looplijst — behalve in Kerstkaartjes-modus, waar het (na
 // jouw keuze) ook naar een bevroren momentopname kan wijzen. Zie
@@ -1371,6 +1396,28 @@ const STORAGE_KERST_SNAPSHOT_DATUM = 'looplijst_v23_kerst_snapshot_datum';
 const STORAGE_KERST_SNAPSHOT_BEANTWOORD = 'looplijst_v23_kerst_snapshot_beantwoord';
 let kerstSnapshotData = null;
 try { const s = localStorage.getItem(STORAGE_KERST_SNAPSHOT); kerstSnapshotData = s ? JSON.parse(s) : null; } catch(e){ kerstSnapshotData = null; }
+// Zelfde opschoning als bij DATA_ECHT hierboven, maar dan voor de bevroren
+// Kerst-snapshot — anders blijft een oud spook-adres (bv. "18 VKVD") daar
+// zichtbaar staan ook al is de live data al schoon.
+(function opschonenKerstSnapshot(){
+  if(!kerstSnapshotData) return;
+  const spookCodes = /^(ADVD|NWKVD|TELVD|VKVD|TRVD|ZOVD|INST)$/i;
+  let gewijzigd = false;
+  try{
+    (kerstSnapshotData||[]).forEach(w=>{
+      (w.rondes||[]).forEach(r=>{
+        (r.straten||[]).forEach(s=>{
+          const voor = (s.adressen||[]).length;
+          s.adressen = (s.adressen||[]).filter(a=> !spookCodes.test((a.prod||'').trim()));
+          if(s.adressen.length !== voor) gewijzigd = true;
+        });
+      });
+    });
+  }catch(e){ /* bij twijfel niets wijzigen */ }
+  if(gewijzigd){
+    try{ localStorage.setItem(STORAGE_KERST_SNAPSHOT, JSON.stringify(kerstSnapshotData)); }catch(e){}
+  }
+})();
 let kerstSnapshotDatum = localStorage.getItem(STORAGE_KERST_SNAPSHOT_DATUM) || '';
 let kerstSnapshotBeantwoordVoor = localStorage.getItem(STORAGE_KERST_SNAPSHOT_BEANTWOORD) || '';
 function saveKerstSnapshot(){
@@ -3575,7 +3622,7 @@ function exportKerstPdf(modus){
           const startPagina = doc.internal.getNumberOfPages();
           const rondeKaderStartY = y - 1.5; // vóór de rondekop, zodat de titel zelf ook binnen het kader valt
           const linksX = marge - 3, rechtsX = pageW - marge + 3;
-          schrijfSubKop(r.ronde);
+          schrijfSubKop(r.ronde + '  ·  ' + bbInRonde + (bbInRonde===1 ? ' adres' : ' adressen'));
           r.straten.forEach((s, si)=>{
             const bb = brievenbussenVoorStraat(wi, ri, si);
             if(bb.length) schrijfStraat(s.naam, bb);
