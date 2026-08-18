@@ -3503,45 +3503,94 @@ function exportKerstPdf(modus){
       if(na !== nb) return na - nb;
       return sa.localeCompare(sb);
     }
+    function isOneven(nr){
+      const m = String(nr).trim().match(/^(\d+)/);
+      return m ? (parseInt(m[1],10) % 2 === 1) : true; // geen leidend cijfer: bij "oneven" zetten, komt zelden voor
+    }
 
-    function schrijfStraat(straatNaam, brievenbussen){
-      brievenbussen = brievenbussen.slice().sort(vergelijkHuisnr);
-      // Vaste rastertabel: elke cel even breed, randen sluiten op elkaar aan
-      const cellW = 17, cellH = 9;
-      const tabelX = marge + 1;
-      const tabelBreedte = pageW - 2*marge - 2;
-      const kolommen = Math.max(1, Math.floor(tabelBreedte / cellW));
-      const rijen = Math.ceil(brievenbussen.length / kolommen);
+    // ===== Wijknummer-opzoektabel (uit SEGMENT_DATA / Wijken-PDF) =====
+    // Zodat we per huisnummer weten bij welk wijknummer (kort-code, bv. "226")
+    // het hoort, en daartussen een paginabreak kunnen forceren.
+    const straatNrNaarKort = {};
+    Object.keys(SEGMENT_DATA||{}).forEach(kort=>{
+      const seg = SEGMENT_DATA[kort];
+      if(!seg || !seg.straten) return;
+      Object.keys(seg.straten).forEach(straatKey=>{
+        (seg.straten[straatKey]||[]).forEach(nr=>{
+          const norm = String(nr).replace(/\s+/g,'').toUpperCase();
+          straatNrNaarKort[straatKey+'|'+norm] = kort;
+        });
+      });
+    });
+    function vindWijknummer(straatNaam, hoofd){
+      const key = straatNaam.toUpperCase().trim()+'|'+String(hoofd).replace(/\s+/g,'').toUpperCase();
+      return straatNrNaarKort[key] || null;
+    }
 
-      // Belangrijk: eerst de TOTALE bloklengte (naam + hele tabel) uitrekenen
-      // en in één keer checken of dat nog op deze pagina past, VOORDAT er iets
-      // getekend wordt. Deed dit niet: dan kon de straatnaam nog net onderaan
-      // een pagina passen, terwijl de nummer-tabel daarna alsnog naar de
-      // volgende pagina sprong — straatnaam en nummers raakten dan gescheiden
-      // (bv. bij Kretalaan).
-      const blokHoogte = 7.5 + rijen*cellH + 4;
-      nieuwePaginaAlsNodig(blokHoogte);
+    let huidigeWijknummer; // undefined = nog niet gestart; wordt bijgehouden over straten/rondes heen
 
-      const kaderX = marge - 1;
-      const kaderBreedte = pageW - 2*marge + 2;
-      const kaderStartY = y - 1.5;
+    // ===== 3 straat-kolommen naast elkaar =====
+    // Elke straat (met zijn eigen oneven/even sub-kolommen) komt in de kolom
+    // terecht die op dat moment het minst gevuld is. kolomY houdt de
+    // "waterlijn" per kolom bij.
+    const AANTAL_KOLOMMEN = 3;
+    const buitenGap = 4;
+    const buitenKolomBreedte = (pageW - 2*marge - (AANTAL_KOLOMMEN-1)*buitenGap) / AANTAL_KOLOMMEN;
+    function xBasisKolom(k){ return marge + k*(buitenKolomBreedte + buitenGap); }
+    let kolomY = new Array(AANTAL_KOLOMMEN).fill(y);
+    function syncKolommenNaarY(){ kolomY = new Array(AANTAL_KOLOMMEN).fill(y); }
+    function syncYNaarKolommen(){ y = Math.max(...kolomY); }
+
+    // Tekent één blok: straatnaam + twee sub-kolommen (oneven / even), elk
+    // huisnummer in een eigen klein blokje, oplopend onder elkaar. `kolom`
+    // (0=links,1=rechts) bepaalt in welke buitenkolom dit blok komt.
+    function schrijfStraatBlok(straatNaam, brievenbussen, kolom){
+      const oneven = brievenbussen.filter(b=>isOneven(b.hoofd)).sort(vergelijkHuisnr);
+      const even   = brievenbussen.filter(b=>!isOneven(b.hoofd)).sort(vergelijkHuisnr);
+      const rijen = Math.max(oneven.length, even.length);
+      if(rijen === 0) return;
+
+      const cellW = 20, cellH = 8;
+      const innerGap = 2;
+      const xB = xBasisKolom(kolom);
+      const tabelX = xB + 1;
+      const tabelBreedte = buitenKolomBreedte - 2;
+      const kolomXOneven = tabelX;
+      const kolomXEven = tabelX + cellW + innerGap;
+
+      let yy = kolomY[kolom];
+      const minEersteHoogte = 6.5 + 4.5 + cellH + 3;
+      if(yy + minEersteHoogte > pageH - marge){
+        doc.addPage();
+        kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
+        kolom = 0;
+        yy = marge;
+      }
+
+      const kaderX = xB - 1;
+      const kaderBreedte = buitenKolomBreedte + 2;
+      let kaderStartY = yy - 1.5;
+      const kaderStukken = [];
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(9.5);
+      doc.setFontSize(8.5);
       doc.setTextColor(20,20,20);
-      doc.text(straatNaam, marge + 2, y + 4);
-      y += 7.5;
+      doc.text(straatNaam, xB + 2, yy + 3.5);
+      yy += 6.5;
 
-      doc.setFontSize(9.5);
+      doc.setFont('helvetica','italic');
+      doc.setFontSize(7);
+      doc.setTextColor(130,130,130);
+      doc.text('oneven', kolomXOneven + 1.5, yy);
+      doc.text('even', kolomXEven + 1.5, yy);
+      doc.setTextColor(20,20,20);
+      yy += 4.5;
+
+      doc.setFontSize(8.5);
       doc.setDrawColor(120,120,120);
       doc.setLineWidth(0.25);
 
-      brievenbussen.forEach((b, idx)=>{
-        const col = idx % kolommen;
-        const rij = Math.floor(idx / kolommen);
-        const cx = tabelX + col*cellW;
-        const cy = y + rij*cellH;
-
+      function tekenBlokje(b, kolX){
         const k = kerstKey(straatNaam, b.hoofd);
         const isDone = !!doneKerst[k];
         const e = fooiEntry(k);
@@ -3551,28 +3600,98 @@ function exportKerstPdf(modus){
 
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.rect(cx, cy, cellW, cellH, 'FD');
+          doc.rect(kolX, yy, cellW, cellH, 'FD');
           doc.setTextColor(255,255,255);
           doc.setFont('helvetica','bold');
         } else {
-          doc.rect(cx, cy, cellW, cellH, 'S');
+          doc.rect(kolX, yy, cellW, cellH, 'S');
           doc.setTextColor(20,20,20);
           doc.setFont('helvetica','normal');
         }
-        doc.text(label, cx + cellW/2, cy + cellH/2 + 1, {align:'center'});
-      });
+        doc.text(label, kolX + cellW/2, yy + cellH/2 + 1, {align:'center'});
+      }
 
-      y += rijen*cellH;
+      for(let i=0; i<rijen; i++){
+        if(yy + cellH > pageH - marge){
+          // Rij past niet meer: kader-stuk afsluiten, nieuwe pagina, BEIDE
+          // kolommen resetten en verdergaan links met "(vervolg)".
+          kaderStukken.push({pagina:doc.internal.getNumberOfPages(), boven:kaderStartY, onder:yy+2});
+          doc.addPage();
+          kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
+          kolom = 0;
+          yy = marge;
+          kaderStartY = yy - 1.5;
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(20,20,20);
+          doc.text(straatNaam+' (vervolg)', marge + 2, yy + 3.5);
+          yy += 6.5;
+          doc.setFont('helvetica','italic');
+          doc.setFontSize(7);
+          doc.setTextColor(130,130,130);
+          doc.text('oneven', marge + 1 + 1.5, yy);
+          doc.text('even', marge + 1 + cellW + innerGap + 1.5, yy);
+          doc.setTextColor(20,20,20);
+          yy += 4.5;
+          doc.setFontSize(8.5);
+        }
+        if(oneven[i]) tekenBlokje(oneven[i], kolomXOneven);
+        if(even[i]) tekenBlokje(even[i], kolomXEven);
+        yy += cellH;
+      }
 
-      // Knipkader om het hele straatblok (naam + tabel)
-      const kaderEindY = y + 2.5;
+      const kaderEindPagina = doc.internal.getNumberOfPages();
+      const kaderEindY = yy + 2;
+      kaderStukken.push({pagina:kaderEindPagina, boven:kaderStartY, onder:kaderEindY});
+
       doc.setDrawColor(150,150,150);
       doc.setLineWidth(0.3);
-      doc.rect(kaderX, kaderStartY, kaderBreedte, kaderEindY - kaderStartY, 'S');
+      const huidigePaginaVoorKader = doc.internal.getCurrentPageInfo().pageNumber;
+      if(kaderStukken.length===1){
+        doc.rect(kaderX, kaderStartY, kaderBreedte, kaderEindY-kaderStartY, 'S');
+      } else {
+        kaderStukken.forEach((stuk, idx)=>{
+          doc.setPage(stuk.pagina);
+          const boven = idx===0 ? stuk.boven : marge - 3;
+          const onder = idx===kaderStukken.length-1 ? stuk.onder : pageH - marge + 3;
+          doc.line(kaderX, boven, kaderX, onder);
+          doc.line(kaderX+kaderBreedte, boven, kaderX+kaderBreedte, onder);
+          if(idx===0) doc.line(kaderX, boven, kaderX+kaderBreedte, boven);
+          if(idx===kaderStukken.length-1) doc.line(kaderX, onder, kaderX+kaderBreedte, onder);
+        });
+        doc.setPage(huidigePaginaVoorKader);
+      }
       doc.setLineWidth(0.2);
-
       doc.setTextColor(20,20,20);
-      y = kaderEindY + 2.5;
+      kolomY[kolom] = kaderEindY + 2;
+    }
+
+    // Kiest voor een straat-blok de kolom met de meeste resterende ruimte, en
+    // regelt een paginabreak (met reset van alle kolommen) als het blok in
+    // geen enkele kolom meer past op de huidige pagina.
+    function plaatsStraatBlok(straatNaam, items){
+      if(!items.length) return;
+      const onevenN = items.filter(b=>isOneven(b.hoofd)).length;
+      const evenN = items.length - onevenN;
+      const rijenSchatting = Math.max(onevenN, evenN);
+      const hoogteSchatting = 6.5 + 4.5 + rijenSchatting*8 + 3;
+
+      // Kolommen op volgorde van meeste resterende ruimte (kleinste kolomY eerst)
+      const volgorde = kolomY.map((v,i)=>i).sort((a,b)=>kolomY[a]-kolomY[b]);
+      let kolom = volgorde.find(k=> kolomY[k] + hoogteSchatting <= pageH - marge);
+      if(kolom === undefined){
+        doc.addPage();
+        kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
+        kolom = 0;
+      }
+      schrijfStraatBlok(straatNaam, items, kolom);
+    }
+
+    // Publieke functie (zelfde naam/signatuur als voorheen, zodat de rest van
+    // de export-code ongewijzigd kan blijven): plaatst de straat gewoon in de
+    // kolom die op dat moment het meeste ruimte heeft, zonder extra breaks.
+    function schrijfStraat(straatNaam, brievenbussen){
+      plaatsStraatBlok(straatNaam, brievenbussen.slice().sort(vergelijkHuisnr));
     }
 
     doc.setFont('helvetica','bold');
@@ -3597,7 +3716,10 @@ function exportKerstPdf(modus){
       const kleuren = {OOST: [211,47,47], WEST: [21,101,192], OVERIG: [97,97,97]};
       ['OOST','WEST','OVERIG'].forEach(regio=>{
         if(groepen[regio].length===0) return;
+        if(y > marge + 5){ doc.addPage(); y = marge; }
         schrijfKop('OLDENZAAL '+regio, kleuren[regio]);
+        huidigeWijknummer = undefined;
+        syncKolommenNaarY();
         groepen[regio].forEach(wi=>{
           const w = DATA[wi];
           w.rondes.forEach((r, ri)=>{
@@ -3607,6 +3729,7 @@ function exportKerstPdf(modus){
             });
           });
         });
+        syncYNaarKolommen();
         y += 3;
       });
     } else {
@@ -3623,10 +3746,13 @@ function exportKerstPdf(modus){
           const rondeKaderStartY = y - 1.5; // vóór de rondekop, zodat de titel zelf ook binnen het kader valt
           const linksX = marge - 3, rechtsX = pageW - marge + 3;
           schrijfSubKop(r.ronde + '  ·  ' + bbInRonde + (bbInRonde===1 ? ' adres' : ' adressen'));
+          huidigeWijknummer = undefined; // straat-na-ronde-break mag nooit nog eens breken
+          syncKolommenNaarY();
           r.straten.forEach((s, si)=>{
             const bb = brievenbussenVoorStraat(wi, ri, si);
             if(bb.length) schrijfStraat(s.naam, bb);
           });
+          syncYNaarKolommen();
           const eindPagina = doc.internal.getNumberOfPages();
           const kaderEindY = y - 2;
 
