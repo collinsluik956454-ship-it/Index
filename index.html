@@ -2363,6 +2363,7 @@ function render(){
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
   if(view.mode==='bonus') return renderBonus();
+  if(view.mode==='promillageperiode') return renderPromillagePeriode();
   if(view.mode==='klachten') return renderKlachten();
   if(view.mode==='mutaties') return renderMutaties();
   if(view.mode==='jaararchief') return renderJaarArchief();
@@ -4687,6 +4688,24 @@ function renderHome(){
   cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
   grid.appendChild(cardBonus);
 
+  // Promillage per periode-module (los, 4-wekelijks, onafhankelijk van DPG-import)
+  const cardPromPeriode = document.createElement('button');
+  cardPromPeriode.className = 'home-card';
+  const _ppLijst = promillagePerVierWekelijksePeriode();
+  const _ppHuidig = _ppLijst.find(p=>p.isHuidig);
+  const _ppSub = _ppHuidig && _ppHuidig.promillage!==null
+    ? _ppHuidig.promillage.toFixed(2).replace('.',',')+'‰ deze periode'
+    : (_ppLijst.length ? _ppLijst.length+' periode'+(_ppLijst.length===1?'':'s') : 'Nog geen data');
+  cardPromPeriode.innerHTML =
+    '<div class="hc-ic">📊</div>'+
+    '<div class="hc-body">'+
+      '<div class="hc-titel">Promillage per periode</div>'+
+      '<div class="hc-sub">'+_ppSub+'</div>'+
+    '</div>'+
+    '<div class="hc-chev">›</div>';
+  cardPromPeriode.onclick = ()=>{ view={mode:'promillageperiode'}; render(); };
+  grid.appendChild(cardPromPeriode);
+
   // Klachten-module
   const cardKlachten = document.createElement('button');
   cardKlachten.className = 'home-card';
@@ -5769,6 +5788,56 @@ function groepeerOpPeriode(items){
 }
 
 
+// Onafhankelijke 4-wekelijkse periodes — NIET gekoppeld aan de DPG-vergoedings-
+// import (die loopt soms achter, of ontbreekt voor oudere data). Anker: de
+// maandag van de week waarin de vroegst bekende dag (klacht of krantentelling)
+// valt. Vandaaraf steeds blokken van 28 dagen, tot en met vandaag.
+function vierWekelijksePerioden(){
+  const perDag = laadKrantenPerDag();
+  const klachtenLog = laadKlachtenLog().filter(k=>!k.extraWijk);
+  const alleDatums = Object.keys(perDag).concat(klachtenLog.map(k=>k.datum)).filter(Boolean);
+  if(!alleDatums.length) return [];
+  const minDatumStr = alleDatums.reduce((a,b)=> a<b ? a : b);
+  const anker = new Date(minDatumStr+'T00:00:00');
+  const dow = (anker.getDay()+6)%7; // 0=maandag .. 6=zondag
+  anker.setDate(anker.getDate()-dow);
+
+  const vandaag = new Date(); vandaag.setHours(0,0,0,0);
+  const perioden = [];
+  let start = new Date(anker);
+  while(start <= vandaag){
+    const eind = new Date(start); eind.setDate(eind.getDate()+27);
+    perioden.push({vanaf: new Date(start), tot: eind});
+    start = new Date(start); start.setDate(start.getDate()+28);
+  }
+  return perioden.reverse(); // nieuwste eerst
+}
+
+// Berekent klachten/kranten/promillage per 4-wekelijkse periode (zie hierboven).
+function promillagePerVierWekelijksePeriode(){
+  const perDag = laadKrantenPerDag();
+  const klachtenLog = laadKlachtenLog().filter(k=>!k.extraWijk);
+  const perioden = vierWekelijksePerioden();
+  const fmtD = (d)=> d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit'});
+
+  return perioden.map(p=>{
+    const vanafStr = p.vanaf.toISOString().slice(0,10);
+    const totStr = p.tot.toISOString().slice(0,10);
+    const klachten = klachtenLog.filter(k=> k.datum>=vanafStr && k.datum<=totStr);
+    let totaalKranten = 0, dagenGeteld = 0;
+    Object.keys(perDag).forEach(dt=>{
+      if(dt>=vanafStr && dt<=totStr){ totaalKranten += perDag[dt]; dagenGeteld++; }
+    });
+    const promillage = totaalKranten>0 ? (klachten.length/totaalKranten)*1000 : null;
+    return {
+      vanaf: p.vanaf, tot: p.tot,
+      label: fmtD(p.vanaf)+' – '+fmtD(p.tot),
+      klachten: klachten.length, totaalKranten, dagenGeteld, promillage,
+      isHuidig: (new Date() >= p.vanaf && new Date() <= new Date(p.tot.getTime()+86399999))
+    };
+  });
+}
+
 function groepeerKlachtenPerPeriode(){
   const log = laadKlachtenLog().filter(k=>!k.extraWijk);
   const perioden = alleBekendePerioden();
@@ -6402,6 +6471,13 @@ function renderBonus(){
     wrap.appendChild(leegKaart);
   }
 
+  // ===== Link naar de losse "Promillage per periode"-module =====
+  const promPeriodeLinkBtn = document.createElement('button');
+  promPeriodeLinkBtn.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-top:14px;background:#eef2ff;border:none;border-radius:12px;color:#3730a3;font-weight:700;font-size:13px';
+  promPeriodeLinkBtn.innerHTML = '<span>📊 Promillage per periode (4-wekelijks) bekijken</span><span>›</span>';
+  promPeriodeLinkBtn.onclick = ()=>{ view={mode:'promillageperiode'}; render(); };
+  wrap.appendChild(promPeriodeLinkBtn);
+
   // ===== Archief: eerdere afgeronde bonusperiodes, om te vergelijken =====
   const bonusArchief = laadBonusArchief();
   if(bonusArchief.length > 0){
@@ -6435,6 +6511,66 @@ function renderBonus(){
     });
     wrap.appendChild(archKaart);
   }
+
+  main.appendChild(wrap);
+}
+
+// ===== Losse module: Promillage per periode (elke 4 weken, onafhankelijk van
+// de DPG-vergoedingsspecificatie-import) — zodat je in één oogopslag ziet hoe
+// elke periode gaat, ook als je de vergoedingsspecificatie nog niet hebt
+// ingeladen voor die weken. =====
+function renderPromillagePeriode(){
+  const main = document.getElementById('main');
+  document.getElementById('back').classList.remove('hidden');
+  document.getElementById('crumb').textContent = 'Promillage per periode';
+  document.getElementById('title').textContent = 'Promillage per periode';
+  main.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding-bottom:20px';
+
+  const uitlegKaart = document.createElement('div');
+  uitlegKaart.style.cssText = 'background:#eef2ff;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#3730a3';
+  uitlegKaart.textContent = 'Vaste blokken van 4 weken, los van de DPG-vergoedingsspecificatie — werkt dus ook voor periodes waarvan je die PDF nog niet hebt ingeladen.';
+  wrap.appendChild(uitlegKaart);
+
+  const vwPerioden = promillagePerVierWekelijksePeriode();
+  if(!vwPerioden.length){
+    const leeg = document.createElement('div');
+    leeg.style.cssText = 'text-align:center;color:#9ca3af;padding:30px 16px;font-size:13px';
+    leeg.textContent = 'Nog geen data. Zodra je een looplijst-PDF hebt ingeladen (voor de kranten-per-dag telling), verschijnen hier de periodes.';
+    wrap.appendChild(leeg);
+    main.appendChild(wrap);
+    return;
+  }
+
+  const pwKaart = document.createElement('div');
+  pwKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+  vwPerioden.forEach(p=>{
+    const regel = document.createElement('div');
+    regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #f3f4f6;font-size:13px';
+    const kleur = p.promillage===null ? '#9ca3af' : (p.promillage<4 ? '#2e7d32' : '#c62828');
+    regel.innerHTML =
+      '<div>'+
+        '<div style="font-weight:700;color:#374151">'+p.label+(p.isHuidig?' <span style="color:#1a2d5a;font-weight:800">· lopend</span>':'')+'</div>'+
+        '<div style="font-size:11px;color:#9ca3af;margin-top:1px">'+p.klachten+' klacht'+(p.klachten===1?'':'en')+' · '+p.totaalKranten.toLocaleString('nl-NL')+' kranten'+(p.dagenGeteld===0?' (nog geen data)':'')+'</div>'+
+      '</div>'+
+      '<div style="font-weight:800;color:'+kleur+';flex:0 0 auto;margin-left:10px">'+(p.promillage!==null ? p.promillage.toFixed(2).replace('.',',')+'‰' : '—')+'</div>';
+    pwKaart.appendChild(regel);
+  });
+  wrap.appendChild(pwKaart);
+
+  const klachtenLinkBtn = document.createElement('button');
+  klachtenLinkBtn.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:14px;background:#eef2ff;border:none;border-radius:12px;color:#3730a3;font-weight:700;font-size:13px';
+  klachtenLinkBtn.innerHTML = '<span>📋 Alle klachten per periode bekijken</span><span>›</span>';
+  klachtenLinkBtn.onclick = ()=>{ view={mode:'klachten'}; render(); };
+  wrap.appendChild(klachtenLinkBtn);
+
+  const bonusLinkBtn = document.createElement('button');
+  bonusLinkBtn.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#eef2ff;border:none;border-radius:12px;color:#3730a3;font-weight:700;font-size:13px';
+  bonusLinkBtn.innerHTML = '<span>🎁 Zomer/winterbonus-instelling</span><span>›</span>';
+  bonusLinkBtn.onclick = ()=>{ view={mode:'bonus'}; render(); };
+  wrap.appendChild(bonusLinkBtn);
 
   main.appendChild(wrap);
 }
