@@ -3456,10 +3456,10 @@ function exportKerstPdf(modus){
   }
   try{
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const doc = new jsPDF({unit:'mm', format:'a6', orientation:'landscape'});
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const marge = 14;
+    const marge = 5;
     let y = marge;
     const nu = new Date();
     const datumStr = nu.toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
@@ -3468,26 +3468,26 @@ function exportKerstPdf(modus){
       if(y + minHoogte > pageH - marge){ doc.addPage(); y = marge; }
     }
     function schrijfSubKop(tekst){
-      nieuwePaginaAlsNodig(13);
+      nieuwePaginaAlsNodig(10.5);
       doc.setFillColor(232,150,20); // opvallende goud/oranje balk, net als de WIJK-balken
-      doc.rect(marge, y, pageW-2*marge, 9.5, 'F');
+      doc.rect(marge, y, pageW-2*marge, 7.5, 'F');
       doc.setFont('helvetica','bold');
-      doc.setFontSize(11.5);
+      doc.setFontSize(9.5);
       doc.setTextColor(255,255,255);
-      doc.text(tekst, marge+3, y+6.7);
+      doc.text(tekst, marge+2.5, y+5.3);
       doc.setTextColor(20,20,20);
-      y += 12.5;
+      y += 10;
     }
     function schrijfKop(tekst, kleur){
-      nieuwePaginaAlsNodig(16);
+      nieuwePaginaAlsNodig(13);
       doc.setFillColor(kleur[0], kleur[1], kleur[2]);
-      doc.roundedRect(marge, y, pageW-2*marge, 9, 1.5, 1.5, 'F');
+      doc.roundedRect(marge, y, pageW-2*marge, 7, 1.2, 1.2, 'F');
       doc.setTextColor(255,255,255);
       doc.setFont('helvetica','bold');
-      doc.setFontSize(11);
-      doc.text(tekst, marge+3, y+6.3);
+      doc.setFontSize(9);
+      doc.text(tekst, marge+2.5, y+4.9);
       doc.setTextColor(20,20,20);
-      y += 13;
+      y += 10;
     }
     // Huisnummers oplopend sorteren (numeriek, met letter/toevoeging erachter),
     // alleen voor déze PDF — de looplijst-volgorde (loopvolgorde) elders in de
@@ -3538,22 +3538,31 @@ function exportKerstPdf(modus){
     // regel, dan begint een nieuwe regel eronder. Zo blijft elk blokje
     // overal even groot, ook bij straten met veel adressen.
     const CELL_W = 30, CELL_H = 15;
-    const MAX_RIJEN = 10;
-    const KOLOM_GAP = 3;   // tussen alle sub-kolommen onderling
-    const GROEP_GAP = 5;   // extra ruimte tussen het oneven-blok en het even-blok
-    const BLOK_GAP = 6;    // tussen straat-blokken onderling
+    const MAX_RIJEN = 4;   // op A6 passen max ~4 huisnummers onder elkaar in 1 kolom
+    const KOLOM_GAP = 2;   // tussen alle sub-kolommen onderling
+    const GROEP_GAP = 3.5; // extra ruimte tussen het oneven-blok en het even-blok
+    const BLOK_GAP = 3.5;  // tussen straat-blokken onderling
+    // Hoeveel kolommen van CELL_W (+ tussenruimte) er naast elkaar passen
+    // binnen de beschikbare paginabreedte — een blok mag hier nooit
+    // overheen, anders loopt het van de pagina af.
+    const MAX_KOLOMMEN_PER_REGEL = Math.max(1, Math.floor(((pageW - 2*marge - 2) + KOLOM_GAP) / (CELL_W + KOLOM_GAP)));
     let flowX = marge, flowY = y, flowRijHoogte = 0;
     function syncFlowNaarY(){ flowX = marge; flowY = y; flowRijHoogte = 0; }
     function syncYNaarFlow(){ y = flowY + (flowRijHoogte>0 ? flowRijHoogte + BLOK_GAP : 0); }
 
     function straatKolommen(oneven, even){
-      const aantalOnevenKolommen = Math.max(1, Math.ceil(oneven.length / MAX_RIJEN));
-      const aantalEvenKolommen = Math.max(1, Math.ceil(even.length / MAX_RIJEN));
+      // Alleen een kolom (en het bijbehorende "oneven"/"even"-label) reserveren
+      // voor een groep die ook echt adressen heeft — anders bleef er bij een
+      // straat met bv. enkel even huisnummers altijd een lege oneven-kolom
+      // staan, wat blokjes onnodig breed en leeg maakte.
+      const aantalOnevenKolommen = oneven.length ? Math.max(1, Math.ceil(oneven.length / MAX_RIJEN)) : 0;
+      const aantalEvenKolommen = even.length ? Math.max(1, Math.ceil(even.length / MAX_RIJEN)) : 0;
       const totaalKolommen = aantalOnevenKolommen + aantalEvenKolommen;
-      const breedte = totaalKolommen*CELL_W + (totaalKolommen-1)*KOLOM_GAP + GROEP_GAP + 2;
+      const heeftBeideGroepen = aantalOnevenKolommen>0 && aantalEvenKolommen>0;
+      const breedte = totaalKolommen*CELL_W + Math.max(0,totaalKolommen-1)*KOLOM_GAP + (heeftBeideGroepen?GROEP_GAP:0) + 2;
       const rijen = Math.min(MAX_RIJEN, Math.max(oneven.length, even.length));
       const hoogte = 6.5 + 4.5 + rijen*CELL_H + 4;
-      return {aantalOnevenKolommen, aantalEvenKolommen, totaalKolommen, breedte, rijen, hoogte};
+      return {aantalOnevenKolommen, aantalEvenKolommen, totaalKolommen, breedte, rijen, hoogte, heeftBeideGroepen};
     }
 
     // Tekent één blok op de gegeven (x,y): straatnaam + oneven/even
@@ -3561,12 +3570,12 @@ function exportKerstPdf(modus){
     function schrijfStraatBlok(straatNaam, brievenbussen, plekX, plekY, info){
       const oneven = brievenbussen.filter(b=>isOneven(b.hoofd)).sort(vergelijkHuisnr);
       const even   = brievenbussen.filter(b=>!isOneven(b.hoofd)).sort(vergelijkHuisnr);
-      const {aantalOnevenKolommen, rijen} = info;
+      const {aantalOnevenKolommen, aantalEvenKolommen, heeftBeideGroepen, rijen} = info;
 
       let yy = plekY;
       const tabelX = plekX + 1;
       function xVoorKolomIndex(i){
-        const extraGap = i >= aantalOnevenKolommen ? GROEP_GAP : 0;
+        const extraGap = (heeftBeideGroepen && i >= aantalOnevenKolommen) ? GROEP_GAP : 0;
         return tabelX + i*(CELL_W+KOLOM_GAP) + extraGap;
       }
 
@@ -3575,7 +3584,12 @@ function exportKerstPdf(modus){
       const kaderStartY = yy - 1.5;
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(8.5);
+      let straatFontSize = 8.5;
+      doc.setFontSize(straatFontSize);
+      while(straatFontSize > 5.5 && doc.getTextWidth(straatNaam) > kaderBreedte - 3){
+        straatFontSize -= 0.5;
+        doc.setFontSize(straatFontSize);
+      }
       doc.setTextColor(20,20,20);
       doc.text(straatNaam, plekX + 2, yy + 3.5);
       yy += 6.5;
@@ -3583,8 +3597,8 @@ function exportKerstPdf(modus){
       doc.setFont('helvetica','italic');
       doc.setFontSize(7);
       doc.setTextColor(130,130,130);
-      doc.text('oneven', xVoorKolomIndex(0) + 1.5, yy);
-      doc.text('even', xVoorKolomIndex(aantalOnevenKolommen) + 1.5, yy);
+      if(aantalOnevenKolommen>0) doc.text('oneven', xVoorKolomIndex(0) + 1.5, yy);
+      if(aantalEvenKolommen>0) doc.text('even', xVoorKolomIndex(aantalOnevenKolommen) + 1.5, yy);
       doc.setTextColor(20,20,20);
       yy += 4.5;
 
@@ -3661,20 +3675,49 @@ function exportKerstPdf(modus){
 
     // Publieke functie (zelfde naam/signatuur als voorheen, zodat de rest van
     // de export-code ongewijzigd kan blijven).
+    // Een straat met veel adressen (bv. Wilhelminastraat, Schoolstraat) heeft
+    // soms meer kolommen nodig dan er naast elkaar op de pagina passen. Past
+    // hij niet in 1 blokje, dan knippen we 'm op in losse blokjes van max
+    // MAX_KOLOMMEN_PER_REGEL kolommen — oneven en even apart — elk gelabeld
+    // met "(vervolg)", en die schuiven gewoon mee in de normale flow (dus ook
+    // gewoon naast kleinere straten, en over paginabreaks heen indien nodig).
     function schrijfStraat(straatNaam, brievenbussen){
-      plaatsStraatBlok(straatNaam, brievenbussen.slice().sort(vergelijkHuisnr));
+      const gesorteerd = brievenbussen.slice().sort(vergelijkHuisnr);
+      const oneven = gesorteerd.filter(b=>isOneven(b.hoofd));
+      const even = gesorteerd.filter(b=>!isOneven(b.hoofd));
+      const onevenKolommenNodig = oneven.length ? Math.ceil(oneven.length / MAX_RIJEN) : 0;
+      const evenKolommenNodig = even.length ? Math.ceil(even.length / MAX_RIJEN) : 0;
+
+      if(onevenKolommenNodig + evenKolommenNodig <= MAX_KOLOMMEN_PER_REGEL){
+        // Past gewoon als 1 compact blokje (oneven+even naast elkaar) —
+        // de normale situatie voor verreweg de meeste straten.
+        plaatsStraatBlok(straatNaam, gesorteerd);
+        return;
+      }
+
+      const ADRESSEN_PER_DEEL = MAX_KOLOMMEN_PER_REGEL * MAX_RIJEN;
+      let deelnummer = 0;
+      function plaatsDelen(lijst){
+        for(let i=0; i<lijst.length; i+=ADRESSEN_PER_DEEL){
+          deelnummer++;
+          const label = deelnummer===1 ? straatNaam : straatNaam+' (vervolg)';
+          plaatsStraatBlok(label, lijst.slice(i, i+ADRESSEN_PER_DEEL));
+        }
+      }
+      plaatsDelen(oneven);
+      plaatsDelen(even);
     }
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(16);
+    doc.setFontSize(12);
     doc.text('Kerstkaartjes - Brievenbussen', marge, y);
-    y += 6;
+    y += 4.5;
     doc.setFont('helvetica','normal');
-    doc.setFontSize(9);
+    doc.setFontSize(6.5);
     doc.setTextColor(120);
-    doc.text('Geexporteerd op '+datumStr+'  ·  donker blokje = afgevinkt  ·  '+(modus==='oostwest'?'Indeling: Oost & West':'Indeling: per ronde'), marge, y);
+    doc.text('Geexporteerd op '+datumStr+'  ·  donker = afgevinkt  ·  '+(modus==='oostwest'?'Oost & West':'per ronde'), marge, y);
     doc.setTextColor(20);
-    y += 8;
+    y += 5.5;
 
     if(modus === 'oostwest'){
       const groepen = {OOST: [], WEST: [], OVERIG: []};
