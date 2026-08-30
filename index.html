@@ -3530,60 +3530,61 @@ function exportKerstPdf(modus){
 
     let huidigeWijknummer; // undefined = nog niet gestart; wordt bijgehouden over straten/rondes heen
 
-    // ===== 3 straat-kolommen naast elkaar =====
-    // Elke straat (met zijn eigen oneven/even sub-kolommen) komt in de kolom
-    // terecht die op dat moment het minst gevuld is. kolomY houdt de
-    // "waterlijn" per kolom bij.
-    const AANTAL_KOLOMMEN = 3;
-    const buitenGap = 4;
-    const buitenKolomBreedte = (pageW - 2*marge - (AANTAL_KOLOMMEN-1)*buitenGap) / AANTAL_KOLOMMEN;
-    function xBasisKolom(k){ return marge + k*(buitenKolomBreedte + buitenGap); }
-    let kolomY = new Array(AANTAL_KOLOMMEN).fill(y);
-    function syncKolommenNaarY(){ kolomY = new Array(AANTAL_KOLOMMEN).fill(y); }
-    function syncYNaarKolommen(){ y = Math.max(...kolomY); }
+    // ===== Straten in een "flow"-layout naast elkaar =====
+    // Blokjes hebben altijd dezelfde vaste afmeting (cellW x cellH). Elke
+    // straat claimt precies zoveel breedte als 'ie nodig heeft (afhankelijk
+    // van hoeveel oneven/even-kolommen er nodig zijn) en komt gewoon rechts
+    // van de vorige straat te staan; past hij niet meer op de rest van de
+    // regel, dan begint een nieuwe regel eronder. Zo blijft elk blokje
+    // overal even groot, ook bij straten met veel adressen.
+    const CELL_W = 30, CELL_H = 15;
+    const MAX_RIJEN = 10;
+    const KOLOM_GAP = 3;   // tussen alle sub-kolommen onderling
+    const GROEP_GAP = 5;   // extra ruimte tussen het oneven-blok en het even-blok
+    const BLOK_GAP = 6;    // tussen straat-blokken onderling
+    let flowX = marge, flowY = y, flowRijHoogte = 0;
+    function syncFlowNaarY(){ flowX = marge; flowY = y; flowRijHoogte = 0; }
+    function syncYNaarFlow(){ y = flowY + (flowRijHoogte>0 ? flowRijHoogte + BLOK_GAP : 0); }
 
-    // Tekent één blok: straatnaam + twee sub-kolommen (oneven / even), elk
-    // huisnummer in een eigen klein blokje, oplopend onder elkaar. `kolom`
-    // (0=links,1=rechts) bepaalt in welke buitenkolom dit blok komt.
-    function schrijfStraatBlok(straatNaam, brievenbussen, kolom){
+    function straatKolommen(oneven, even){
+      const aantalOnevenKolommen = Math.max(1, Math.ceil(oneven.length / MAX_RIJEN));
+      const aantalEvenKolommen = Math.max(1, Math.ceil(even.length / MAX_RIJEN));
+      const totaalKolommen = aantalOnevenKolommen + aantalEvenKolommen;
+      const breedte = totaalKolommen*CELL_W + (totaalKolommen-1)*KOLOM_GAP + GROEP_GAP + 2;
+      const rijen = Math.min(MAX_RIJEN, Math.max(oneven.length, even.length));
+      const hoogte = 6.5 + 4.5 + rijen*CELL_H + 4;
+      return {aantalOnevenKolommen, aantalEvenKolommen, totaalKolommen, breedte, rijen, hoogte};
+    }
+
+    // Tekent één blok op de gegeven (x,y): straatnaam + oneven/even
+    // sub-kolommen, elk huisnummer in een eigen vast blokje.
+    function schrijfStraatBlok(straatNaam, brievenbussen, plekX, plekY, info){
       const oneven = brievenbussen.filter(b=>isOneven(b.hoofd)).sort(vergelijkHuisnr);
       const even   = brievenbussen.filter(b=>!isOneven(b.hoofd)).sort(vergelijkHuisnr);
-      const rijen = Math.max(oneven.length, even.length);
-      if(rijen === 0) return;
+      const {aantalOnevenKolommen, rijen} = info;
 
-      const cellW = 20, cellH = 8;
-      const innerGap = 2;
-      const xB = xBasisKolom(kolom);
-      const tabelX = xB + 1;
-      const tabelBreedte = buitenKolomBreedte - 2;
-      const kolomXOneven = tabelX;
-      const kolomXEven = tabelX + cellW + innerGap;
-
-      let yy = kolomY[kolom];
-      const minEersteHoogte = 6.5 + 4.5 + cellH + 3;
-      if(yy + minEersteHoogte > pageH - marge){
-        doc.addPage();
-        kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
-        kolom = 0;
-        yy = marge;
+      let yy = plekY;
+      const tabelX = plekX + 1;
+      function xVoorKolomIndex(i){
+        const extraGap = i >= aantalOnevenKolommen ? GROEP_GAP : 0;
+        return tabelX + i*(CELL_W+KOLOM_GAP) + extraGap;
       }
 
-      const kaderX = xB - 1;
-      const kaderBreedte = buitenKolomBreedte + 2;
-      let kaderStartY = yy - 1.5;
-      const kaderStukken = [];
+      const kaderX = plekX - 1;
+      const kaderBreedte = info.breedte;
+      const kaderStartY = yy - 1.5;
 
       doc.setFont('helvetica','bold');
       doc.setFontSize(8.5);
       doc.setTextColor(20,20,20);
-      doc.text(straatNaam, xB + 2, yy + 3.5);
+      doc.text(straatNaam, plekX + 2, yy + 3.5);
       yy += 6.5;
 
       doc.setFont('helvetica','italic');
       doc.setFontSize(7);
       doc.setTextColor(130,130,130);
-      doc.text('oneven', kolomXOneven + 1.5, yy);
-      doc.text('even', kolomXEven + 1.5, yy);
+      doc.text('oneven', xVoorKolomIndex(0) + 1.5, yy);
+      doc.text('even', xVoorKolomIndex(aantalOnevenKolommen) + 1.5, yy);
       doc.setTextColor(20,20,20);
       yy += 4.5;
 
@@ -3601,96 +3602,65 @@ function exportKerstPdf(modus){
 
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.rect(kolX, yy, cellW, cellH, 'FD');
+          doc.rect(kolX, yy, CELL_W, CELL_H, 'FD');
           doc.setTextColor(255,255,255);
           doc.setFont('helvetica','bold');
         } else {
-          doc.rect(kolX, yy, cellW, cellH, 'S');
+          doc.rect(kolX, yy, CELL_W, CELL_H, 'S');
           doc.setTextColor(20,20,20);
           doc.setFont('helvetica','normal');
         }
-        doc.text(label, kolX + cellW/2, yy + cellH/2 + 1, {align:'center'});
+        doc.text(label, kolX + CELL_W/2, yy + CELL_H/2 + 1, {align:'center'});
       }
 
-      for(let i=0; i<rijen; i++){
-        if(yy + cellH > pageH - marge){
-          // Rij past niet meer: kader-stuk afsluiten, nieuwe pagina, BEIDE
-          // kolommen resetten en verdergaan links met "(vervolg)".
-          kaderStukken.push({pagina:doc.internal.getNumberOfPages(), boven:kaderStartY, onder:yy+2});
-          doc.addPage();
-          kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
-          kolom = 0;
-          yy = marge;
-          kaderStartY = yy - 1.5;
-          doc.setFont('helvetica','bold');
-          doc.setFontSize(8.5);
-          doc.setTextColor(20,20,20);
-          doc.text(straatNaam+' (vervolg)', marge + 2, yy + 3.5);
-          yy += 6.5;
-          doc.setFont('helvetica','italic');
-          doc.setFontSize(7);
-          doc.setTextColor(130,130,130);
-          doc.text('oneven', marge + 1 + 1.5, yy);
-          doc.text('even', marge + 1 + cellW + innerGap + 1.5, yy);
-          doc.setTextColor(20,20,20);
-          yy += 4.5;
-          doc.setFontSize(8.5);
+      for(let r=0; r<rijen; r++){
+        for(let ko=0; ko<info.aantalOnevenKolommen; ko++){
+          const idx = ko*MAX_RIJEN + r;
+          if(oneven[idx]) tekenBlokje(oneven[idx], xVoorKolomIndex(ko));
         }
-        if(oneven[i]) tekenBlokje(oneven[i], kolomXOneven);
-        if(even[i]) tekenBlokje(even[i], kolomXEven);
-        yy += cellH;
+        for(let ke=0; ke<info.aantalEvenKolommen; ke++){
+          const idx = ke*MAX_RIJEN + r;
+          if(even[idx]) tekenBlokje(even[idx], xVoorKolomIndex(info.aantalOnevenKolommen+ke));
+        }
+        yy += CELL_H;
       }
-
-      const kaderEindPagina = doc.internal.getNumberOfPages();
-      const kaderEindY = yy + 2;
-      kaderStukken.push({pagina:kaderEindPagina, boven:kaderStartY, onder:kaderEindY});
 
       doc.setDrawColor(150,150,150);
       doc.setLineWidth(0.3);
-      const huidigePaginaVoorKader = doc.internal.getCurrentPageInfo().pageNumber;
-      if(kaderStukken.length===1){
-        doc.rect(kaderX, kaderStartY, kaderBreedte, kaderEindY-kaderStartY, 'S');
-      } else {
-        kaderStukken.forEach((stuk, idx)=>{
-          doc.setPage(stuk.pagina);
-          const boven = idx===0 ? stuk.boven : marge - 3;
-          const onder = idx===kaderStukken.length-1 ? stuk.onder : pageH - marge + 3;
-          doc.line(kaderX, boven, kaderX, onder);
-          doc.line(kaderX+kaderBreedte, boven, kaderX+kaderBreedte, onder);
-          if(idx===0) doc.line(kaderX, boven, kaderX+kaderBreedte, boven);
-          if(idx===kaderStukken.length-1) doc.line(kaderX, onder, kaderX+kaderBreedte, onder);
-        });
-        doc.setPage(huidigePaginaVoorKader);
-      }
+      doc.rect(kaderX, kaderStartY, kaderBreedte, (yy+2)-kaderStartY, 'S');
       doc.setLineWidth(0.2);
       doc.setTextColor(20,20,20);
-      kolomY[kolom] = kaderEindY + 2;
     }
 
-    // Kiest voor een straat-blok de kolom met de meeste resterende ruimte, en
-    // regelt een paginabreak (met reset van alle kolommen) als het blok in
-    // geen enkele kolom meer past op de huidige pagina.
+    // Plaatst een straat-blok in de flow: past het niet meer op de huidige
+    // regel, dan naar een nieuwe regel; past het ook niet op een lege
+    // pagina, dan een nieuwe pagina (blokken zijn altijd max MAX_RIJEN rijen
+    // hoog, dus passen gegarandeerd op een verse pagina).
     function plaatsStraatBlok(straatNaam, items){
       if(!items.length) return;
-      const onevenN = items.filter(b=>isOneven(b.hoofd)).length;
-      const evenN = items.length - onevenN;
-      const rijenSchatting = Math.max(onevenN, evenN);
-      const hoogteSchatting = 6.5 + 4.5 + rijenSchatting*8 + 3;
+      const oneven = items.filter(b=>isOneven(b.hoofd));
+      const even = items.filter(b=>!isOneven(b.hoofd));
+      const info = straatKolommen(oneven, even);
 
-      // Kolommen op volgorde van meeste resterende ruimte (kleinste kolomY eerst)
-      const volgorde = kolomY.map((v,i)=>i).sort((a,b)=>kolomY[a]-kolomY[b]);
-      let kolom = volgorde.find(k=> kolomY[k] + hoogteSchatting <= pageH - marge);
-      if(kolom === undefined){
-        doc.addPage();
-        kolomY = new Array(AANTAL_KOLOMMEN).fill(marge);
-        kolom = 0;
+      if(flowX > marge && flowX + info.breedte > pageW - marge){
+        // Nieuwe regel
+        flowX = marge;
+        flowY += flowRijHoogte + BLOK_GAP;
+        flowRijHoogte = 0;
       }
-      schrijfStraatBlok(straatNaam, items, kolom);
+      if(flowY + info.hoogte > pageH - marge){
+        doc.addPage();
+        flowX = marge;
+        flowY = marge;
+        flowRijHoogte = 0;
+      }
+      schrijfStraatBlok(straatNaam, items, flowX, flowY, info);
+      flowX += info.breedte + BLOK_GAP;
+      flowRijHoogte = Math.max(flowRijHoogte, info.hoogte);
     }
 
     // Publieke functie (zelfde naam/signatuur als voorheen, zodat de rest van
-    // de export-code ongewijzigd kan blijven): plaatst de straat gewoon in de
-    // kolom die op dat moment het meeste ruimte heeft, zonder extra breaks.
+    // de export-code ongewijzigd kan blijven).
     function schrijfStraat(straatNaam, brievenbussen){
       plaatsStraatBlok(straatNaam, brievenbussen.slice().sort(vergelijkHuisnr));
     }
@@ -3720,7 +3690,7 @@ function exportKerstPdf(modus){
         if(y > marge + 5){ doc.addPage(); y = marge; }
         schrijfKop('OLDENZAAL '+regio, kleuren[regio]);
         huidigeWijknummer = undefined;
-        syncKolommenNaarY();
+        syncFlowNaarY();
         groepen[regio].forEach(wi=>{
           const w = DATA[wi];
           w.rondes.forEach((r, ri)=>{
@@ -3730,7 +3700,7 @@ function exportKerstPdf(modus){
             });
           });
         });
-        syncYNaarKolommen();
+        syncYNaarFlow();
         y += 3;
       });
     } else {
@@ -3748,12 +3718,12 @@ function exportKerstPdf(modus){
           const linksX = marge - 3, rechtsX = pageW - marge + 3;
           schrijfSubKop(r.ronde + '  ·  ' + bbInRonde + (bbInRonde===1 ? ' adres' : ' adressen'));
           huidigeWijknummer = undefined; // straat-na-ronde-break mag nooit nog eens breken
-          syncKolommenNaarY();
+          syncFlowNaarY();
           r.straten.forEach((s, si)=>{
             const bb = brievenbussenVoorStraat(wi, ri, si);
             if(bb.length) schrijfStraat(s.naam, bb);
           });
-          syncYNaarKolommen();
+          syncYNaarFlow();
           const eindPagina = doc.internal.getNumberOfPages();
           const kaderEindY = y - 2;
 
