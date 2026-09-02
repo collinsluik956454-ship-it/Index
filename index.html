@@ -3456,7 +3456,7 @@ function exportKerstPdf(modus){
   }
   try{
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a6', orientation:'landscape'});
+    const doc = new jsPDF({unit:'mm', format:'a5', orientation:'landscape'});
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const marge = 5;
@@ -3538,7 +3538,7 @@ function exportKerstPdf(modus){
     // regel, dan begint een nieuwe regel eronder. Zo blijft elk blokje
     // overal even groot, ook bij straten met veel adressen.
     const CELL_W = 30, CELL_H = 15;
-    const MAX_RIJEN = 4;   // op A6 passen max ~4 huisnummers onder elkaar in 1 kolom
+    const MAX_RIJEN = 8;   // A5 is 2x zo hoog als A6, dus passen er nu 8 huisnummers onder elkaar in 1 kolom (was 4 op A6)
     const KOLOM_GAP = 2;   // tussen alle sub-kolommen onderling
     const GROEP_GAP = 3.5; // extra ruimte tussen het oneven-blok en het even-blok
     const BLOK_GAP = 3.5;  // tussen straat-blokken onderling
