@@ -3530,27 +3530,18 @@ function exportKerstPdf(modus){
 
     let huidigeWijknummer; // undefined = nog niet gestart; wordt bijgehouden over straten/rondes heen
 
-    // ===== Straten als eenvoudige, doorlopende oneven/even-kolommen =====
-    // Terug naar de oude opzet: geen losse vakjes per huisnummer en geen
-    // "(vervolg)"-opsplitsing meer — gewoon per straat twee kolommen tekst
-    // (oneven links, even rechts) over de volle paginabreedte, onder elkaar
-    // doorlopend. Nummers lopen gewoon door naar een volgende regel binnen
-    // dezelfde straat als de kolom te lang wordt.
-    const GROEP_GAP = 6; // ruimte tussen de oneven- en even-kolom
-    const REGEL_HOOGTE = 4.2;
+    // ===== Straten: vaste 30x15mm-vakjes per huisnummer, in twee kolommen =====
+    // Per straat: oneven-kolom links, even-kolom ernaast — elk huisnummer in
+    // een eigen vakje (donker = afgevinkt, net als voorheen). Straten komen
+    // gewoon onder elkaar (geen naast-elkaar-flow van meerdere straten meer,
+    // geen wijknummer-paginabreaks). Een straat die te lang is voor de
+    // resterende ruimte op de pagina loopt gewoon door op de volgende
+    // pagina, met "(vervolg)" bij de straatnaam.
+    const CELL_W = 30, CELL_H = 15;
+    const KOLOM_GAP = 2;  // tussen vakjes onderling binnen 1 kolom
+    const GROEP_GAP = 4;  // tussen de oneven- en even-kolom
     function syncFlowNaarY(){ /* niet meer nodig zonder flow-layout, maar blijft als no-op zodat aanroepen elders niks breken */ }
     function syncYNaarFlow(){ /* idem */ }
-
-    function labelVoorNummer(straatNaam, b){
-      const k = kerstKey(straatNaam, b.hoofd);
-      const isDone = !!doneKerst[k];
-      const e = fooiEntry(k);
-      const bedrag = e.munt + e.biljet;
-      let label = String(b.hoofd);
-      if(bedrag>0) label += ' €'+(bedrag/100).toFixed(2).replace('.',',');
-      if(isDone) label = '('+label+')'; // afgevinkt = tussen haakjes (i.p.v. donker vakje)
-      return label;
-    }
 
     function schrijfStraat(straatNaam, brievenbussen){
       if(!brievenbussen.length) return;
@@ -3561,42 +3552,77 @@ function exportKerstPdf(modus){
       const usableW = pageW - 2*marge;
       const colW = heeftBeide ? (usableW - GROEP_GAP)/2 : usableW;
       const evenX = marge + (heeftBeide ? colW + GROEP_GAP : 0);
+      const kolommenPerGroep = Math.max(1, Math.floor((colW + KOLOM_GAP) / (CELL_W + KOLOM_GAP)));
 
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(8);
-      const onevenTxt = oneven.map(b=>labelVoorNummer(straatNaam,b)).join('   ');
-      const evenTxt = even.map(b=>labelVoorNummer(straatNaam,b)).join('   ');
-      const onevenLines = oneven.length ? doc.splitTextToSize(onevenTxt, colW - 2) : [];
-      const evenLines = even.length ? doc.splitTextToSize(evenTxt, colW - 2) : [];
-      const rijen = Math.max(onevenLines.length, evenLines.length, 1);
-      const blokHoogte = 6.5 + 4.3 + rijen*REGEL_HOOGTE + 3;
+      const rijenOneven = oneven.length ? Math.ceil(oneven.length / kolommenPerGroep) : 0;
+      const rijenEven = even.length ? Math.ceil(even.length / kolommenPerGroep) : 0;
+      const totaalRijen = Math.max(rijenOneven, rijenEven, 1);
+      const koptekstHoogte = 6.5 + 4.3;
 
-      nieuwePaginaAlsNodig(blokHoogte);
+      function tekenBlokje(b, x, yy){
+        const k = kerstKey(straatNaam, b.hoofd);
+        const isDone = !!doneKerst[k];
+        const e = fooiEntry(k);
+        const bedrag = e.munt + e.biljet;
+        let label = b.hoofd;
+        if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
+        if(isDone){
+          doc.setFillColor(30,45,90);
+          doc.rect(x, yy, CELL_W, CELL_H, 'FD');
+          doc.setTextColor(255,255,255);
+          doc.setFont('helvetica','bold');
+        } else {
+          doc.rect(x, yy, CELL_W, CELL_H, 'S');
+          doc.setTextColor(20,20,20);
+          doc.setFont('helvetica','normal');
+        }
+        doc.text(String(label), x + CELL_W/2, yy + CELL_H/2 + 1, {align:'center'});
+      }
 
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(20,20,20);
-      doc.text(straatNaam, marge, y + 3.3);
-      y += 6.5;
+      let vervolg = false;
+      let rijStart = 0;
+      while(rijStart < totaalRijen){
+        nieuwePaginaAlsNodig(koptekstHoogte + CELL_H + 3);
+        const beschikbareHoogte = (pageH - marge) - y - koptekstHoogte - 3;
+        const rijenDiePassen = Math.max(1, Math.min(totaalRijen - rijStart, Math.floor(beschikbareHoogte / CELL_H)));
 
-      doc.setFont('helvetica','italic');
-      doc.setFontSize(7);
-      doc.setTextColor(130,130,130);
-      if(oneven.length) doc.text('oneven', marge, y);
-      if(even.length) doc.text('even', evenX, y);
-      doc.setTextColor(20,20,20);
-      y += 4.3;
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(20,20,20);
+        doc.text(straatNaam + (vervolg ? ' (vervolg)' : ''), marge, y + 3.3);
+        y += 6.5;
 
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(8);
-      onevenLines.forEach((line,i)=>{ doc.text(line, marge, y + i*REGEL_HOOGTE); });
-      evenLines.forEach((line,i)=>{ doc.text(line, evenX, y + i*REGEL_HOOGTE); });
-      y += rijen*REGEL_HOOGTE;
+        doc.setFont('helvetica','italic');
+        doc.setFontSize(7);
+        doc.setTextColor(130,130,130);
+        if(oneven.length) doc.text('oneven', marge, y);
+        if(even.length) doc.text('even', evenX, y);
+        doc.setTextColor(20,20,20);
+        y += 4.3;
 
-      doc.setDrawColor(210,210,210);
-      doc.setLineWidth(0.2);
-      doc.line(marge, y+1.5, pageW-marge, y+1.5);
-      y += 3.5;
+        doc.setFontSize(8.5);
+        doc.setDrawColor(120,120,120);
+        doc.setLineWidth(0.25);
+
+        for(let r=0; r<rijenDiePassen; r++){
+          const rijIdx = rijStart + r;
+          for(let c=0; c<kolommenPerGroep; c++){
+            const idx = rijIdx*kolommenPerGroep + c;
+            if(oneven[idx]) tekenBlokje(oneven[idx], marge + c*(CELL_W+KOLOM_GAP), y + r*CELL_H);
+            if(even[idx]) tekenBlokje(even[idx], evenX + c*(CELL_W+KOLOM_GAP), y + r*CELL_H);
+          }
+        }
+        y += rijenDiePassen*CELL_H + 3;
+
+        doc.setDrawColor(210,210,210);
+        doc.setLineWidth(0.2);
+        doc.line(marge, y - 1.5, pageW - marge, y - 1.5);
+        doc.setTextColor(20,20,20);
+
+        rijStart += rijenDiePassen;
+        vervolg = true;
+        if(rijStart < totaalRijen){ doc.addPage(); y = marge; }
+      }
     }
 
     doc.setFont('helvetica','bold');
@@ -3606,7 +3632,7 @@ function exportKerstPdf(modus){
     doc.setFont('helvetica','normal');
     doc.setFontSize(6.5);
     doc.setTextColor(120);
-    doc.text('Geexporteerd op '+datumStr+'  ·  (haakjes) = afgevinkt  ·  '+(modus==='oostwest'?'Oost & West':'per ronde'), marge, y);
+    doc.text('Geexporteerd op '+datumStr+'  ·  donker = afgevinkt  ·  '+(modus==='oostwest'?'Oost & West':'per ronde'), marge, y);
     doc.setTextColor(20);
     y += 5.5;
 
