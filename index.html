@@ -5805,17 +5805,40 @@ function groepeerOpPeriode(items){
 // import (die loopt soms achter, of ontbreekt voor oudere data). Anker: de
 // maandag van de week waarin de vroegst bekende dag (klacht of krantentelling)
 // valt. Vandaaraf steeds blokken van 28 dagen, tot en met vandaag.
+// Heb je al een bonusperiode afgerond & gearchiveerd (zie Bonus-module),
+// dan start de telling hier pas ná die afgesloten periode — anders zou een
+// klacht die al in je gearchiveerde periode zat, ook nog een keer in de
+// "lopende" periode meetellen.
 function vierWekelijksePerioden(){
   const perDag = laadKrantenPerDag();
   const klachtenLog = laadKlachtenLog().filter(k=>!k.extraWijk);
   const alleDatums = Object.keys(perDag).concat(klachtenLog.map(k=>k.datum)).filter(Boolean);
   if(!alleDatums.length) return [];
-  const minDatumStr = alleDatums.reduce((a,b)=> a<b ? a : b);
+  let minDatumStr = alleDatums.reduce((a,b)=> a<b ? a : b);
+
+  let laatsteArchiefEind = null;
+  (laadBonusArchief()||[]).forEach(a=>{
+    if(a.eind && (!laatsteArchiefEind || a.eind > laatsteArchiefEind)) laatsteArchiefEind = a.eind;
+  });
+  if(laatsteArchiefEind && laatsteArchiefEind >= minDatumStr){
+    const na = new Date(laatsteArchiefEind+'T00:00:00');
+    na.setDate(na.getDate()+1);
+    minDatumStr = na.toISOString().slice(0,10);
+  }
+
   const anker = new Date(minDatumStr+'T00:00:00');
   const dow = (anker.getDay()+6)%7; // 0=maandag .. 6=zondag
   anker.setDate(anker.getDate()-dow);
+  // Maandag-uitlijning kan terugrollen tot vóór een net afgesloten bonusperiode
+  // (bv. periode eindigt op zaterdag, dan is "maandag van die week" eerder dan
+  // de afsluitdatum) — in dat geval een week doorschuiven.
+  if(laatsteArchiefEind && anker <= new Date(laatsteArchiefEind+'T00:00:00')){
+    anker.setDate(anker.getDate()+7);
+  }
 
   const vandaag = new Date(); vandaag.setHours(0,0,0,0);
+  if(anker > vandaag) return []; // net afgerond, nog geen nieuwe periode gestart
+
   const perioden = [];
   let start = new Date(anker);
   while(start <= vandaag){
@@ -6492,20 +6515,35 @@ function renderBonus(){
   wrap.appendChild(promPeriodeLinkBtn);
 
   // ===== Archief: eerdere afgeronde bonusperiodes, om te vergelijken =====
+  // Cijfers worden live herberekend (niet de bevroren snapshot van het
+  // archiveer-moment), want een klacht die je pas ná het afsluiten inlaadt
+  // (bv. uit een latere looplijst-PDF die 'm herhaalt) maar wél binnen de
+  // periode-datums valt, moet alsnog meetellen in deze periode — en NIET in
+  // de lopende telling daarna (zie vierWekelijksePerioden hierboven).
   const bonusArchief = laadBonusArchief();
   if(bonusArchief.length > 0){
+    const archiefKlachtenLog = laadKlachtenLog().filter(k=>!k.extraWijk);
+    const archiefPerDag = laadKrantenPerDag();
+    function herberekenArchiefEntry(a){
+      const klachten = archiefKlachtenLog.filter(k=> k.datum>=a.start && k.datum<=a.eind).length;
+      let kranten = 0;
+      Object.keys(archiefPerDag).forEach(dt=>{ if(dt>=a.start && dt<=a.eind) kranten += archiefPerDag[dt]; });
+      const promillage = kranten>0 ? (klachten/kranten)*1000 : a.promillage;
+      return {klachten, totaalKranten: kranten, promillage, onderGrens: promillage<4};
+    }
     const archKaart = document.createElement('div');
     archKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-top:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
     archKaart.innerHTML = '<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📦 Archief · eerdere periodes</div>';
     const fmtD2 = (iso)=> new Date(iso+'T00:00:00').toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
-    bonusArchief.slice().reverse().forEach((a, revIdx)=>{
+    bonusArchief.slice().reverse().forEach((a0, revIdx)=>{
+      const a = {...a0, ...herberekenArchiefEntry(a0)};
       const echtIdx = bonusArchief.length - 1 - revIdx;
       const regel = document.createElement('div');
       regel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6';
       regel.innerHTML =
         '<div>'+
           '<div style="font-size:13px;font-weight:700;color:#374151">'+(a.type==='zomer'?'☀️ Zomerbonus':'❄️ Winterbonus')+'</div>'+
-          '<div style="font-size:11px;color:#9ca3af;margin-top:1px">'+fmtD2(a.start)+' – '+fmtD2(a.eind)+(a.compleet?'':' · onvolledig')+'</div>'+
+          '<div style="font-size:11px;color:#9ca3af;margin-top:1px">'+fmtD2(a.start)+' – '+fmtD2(a.eind)+(a0.compleet?'':' · onvolledig')+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
           '<div style="font-size:16px;font-weight:900;color:'+(a.onderGrens?'#2e7d32':'#c62828')+'">'+a.promillage.toFixed(2).replace('.',',')+'‰</div>'+
