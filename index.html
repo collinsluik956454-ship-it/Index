@@ -3530,16 +3530,17 @@ function exportKerstPdf(modus){
 
     let huidigeWijknummer; // undefined = nog niet gestart; wordt bijgehouden over straten/rondes heen
 
-    // ===== Straten: vaste 30x15mm-vakjes per huisnummer, in twee kolommen =====
+    // ===== Straten: huisnummer in een rondje, in twee kolommen =====
     // Per straat: oneven-kolom links, even-kolom ernaast — elk huisnummer in
-    // een eigen vakje (donker = afgevinkt, net als voorheen). Straten komen
-    // gewoon onder elkaar (geen naast-elkaar-flow van meerdere straten meer,
-    // geen wijknummer-paginabreaks). Een straat die te lang is voor de
-    // resterende ruimte op de pagina loopt gewoon door op de volgende
-    // pagina, met "(vervolg)" bij de straatnaam.
-    const CELL_W = 30, CELL_H = 15;
-    const KOLOM_GAP = 2;  // tussen vakjes onderling binnen 1 kolom
-    const GROEP_GAP = 4;  // tussen de oneven- en even-kolom
+    // een eigen rondje (donker = afgevinkt). Straten komen gewoon onder
+    // elkaar (geen naast-elkaar-flow van meerdere straten, geen
+    // wijknummer-paginabreaks). Compacter dan de eerdere 30x15mm-versie,
+    // zodat er meer op een pagina past — een straat die alsnog te lang is
+    // voor de resterende ruimte loopt door op de volgende pagina, met
+    // "(vervolg)" bij de straatnaam.
+    const CELL_W = 20, CELL_H = 10;
+    const KOLOM_GAP = 1.5;  // tussen vakjes onderling binnen 1 kolom
+    const GROEP_GAP = 3;    // tussen de oneven- en even-kolom
     function syncFlowNaarY(){ /* niet meer nodig zonder flow-layout, maar blijft als no-op zodat aanroepen elders niks breken */ }
     function syncYNaarFlow(){ /* idem */ }
 
@@ -3567,7 +3568,7 @@ function exportKerstPdf(modus){
         let label = b.hoofd;
         if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
         const cx = x + CELL_W/2, cy = yy + CELL_H/2;
-        const r = Math.min(CELL_W, CELL_H)/2 - 1.5; // rondje, kleiner dan het vakje eromheen (geen vierkant meer)
+        const r = Math.min(CELL_W, CELL_H)/2 - 1; // rondje, kleiner dan het vakje eromheen (geen vierkant meer)
         if(isDone){
           doc.setFillColor(30,45,90);
           doc.circle(cx, cy, r, 'FD');
@@ -3602,7 +3603,7 @@ function exportKerstPdf(modus){
         doc.setTextColor(20,20,20);
         y += 4.3;
 
-        doc.setFontSize(8.5);
+        doc.setFontSize(7);
         doc.setDrawColor(120,120,120);
         doc.setLineWidth(0.25);
 
