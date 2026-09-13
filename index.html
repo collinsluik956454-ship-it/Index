@@ -3551,13 +3551,26 @@ function exportKerstPdf(modus){
       const even = gesorteerd.filter(b=>!isOneven(b.hoofd));
       const heeftBeide = oneven.length>0 && even.length>0;
       const usableW = pageW - 2*marge;
-      const colW = heeftBeide ? (usableW - GROEP_GAP)/2 : usableW;
-      const evenX = marge + (heeftBeide ? colW + GROEP_GAP : 0);
-      const kolommenPerGroep = Math.max(1, Math.floor((colW + KOLOM_GAP) / (CELL_W + KOLOM_GAP)));
-
-      const rijenOneven = oneven.length ? Math.ceil(oneven.length / kolommenPerGroep) : 0;
-      const rijenEven = even.length ? Math.ceil(even.length / kolommenPerGroep) : 0;
-      const totaalRijen = Math.max(rijenOneven, rijenEven, 1);
+      // Kolomaantal per groep is afhankelijk van hoeveel nummers die groep
+      // echt heeft — niet van een vaste halve paginabreedte. Zo staat de
+      // even-kolom direct naast de oneven-kolom in plaats van halverwege de
+      // pagina te beginnen als de oneven-kolom maar een paar nummers heeft.
+      const kolommenVolledig = Math.max(1, Math.floor((usableW + KOLOM_GAP) / (CELL_W + KOLOM_GAP)));
+      function rijenVoor(count, kolommen){ return count ? Math.ceil(count / kolommen) : 0; }
+      let rijen = Math.max(rijenVoor(oneven.length, kolommenVolledig), rijenVoor(even.length, kolommenVolledig), 1);
+      function kolommenVoor(count){ return count ? Math.min(kolommenVolledig, Math.ceil(count / rijen)) : 0; }
+      let onevenKolommen = kolommenVoor(oneven.length);
+      let evenKolommen = kolommenVoor(even.length);
+      function breedteVoor(kolommen){ return kolommen>0 ? kolommen*CELL_W + (kolommen-1)*KOLOM_GAP : 0; }
+      // Past de gecombineerde breedte (bij twee groepen naast elkaar) toch niet
+      // op de pagina, dan meer rijen gebruiken tot het wel past.
+      while(heeftBeide && breedteVoor(onevenKolommen) + GROEP_GAP + breedteVoor(evenKolommen) > usableW){
+        rijen++;
+        onevenKolommen = kolommenVoor(oneven.length);
+        evenKolommen = kolommenVoor(even.length);
+      }
+      const evenX = marge + (heeftBeide ? breedteVoor(onevenKolommen) + GROEP_GAP : 0);
+      const totaalRijen = rijen;
       const koptekstHoogte = 6.5 + 4.3;
 
       function tekenBlokje(b, x, yy){
@@ -3609,9 +3622,12 @@ function exportKerstPdf(modus){
 
         for(let r=0; r<rijenDiePassen; r++){
           const rijIdx = rijStart + r;
-          for(let c=0; c<kolommenPerGroep; c++){
-            const idx = rijIdx*kolommenPerGroep + c;
+          for(let c=0; c<onevenKolommen; c++){
+            const idx = rijIdx*onevenKolommen + c;
             if(oneven[idx]) tekenBlokje(oneven[idx], marge + c*(CELL_W+KOLOM_GAP), y + r*CELL_H);
+          }
+          for(let c=0; c<evenKolommen; c++){
+            const idx = rijIdx*evenKolommen + c;
             if(even[idx]) tekenBlokje(even[idx], evenX + c*(CELL_W+KOLOM_GAP), y + r*CELL_H);
           }
         }
