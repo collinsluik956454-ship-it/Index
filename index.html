@@ -3566,17 +3566,19 @@ function exportKerstPdf(modus){
         const bedrag = e.munt + e.biljet;
         let label = b.hoofd;
         if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
+        const cx = x + CELL_W/2, cy = yy + CELL_H/2;
+        const r = Math.min(CELL_W, CELL_H)/2 - 1.5; // rondje, kleiner dan het vakje eromheen (geen vierkant meer)
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.rect(x, yy, CELL_W, CELL_H, 'FD');
+          doc.circle(cx, cy, r, 'FD');
           doc.setTextColor(255,255,255);
           doc.setFont('helvetica','bold');
         } else {
-          doc.rect(x, yy, CELL_W, CELL_H, 'S');
+          doc.circle(cx, cy, r, 'S');
           doc.setTextColor(20,20,20);
           doc.setFont('helvetica','normal');
         }
-        doc.text(String(label), x + CELL_W/2, yy + CELL_H/2 + 1, {align:'center'});
+        doc.text(String(label), cx, cy + 1, {align:'center'});
       }
 
       let vervolg = false;
