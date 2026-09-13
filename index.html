@@ -3456,7 +3456,7 @@ function exportKerstPdf(modus){
   }
   try{
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a5', orientation:'landscape'});
+    const doc = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const marge = 5;
