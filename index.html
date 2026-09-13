@@ -3530,182 +3530,73 @@ function exportKerstPdf(modus){
 
     let huidigeWijknummer; // undefined = nog niet gestart; wordt bijgehouden over straten/rondes heen
 
-    // ===== Straten in een "flow"-layout naast elkaar =====
-    // Blokjes hebben altijd dezelfde vaste afmeting (cellW x cellH). Elke
-    // straat claimt precies zoveel breedte als 'ie nodig heeft (afhankelijk
-    // van hoeveel oneven/even-kolommen er nodig zijn) en komt gewoon rechts
-    // van de vorige straat te staan; past hij niet meer op de rest van de
-    // regel, dan begint een nieuwe regel eronder. Zo blijft elk blokje
-    // overal even groot, ook bij straten met veel adressen.
-    const CELL_W = 30, CELL_H = 15;
-    const MAX_RIJEN = 8;   // A5 is 2x zo hoog als A6, dus passen er nu 8 huisnummers onder elkaar in 1 kolom (was 4 op A6)
-    const KOLOM_GAP = 2;   // tussen alle sub-kolommen onderling
-    const GROEP_GAP = 3.5; // extra ruimte tussen het oneven-blok en het even-blok
-    const BLOK_GAP = 3.5;  // tussen straat-blokken onderling
-    // Hoeveel kolommen van CELL_W (+ tussenruimte) er naast elkaar passen
-    // binnen de beschikbare paginabreedte — een blok mag hier nooit
-    // overheen, anders loopt het van de pagina af.
-    const MAX_KOLOMMEN_PER_REGEL = Math.max(1, Math.floor(((pageW - 2*marge - 2) + KOLOM_GAP) / (CELL_W + KOLOM_GAP)));
-    let flowX = marge, flowY = y, flowRijHoogte = 0;
-    function syncFlowNaarY(){ flowX = marge; flowY = y; flowRijHoogte = 0; }
-    function syncYNaarFlow(){ y = flowY + (flowRijHoogte>0 ? flowRijHoogte + BLOK_GAP : 0); }
+    // ===== Straten als eenvoudige, doorlopende oneven/even-kolommen =====
+    // Terug naar de oude opzet: geen losse vakjes per huisnummer en geen
+    // "(vervolg)"-opsplitsing meer — gewoon per straat twee kolommen tekst
+    // (oneven links, even rechts) over de volle paginabreedte, onder elkaar
+    // doorlopend. Nummers lopen gewoon door naar een volgende regel binnen
+    // dezelfde straat als de kolom te lang wordt.
+    const GROEP_GAP = 6; // ruimte tussen de oneven- en even-kolom
+    const REGEL_HOOGTE = 4.2;
+    function syncFlowNaarY(){ /* niet meer nodig zonder flow-layout, maar blijft als no-op zodat aanroepen elders niks breken */ }
+    function syncYNaarFlow(){ /* idem */ }
 
-    function straatKolommen(oneven, even){
-      // Alleen een kolom (en het bijbehorende "oneven"/"even"-label) reserveren
-      // voor een groep die ook echt adressen heeft — anders bleef er bij een
-      // straat met bv. enkel even huisnummers altijd een lege oneven-kolom
-      // staan, wat blokjes onnodig breed en leeg maakte.
-      const aantalOnevenKolommen = oneven.length ? Math.max(1, Math.ceil(oneven.length / MAX_RIJEN)) : 0;
-      const aantalEvenKolommen = even.length ? Math.max(1, Math.ceil(even.length / MAX_RIJEN)) : 0;
-      const totaalKolommen = aantalOnevenKolommen + aantalEvenKolommen;
-      const heeftBeideGroepen = aantalOnevenKolommen>0 && aantalEvenKolommen>0;
-      const breedte = totaalKolommen*CELL_W + Math.max(0,totaalKolommen-1)*KOLOM_GAP + (heeftBeideGroepen?GROEP_GAP:0) + 2;
-      const rijen = Math.min(MAX_RIJEN, Math.max(oneven.length, even.length));
-      const hoogte = 6.5 + 4.5 + rijen*CELL_H + 4;
-      return {aantalOnevenKolommen, aantalEvenKolommen, totaalKolommen, breedte, rijen, hoogte, heeftBeideGroepen};
+    function labelVoorNummer(straatNaam, b){
+      const k = kerstKey(straatNaam, b.hoofd);
+      const isDone = !!doneKerst[k];
+      const e = fooiEntry(k);
+      const bedrag = e.munt + e.biljet;
+      let label = String(b.hoofd);
+      if(bedrag>0) label += ' €'+(bedrag/100).toFixed(2).replace('.',',');
+      if(isDone) label = '('+label+')'; // afgevinkt = tussen haakjes (i.p.v. donker vakje)
+      return label;
     }
 
-    // Tekent één blok op de gegeven (x,y): straatnaam + oneven/even
-    // sub-kolommen, elk huisnummer in een eigen vast blokje.
-    function schrijfStraatBlok(straatNaam, brievenbussen, plekX, plekY, info){
-      const oneven = brievenbussen.filter(b=>isOneven(b.hoofd)).sort(vergelijkHuisnr);
-      const even   = brievenbussen.filter(b=>!isOneven(b.hoofd)).sort(vergelijkHuisnr);
-      const {aantalOnevenKolommen, aantalEvenKolommen, heeftBeideGroepen, rijen} = info;
+    function schrijfStraat(straatNaam, brievenbussen){
+      if(!brievenbussen.length) return;
+      const gesorteerd = brievenbussen.slice().sort(vergelijkHuisnr);
+      const oneven = gesorteerd.filter(b=>isOneven(b.hoofd));
+      const even = gesorteerd.filter(b=>!isOneven(b.hoofd));
+      const heeftBeide = oneven.length>0 && even.length>0;
+      const usableW = pageW - 2*marge;
+      const colW = heeftBeide ? (usableW - GROEP_GAP)/2 : usableW;
+      const evenX = marge + (heeftBeide ? colW + GROEP_GAP : 0);
 
-      let yy = plekY;
-      const tabelX = plekX + 1;
-      function xVoorKolomIndex(i){
-        const extraGap = (heeftBeideGroepen && i >= aantalOnevenKolommen) ? GROEP_GAP : 0;
-        return tabelX + i*(CELL_W+KOLOM_GAP) + extraGap;
-      }
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      const onevenTxt = oneven.map(b=>labelVoorNummer(straatNaam,b)).join('   ');
+      const evenTxt = even.map(b=>labelVoorNummer(straatNaam,b)).join('   ');
+      const onevenLines = oneven.length ? doc.splitTextToSize(onevenTxt, colW - 2) : [];
+      const evenLines = even.length ? doc.splitTextToSize(evenTxt, colW - 2) : [];
+      const rijen = Math.max(onevenLines.length, evenLines.length, 1);
+      const blokHoogte = 6.5 + 4.3 + rijen*REGEL_HOOGTE + 3;
 
-      const kaderX = plekX - 1;
-      const kaderBreedte = info.breedte;
-      const kaderStartY = yy - 1.5;
+      nieuwePaginaAlsNodig(blokHoogte);
 
       doc.setFont('helvetica','bold');
-      let straatFontSize = 8.5;
-      doc.setFontSize(straatFontSize);
-      while(straatFontSize > 5.5 && doc.getTextWidth(straatNaam) > kaderBreedte - 3){
-        straatFontSize -= 0.5;
-        doc.setFontSize(straatFontSize);
-      }
+      doc.setFontSize(8.5);
       doc.setTextColor(20,20,20);
-      doc.text(straatNaam, plekX + 2, yy + 3.5);
-      yy += 6.5;
+      doc.text(straatNaam, marge, y + 3.3);
+      y += 6.5;
 
       doc.setFont('helvetica','italic');
       doc.setFontSize(7);
       doc.setTextColor(130,130,130);
-      if(aantalOnevenKolommen>0) doc.text('oneven', xVoorKolomIndex(0) + 1.5, yy);
-      if(aantalEvenKolommen>0) doc.text('even', xVoorKolomIndex(aantalOnevenKolommen) + 1.5, yy);
+      if(oneven.length) doc.text('oneven', marge, y);
+      if(even.length) doc.text('even', evenX, y);
       doc.setTextColor(20,20,20);
-      yy += 4.5;
+      y += 4.3;
 
-      doc.setFontSize(8.5);
-      doc.setDrawColor(120,120,120);
-      doc.setLineWidth(0.25);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      onevenLines.forEach((line,i)=>{ doc.text(line, marge, y + i*REGEL_HOOGTE); });
+      evenLines.forEach((line,i)=>{ doc.text(line, evenX, y + i*REGEL_HOOGTE); });
+      y += rijen*REGEL_HOOGTE;
 
-      function tekenBlokje(b, kolX){
-        const k = kerstKey(straatNaam, b.hoofd);
-        const isDone = !!doneKerst[k];
-        const e = fooiEntry(k);
-        const bedrag = e.munt + e.biljet;
-        let label = b.hoofd;
-        if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
-
-        if(isDone){
-          doc.setFillColor(30,45,90);
-          doc.rect(kolX, yy, CELL_W, CELL_H, 'FD');
-          doc.setTextColor(255,255,255);
-          doc.setFont('helvetica','bold');
-        } else {
-          doc.rect(kolX, yy, CELL_W, CELL_H, 'S');
-          doc.setTextColor(20,20,20);
-          doc.setFont('helvetica','normal');
-        }
-        doc.text(label, kolX + CELL_W/2, yy + CELL_H/2 + 1, {align:'center'});
-      }
-
-      for(let r=0; r<rijen; r++){
-        for(let ko=0; ko<info.aantalOnevenKolommen; ko++){
-          const idx = ko*MAX_RIJEN + r;
-          if(oneven[idx]) tekenBlokje(oneven[idx], xVoorKolomIndex(ko));
-        }
-        for(let ke=0; ke<info.aantalEvenKolommen; ke++){
-          const idx = ke*MAX_RIJEN + r;
-          if(even[idx]) tekenBlokje(even[idx], xVoorKolomIndex(info.aantalOnevenKolommen+ke));
-        }
-        yy += CELL_H;
-      }
-
-      doc.setDrawColor(150,150,150);
-      doc.setLineWidth(0.3);
-      doc.rect(kaderX, kaderStartY, kaderBreedte, (yy+2)-kaderStartY, 'S');
+      doc.setDrawColor(210,210,210);
       doc.setLineWidth(0.2);
-      doc.setTextColor(20,20,20);
-    }
-
-    // Plaatst een straat-blok in de flow: past het niet meer op de huidige
-    // regel, dan naar een nieuwe regel; past het ook niet op een lege
-    // pagina, dan een nieuwe pagina (blokken zijn altijd max MAX_RIJEN rijen
-    // hoog, dus passen gegarandeerd op een verse pagina).
-    function plaatsStraatBlok(straatNaam, items){
-      if(!items.length) return;
-      const oneven = items.filter(b=>isOneven(b.hoofd));
-      const even = items.filter(b=>!isOneven(b.hoofd));
-      const info = straatKolommen(oneven, even);
-
-      if(flowX > marge && flowX + info.breedte > pageW - marge){
-        // Nieuwe regel
-        flowX = marge;
-        flowY += flowRijHoogte + BLOK_GAP;
-        flowRijHoogte = 0;
-      }
-      if(flowY + info.hoogte > pageH - marge){
-        doc.addPage();
-        flowX = marge;
-        flowY = marge;
-        flowRijHoogte = 0;
-      }
-      schrijfStraatBlok(straatNaam, items, flowX, flowY, info);
-      flowX += info.breedte + BLOK_GAP;
-      flowRijHoogte = Math.max(flowRijHoogte, info.hoogte);
-    }
-
-    // Publieke functie (zelfde naam/signatuur als voorheen, zodat de rest van
-    // de export-code ongewijzigd kan blijven).
-    // Een straat met veel adressen (bv. Wilhelminastraat, Schoolstraat) heeft
-    // soms meer kolommen nodig dan er naast elkaar op de pagina passen. Past
-    // hij niet in 1 blokje, dan knippen we 'm op in losse blokjes van max
-    // MAX_KOLOMMEN_PER_REGEL kolommen — oneven en even apart — elk gelabeld
-    // met "(vervolg)", en die schuiven gewoon mee in de normale flow (dus ook
-    // gewoon naast kleinere straten, en over paginabreaks heen indien nodig).
-    function schrijfStraat(straatNaam, brievenbussen){
-      const gesorteerd = brievenbussen.slice().sort(vergelijkHuisnr);
-      const oneven = gesorteerd.filter(b=>isOneven(b.hoofd));
-      const even = gesorteerd.filter(b=>!isOneven(b.hoofd));
-      const onevenKolommenNodig = oneven.length ? Math.ceil(oneven.length / MAX_RIJEN) : 0;
-      const evenKolommenNodig = even.length ? Math.ceil(even.length / MAX_RIJEN) : 0;
-
-      if(onevenKolommenNodig + evenKolommenNodig <= MAX_KOLOMMEN_PER_REGEL){
-        // Past gewoon als 1 compact blokje (oneven+even naast elkaar) —
-        // de normale situatie voor verreweg de meeste straten.
-        plaatsStraatBlok(straatNaam, gesorteerd);
-        return;
-      }
-
-      const ADRESSEN_PER_DEEL = MAX_KOLOMMEN_PER_REGEL * MAX_RIJEN;
-      let deelnummer = 0;
-      function plaatsDelen(lijst){
-        for(let i=0; i<lijst.length; i+=ADRESSEN_PER_DEEL){
-          deelnummer++;
-          const label = deelnummer===1 ? straatNaam : straatNaam+' (vervolg)';
-          plaatsStraatBlok(label, lijst.slice(i, i+ADRESSEN_PER_DEEL));
-        }
-      }
-      plaatsDelen(oneven);
-      plaatsDelen(even);
+      doc.line(marge, y+1.5, pageW-marge, y+1.5);
+      y += 3.5;
     }
 
     doc.setFont('helvetica','bold');
@@ -3715,7 +3606,7 @@ function exportKerstPdf(modus){
     doc.setFont('helvetica','normal');
     doc.setFontSize(6.5);
     doc.setTextColor(120);
-    doc.text('Geexporteerd op '+datumStr+'  ·  donker = afgevinkt  ·  '+(modus==='oostwest'?'Oost & West':'per ronde'), marge, y);
+    doc.text('Geexporteerd op '+datumStr+'  ·  (haakjes) = afgevinkt  ·  '+(modus==='oostwest'?'Oost & West':'per ronde'), marge, y);
     doc.setTextColor(20);
     y += 5.5;
 
