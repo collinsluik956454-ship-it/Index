@@ -3581,7 +3581,7 @@ function exportKerstPdf(modus){
         let label = b.hoofd;
         if(bedrag>0) label = b.hoofd+' €'+(bedrag/100).toFixed(2).replace('.',',');
         const cx = x + CELL_W/2, cy = yy + CELL_H/2;
-        const r = Math.min(CELL_W, CELL_H)/2 - 1; // rondje, kleiner dan het vakje eromheen (geen vierkant meer)
+        const r = Math.min(CELL_W, CELL_H)/2 - 1.6; // rondje, kleiner dan het vakje eromheen (geen vierkant meer)
         if(isDone){
           doc.setFillColor(30,45,90);
           doc.circle(cx, cy, r, 'FD');
@@ -3616,7 +3616,7 @@ function exportKerstPdf(modus){
         doc.setTextColor(20,20,20);
         y += 4.3;
 
-        doc.setFontSize(7);
+        doc.setFontSize(7.5);
         doc.setDrawColor(120,120,120);
         doc.setLineWidth(0.25);
 
