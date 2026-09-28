@@ -1527,6 +1527,12 @@ const STORAGE_VOLGORDE_MODUS = 'looplijst_v23_volgorde_modus';
 let volgordeModus = localStorage.getItem(STORAGE_VOLGORDE_MODUS) || 'perwijk'; // 'perwijk' of 'gemengd'
 function saveVolgordeModus(){ localStorage.setItem(STORAGE_VOLGORDE_MODUS, volgordeModus); }
 const GEMENGD_KEY = '__GEMENGD__';
+// Weergave-modus voor het afvinken van kerstkaartjes per ronde: 'straat' = lijst met
+// straten om apart in te tikken (bestaand gedrag), 'veld' = alle straten van de ronde
+// in één keer als grid van blokjes (net als de Kerstkaartjes-PDF), rechtstreeks aftikbaar.
+const STORAGE_KERST_WEERGAVE = 'looplijst_v23_kerst_weergave';
+let kerstWeergave = localStorage.getItem(STORAGE_KERST_WEERGAVE) || 'straat'; // 'straat' of 'veld'
+function saveKerstWeergave(){ localStorage.setItem(STORAGE_KERST_WEERGAVE, kerstWeergave); }
 try { wijkOrder = JSON.parse(localStorage.getItem(STORAGE_WIJKORDER)) || []; } catch(e){ wijkOrder = []; }
 function saveWijkOrder(){ localStorage.setItem(STORAGE_WIJKORDER, JSON.stringify(wijkOrder)); }
 
@@ -4106,34 +4112,137 @@ function renderKerst(){
     const w=DATA[view.wijk];
     const r=w.rondes[view.ronde];
     crumb.textContent='🎄 '+r.ronde;
-    title.textContent='Kies een straat';
+    title.textContent=kerstWeergave==='veld' ? 'Alle straten' : 'Kies een straat';
     // Totaalbox ronde
     const totBox = document.createElement('div');
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Fooi in '+r.ronde, fooiInRonde(view.wijk,view.ronde));
     main.appendChild(totBox);
-    let shown=0;
-    straatIdxsInRonde(view.wijk, view.ronde).forEach(si=>{
-      const s = r.straten[si];
-      const c=countKerstInStraat(view.wijk,view.ronde,si);
-      const complete=c.done>=c.total;
-      if(hideChecked && complete) return;
-      shown++;
-      const sfooi = fooiInStraat(view.wijk,view.ronde,si);
-      const row=document.createElement('div');
-      row.className='row';
-      row.innerHTML='<div class="navrow '+(complete?'complete':'')+'">'+
-        ringSVG(c.done,c.total)+
-        '<div class="txt"><div class="nm">'+s.naam+'</div>'+
-        '<div class="sub">'+(c.total-c.done)+' van '+c.total+' brievenbussen</div>'+
-        '</div>'+
-        fooiPillHTML(sfooi)+
-        '</div>';
-      row.querySelector('.navrow').onclick=()=>{ view={mode:'kerst',level:'adres',wijk:view.wijk,ronde:view.ronde,straat:si,krant:null}; render(); };
-      main.appendChild(row);
+
+    // Weergave-toggle: per straat aanklikken (bestaand) of alle straten als
+    // grid van blokjes op één scherm (net als de Kerstkaartjes-PDF), zodat je
+    // direct kan aftikken zonder steeds terug te navigeren.
+    const wgToggle = document.createElement('div');
+    wgToggle.style.cssText = 'display:flex;gap:6px;margin-bottom:12px;background:#f0f5f2;padding:4px;border-radius:11px';
+    wgToggle.innerHTML =
+      '<button data-wg="veld" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(kerstWeergave==='veld'?'#fff':'transparent')+';color:'+(kerstWeergave==='veld'?'var(--ink)':'var(--muted)')+';box-shadow:'+(kerstWeergave==='veld'?'var(--shadow)':'none')+'">▦ Veld</button>'+
+      '<button data-wg="straat" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(kerstWeergave==='straat'?'#fff':'transparent')+';color:'+(kerstWeergave==='straat'?'var(--ink)':'var(--muted)')+';box-shadow:'+(kerstWeergave==='straat'?'var(--shadow)':'none')+'">📋 Per straat</button>';
+    wgToggle.querySelectorAll('button').forEach(btn=>{
+      btn.onclick = ()=>{ kerstWeergave = btn.dataset.wg; saveKerstWeergave(); render(); };
     });
-    if(shown===0){
-      main.innerHTML='<div class="empty"><div class="big">🎄</div><h2>Ronde klaar!</h2><p>Alle kaarten in '+r.ronde+' bezorgd.</p></div>';
+    main.appendChild(wgToggle);
+
+    let shown=0;
+    if(kerstWeergave === 'veld'){
+      // Alle straten van deze ronde in één keer: per straat een blokje met de
+      // huisnummers verdeeld in een oneven- en even-kolom, elk nummer een eigen
+      // aantikbaar vakje — precies zoals de Kerstkaartjes-PDF het indeelt.
+      function huisnrSortVal(nr){
+        const m = String(nr).trim().match(/^(\d+)\s*(.*)$/);
+        if(m) return [parseInt(m[1],10), m[2].toLowerCase()];
+        return [Infinity, String(nr).toLowerCase()];
+      }
+      function vergelijkHuisnrVeld(a,b){
+        const [na,sa]=huisnrSortVal(a.hoofd), [nb,sb]=huisnrSortVal(b.hoofd);
+        return na!==nb ? na-nb : sa.localeCompare(sb);
+      }
+      function isOnevenNr(nr){
+        const m = String(nr).trim().match(/^(\d+)/);
+        return m ? (parseInt(m[1],10)%2===1) : true;
+      }
+      let hiddenBbCount = 0;
+      straatIdxsInRonde(view.wijk, view.ronde).forEach(si=>{
+        const s = r.straten[si];
+        const bbAlles = brievenbussenVoorStraat(view.wijk, view.ronde, si);
+        if(!bbAlles.length) return;
+        const c = countKerstInStraat(view.wijk, view.ronde, si);
+        const compleet = c.done>=c.total;
+        if(hideChecked && compleet){ hiddenBbCount += bbAlles.length; return; }
+        // Bij "afgevinkt verbergen" ook losse, al aangetikte huisnummers uit
+        // een nog niet helemaal klare straat weglaten — niet alleen hele
+        // straten die al compleet zijn.
+        const bb = hideChecked ? bbAlles.filter(b=>!doneKerst[kerstKey(s.naam,b.hoofd)]) : bbAlles;
+        hiddenBbCount += (bbAlles.length - bb.length);
+        if(!bb.length) return;
+        shown++;
+        const sfooi = fooiInStraat(view.wijk, view.ronde, si);
+        const blok = document.createElement('div');
+        blok.style.cssText = 'background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.06)';
+        blok.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+          '<div style="font-weight:800;font-size:14px;color:var(--ink)">'+s.naam+'</div>'+
+          '<div style="display:flex;align-items:center;gap:6px">'+
+            '<span style="font-size:11px;color:var(--muted);font-weight:700">'+c.done+'/'+c.total+'</span>'+
+            fooiPillHTML(sfooi)+
+          '</div></div>';
+        const oneven = bb.filter(b=>isOnevenNr(b.hoofd)).sort(vergelijkHuisnrVeld);
+        const even = bb.filter(b=>!isOnevenNr(b.hoofd)).sort(vergelijkHuisnrVeld);
+        const groepenRij = document.createElement('div');
+        groepenRij.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap';
+        function bouwGroep(label, lijst){
+          if(!lijst.length) return;
+          const g = document.createElement('div');
+          const kop = document.createElement('div');
+          kop.style.cssText = 'font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px';
+          kop.textContent = label;
+          g.appendChild(kop);
+          const grid = document.createElement('div');
+          grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;max-width:210px';
+          lijst.forEach(b=>{
+            const k = kerstKey(s.naam, b.hoofd);
+            const isDone = !!doneKerst[k];
+            const box = document.createElement('div');
+            box.textContent = b.hoofd;
+            box.style.cssText = 'min-width:38px;height:32px;padding:0 5px;display:flex;align-items:center;justify-content:center;'+
+              'border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;user-select:none;'+
+              (isDone ? 'background:var(--green);color:#fff' : 'background:#f0f5f2;color:var(--ink);border:1.5px solid var(--line)');
+            box.onclick = ()=>{
+              if(doneKerst[k]) delete doneKerst[k];
+              else doneKerst[k] = vandaagIso();
+              saveKerst();
+              render();
+              updateHeaderProgress();
+            };
+            grid.appendChild(box);
+          });
+          g.appendChild(grid);
+          groepenRij.appendChild(g);
+        }
+        bouwGroep('Oneven', oneven);
+        bouwGroep('Even', even);
+        blok.appendChild(groepenRij);
+        main.appendChild(blok);
+      });
+      if(shown===0){
+        main.innerHTML='<div class="empty"><div class="big">🎄</div><h2>Ronde klaar!</h2><p>Alle kaarten in '+r.ronde+' bezorgd.</p></div>';
+      } else if(hideChecked && hiddenBbCount>0){
+        const note=document.createElement('div');
+        note.className='hiddennote';
+        note.textContent=hiddenBbCount+' kaart'+(hiddenBbCount===1?'':'en')+' bezorgd (verborgen — tik "Toon" om aan te passen)';
+        main.appendChild(note);
+      }
+    } else {
+      straatIdxsInRonde(view.wijk, view.ronde).forEach(si=>{
+        const s = r.straten[si];
+        const c=countKerstInStraat(view.wijk,view.ronde,si);
+        const complete=c.done>=c.total;
+        if(hideChecked && complete) return;
+        shown++;
+        const sfooi = fooiInStraat(view.wijk,view.ronde,si);
+        const row=document.createElement('div');
+        row.className='row';
+        row.innerHTML='<div class="navrow '+(complete?'complete':'')+'">'+
+          ringSVG(c.done,c.total)+
+          '<div class="txt"><div class="nm">'+s.naam+'</div>'+
+          '<div class="sub">'+(c.total-c.done)+' van '+c.total+' brievenbussen</div>'+
+          '</div>'+
+          fooiPillHTML(sfooi)+
+          '</div>';
+        row.querySelector('.navrow').onclick=()=>{ view={mode:'kerst',level:'adres',wijk:view.wijk,ronde:view.ronde,straat:si,krant:null}; render(); };
+        main.appendChild(row);
+      });
+      if(shown===0){
+        main.innerHTML='<div class="empty"><div class="big">🎄</div><h2>Ronde klaar!</h2><p>Alle kaarten in '+r.ronde+' bezorgd.</p></div>';
+      }
     }
   }
   else if(view.level==='adres'){
