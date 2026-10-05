@@ -3463,7 +3463,7 @@ function exportKerstPdf(modus){
   }
   try{
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a5', orientation:'landscape'});
+    const doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const marge = 5;
@@ -3545,7 +3545,10 @@ function exportKerstPdf(modus){
     // regel, dan begint een nieuwe regel eronder. Zo blijft elk blokje
     // overal even groot, ook bij straten met veel adressen.
     const CELL_W = 30, CELL_H = 15;
-    const MAX_RIJEN = 8;   // A5 is 2x zo hoog als A6, dus passen er nu 8 huisnummers onder elkaar in 1 kolom (was 4 op A6)
+    // Aantal huisnummers dat onder elkaar in 1 kolom past, berekend uit de
+    // echte paginahoogte (ipv een vast getal) — zo schaalt dit automatisch
+    // mee als het papierformaat verandert (bv. A5 → A4).
+    const MAX_RIJEN = Math.max(4, Math.floor((pageH - 2*marge - 11) / CELL_H));
     const KOLOM_GAP = 2;   // tussen alle sub-kolommen onderling
     const GROEP_GAP = 3.5; // extra ruimte tussen het oneven-blok en het even-blok
     const BLOK_GAP = 3.5;  // tussen straat-blokken onderling
@@ -3623,11 +3626,11 @@ function exportKerstPdf(modus){
 
         if(isDone){
           doc.setFillColor(30,45,90);
-          doc.rect(kolX, yy, CELL_W, CELL_H, 'FD');
+          doc.roundedRect(kolX, yy, CELL_W, CELL_H, 3, 3, 'FD');
           doc.setTextColor(255,255,255);
           doc.setFont('helvetica','bold');
         } else {
-          doc.rect(kolX, yy, CELL_W, CELL_H, 'S');
+          doc.roundedRect(kolX, yy, CELL_W, CELL_H, 3, 3, 'S');
           doc.setTextColor(20,20,20);
           doc.setFont('helvetica','normal');
         }
@@ -3648,7 +3651,7 @@ function exportKerstPdf(modus){
 
       doc.setDrawColor(150,150,150);
       doc.setLineWidth(0.3);
-      doc.rect(kaderX, kaderStartY, kaderBreedte, (yy+2)-kaderStartY, 'S');
+      doc.roundedRect(kaderX, kaderStartY, kaderBreedte, (yy+2)-kaderStartY, 2, 2, 'S');
       doc.setLineWidth(0.2);
       doc.setTextColor(20,20,20);
     }
