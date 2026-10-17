@@ -8652,6 +8652,27 @@ function renderOrder(){
       ? 'Stel hieronder één doorlopende route in met adressen uit al je wijken door elkaar.'
       : 'Tik <b>▲</b> of <b>▼</b> om de volgorde te wijzigen. Tik op <b>›</b> om dieper te gaan.';
     main.appendChild(info);
+    // Volgorde aangepast in Per wijk / Wijken door elkaar? Vraag of de vaste volgorde ook mee moet.
+    if(volgordeModus!=='vast' && window.LV){
+      let lvItems = [];
+      try{ lvItems = bezorgLijstBasis(); }catch(e){}
+      let lvGewijzigd = false;
+      try{ lvGewijzigd = LV.gewijzigd(volgordeModus, lvItems); }catch(e){ console.error('LV gewijzigd', e); }
+      if(lvGewijzigd){
+        const modusNaam = volgordeModus==='gemengd' ? 'Wijken door elkaar' : 'Per wijk';
+        const dagNaam = LV.dagNaam();
+        const vb = document.createElement('div');
+        vb.style.cssText = 'border:2px solid #e0a800;background:#fff8e1;border-radius:12px;padding:12px 14px;margin:10px 0;color:#1a2433';
+        vb.innerHTML = '<div style="font-weight:800;font-size:14px">Volgorde aangepast ('+modusNaam+')</div>'+
+          '<div style="font-size:13px;margin:4px 0 10px">Ook in de <b>vaste volgorde</b> zetten? Je kiest daarna voor welke dagen (ma t/m wo, do, vr, za).</div>'+
+          '<div style="display:flex;gap:8px">'+
+          '<button class="lv-nee" style="flex:1;padding:11px;border:none;border-radius:10px;background:#eef1ef;font-weight:700;font-size:14px;cursor:pointer">Nee</button>'+
+          '<button class="lv-ja" style="flex:2;padding:11px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:14px;cursor:pointer">Ja, ook aanpassen</button></div>';
+        vb.querySelector('.lv-nee').onclick = ()=>{ LV.negeer(volgordeModus, lvItems); render(); };
+        vb.querySelector('.lv-ja').onclick = ()=>{ LV.kiesDagen(volgordeModus, lvItems, ()=>render()); };
+        main.appendChild(vb);
+      }
+    }
     // Start-knop voor bezorg-modus
     const lijstAantal = bezorgLijst().length;
     const startBtn = document.createElement('button');
@@ -12340,8 +12361,21 @@ Sportlaan: 1 2 6 7 5 54 47 46 39 44 40 38 33 34 32 31 30 29 27 28 26 25 22 16 14
 const STORE_EXTRA = 'looplijst_v23_lv_extra';
 const STORE_INIT = 'looplijst_v23_lv_init';
 const STORE_CUSTOM = 'looplijst_v23_lv_custom_';
+/* Dag-groepen: ma t/m wo samen, donderdag, vrijdag en zaterdag elk apart.
+   Do en vr starten als kopie van de oude ma-vr volgorde (eigen aanpassingen daaruit worden meegenomen). */
+const DAGGROEPEN = { mawo:'Ma t/m wo', do:'Donderdag', vr:'Vrijdag', za:'Zaterdag' };
+const GROEP_VOLGORDE = ['mawo','do','vr','za'];
+LV_DATA.mawo = LV_DATA.mavr; LV_DATA.do = LV_DATA.mavr; LV_DATA.vr = LV_DATA.mavr;
+function bronTekst(g){
+  try{
+    const c = localStorage.getItem(STORE_CUSTOM+g); if(c) return c;
+    if(g!=='za'){ const oud = localStorage.getItem(STORE_CUSTOM+'mavr'); if(oud) return oud; }
+  }catch(e){}
+  return LV_DATA[g];
+}
 let extra = {};
 try{ extra = JSON.parse(localStorage.getItem(STORE_EXTRA)||'{}') || {}; }catch(e){ extra = {}; }
+if(extra.mavr){ ['mawo','do','vr'].forEach(g=>{ if(!extra[g]) extra[g] = extra.mavr.slice(); }); }
 function saveExtra(){ try{ localStorage.setItem(STORE_EXTRA, JSON.stringify(extra)); }catch(e){} }
 let overgeslagen = false;
 
@@ -12353,15 +12387,16 @@ function groep(){
   let d = 'Route';
   try{ d = dagVanLooplijst(); }catch(e){}
   if(d==='Zaterdag') return 'za';
-  if(['Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag'].indexOf(d)>=0) return 'mavr';
+  if(d==='Vrijdag') return 'vr';
+  if(d==='Donderdag') return 'do';
+  if(['Maandag','Dinsdag','Woensdag'].indexOf(d)>=0) return 'mawo';
   return null;
 }
 const masterCache = {};
 function masterSlots(g){
   if(masterCache[g]) return masterCache[g];
   const slots = []; let stopN = 0;
-  let bron = LV_DATA[g];
-  try{ const c = localStorage.getItem(STORE_CUSTOM+g); if(c) bron = c; }catch(e){}
+  const bron = bronTekst(g);
   bron.split('\n').forEach(line=>{
     line = line.trim(); if(!line) return;
     if(line[0]==='@'){ stopN++; slots.push({stop:true, label:line.slice(1).trim(), id:'stop|'+stopN}); return; }
@@ -12458,7 +12493,122 @@ function lijstSorteer(items){
   return res;
 }
 function alleItems(){ return (typeof bezorgLijstBasis==='function') ? bezorgLijstBasis() : []; }
+
+/* ===== Aanpassingen uit "Per wijk" / "Wijken door elkaar" doorgeven aan de vaste volgorde =====
+   - Per modus wordt onthouden (localStorage) welke volgorde je het laatst hebt bevestigd.
+   - Wijkt de huidige volgorde daarvan af, dan vraagt de app of de vaste volgorde ook aangepast moet worden.
+   - Bij "Ja" worden alleen de adressen van de huidige looplijst herschikt; overige adressen en stops
+     in de vaste volgorde blijven bij hun buurman staan. */
+const STORE_SNAP = 'looplijst_v23_lv_snap_';
+function hash(str){ let h = 5381; for(let i=0;i<str.length;i++){ h = ((h<<5)+h+str.charCodeAt(i))|0; } return String(h>>>0)+':'+str.length; }
+function sigVan(items){
+  const keys = items.map(it=>it.key);
+  return { set: hash(keys.slice().sort().join('|')), ord: hash(keys.join('|')) };
+}
+function laadSnap(mode){ try{ return JSON.parse(localStorage.getItem(STORE_SNAP+mode)||'null'); }catch(e){ return null; } }
+function bewaarSnap(mode, items){ try{ localStorage.setItem(STORE_SNAP+mode, JSON.stringify(sigVan(items))); }catch(e){} }
+function slotTok(s){
+  if(s.kind==='all') return s.b+'*';
+  if(s.kind==='rng') return s.a+'..'+s.b;
+  return String(s.k).toUpperCase();
+}
+function nieuweTekst(items, g, metOnbekend){
+  const slots = slotsMetExtra(g);
+  const idxOf = items.map(it=>matchIdx(slots,it));
+  const matched = {}; idxOf.forEach(i=>{ if(i>=0) matched[i] = true; });
+  // niet-aangeraakte slots (andere adressen, stops) hangen aan het vorige aangeraakte slot
+  const start = [], groepen = {}; let anker = -1;
+  slots.forEach((s,i)=>{
+    if(matched[i]){ anker = i; return; }
+    if(anker<0) start.push(s); else (groepen[anker] = groepen[anker]||[]).push(s);
+  });
+  const laatste = {}; idxOf.forEach((i,n)=>{ if(i>=0) laatste[i] = n; });
+  const uit = []; const gezien = {}; const onbGezien = {};
+  function pushSlot(s){ uit.push(s.stop ? {stop:true, label:s.label} : {straat:s.straat, sk:s.sk, tok:slotTok(s)}); }
+  start.forEach(pushSlot);
+  items.forEach((it,n)=>{
+    const i = idxOf[n];
+    if(i<0){
+      if(!metOnbekend) return; // andere dag: adressen die daar niet in staan niet toevoegen
+      const k = normS(it.straat)+'|'+normNr(it.adres.nr);
+      if(onbGezien[k]) return; onbGezien[k] = true;
+      uit.push({straat:it.straat, sk:normS(it.straat), tok:String(it.adres.nr).replace(/\s+/g,'')});
+      return;
+    }
+    if(!gezien[i]){ gezien[i] = true; pushSlot(slots[i]); }
+    if(laatste[i]===n && groepen[i]) groepen[i].forEach(pushSlot);
+  });
+  const regels = []; let cur = null; const stops = []; let vorige = null;
+  uit.forEach(e=>{
+    if(e.stop){ regels.push('@'+e.label); cur = null; stops.push({label:e.label, na: vorige ? vorige.straat+' '+vorige.tok : 'het begin'}); return; }
+    vorige = e;
+    if(cur && cur.sk===e.sk){ cur.toks.push(e.tok); }
+    else { cur = {sk:e.sk, straat:e.straat, toks:[e.tok]}; regels.push(cur); }
+  });
+  return { tekst: regels.map(r=> typeof r==='string' ? r : r.straat+': '+r.toks.join(' ')).join('\n'), stops };
+}
+
 window.LV = {
+  /* true als de volgorde van deze modus is gewijzigd sinds de laatste keer dat je er iets over hebt beantwoord */
+  gewijzigd(mode, items){
+    if(!groep() || !items || !items.length) return false;
+    const snap = laadSnap(mode), s = sigVan(items);
+    if(!snap || snap.set!==s.set){ bewaarSnap(mode, items); return false; } // eerste keer of nieuwe looplijst
+    return snap.ord!==s.ord;
+  },
+  negeer(mode, items){ bewaarSnap(mode, items); },
+  dagNaam(){ try{ return dagVanLooplijst(); }catch(e){ return ''; } },
+  /* zet de volgorde van de huidige looplijst ook in de vaste volgorde van de gekozen dag-groepen */
+  neemOver(mode, items, groepen){
+    const huidig = groep();
+    const uitkomst = [];
+    (groepen||[]).forEach(g=>{
+      if(!DAGGROEPEN[g]) return;
+      const r = nieuweTekst(items, g, g===huidig);
+      try{ localStorage.setItem(STORE_CUSTOM+g, r.tekst); }catch(e){ return; }
+      masterCache[g] = null;
+      extra[g] = [];
+      uitkomst.push({g, naam:DAGGROEPEN[g], stops:r.stops});
+    });
+    cache = {sig:null, res:null};
+    saveExtra();
+    if(uitkomst.length) bewaarSnap(mode, items);
+    return uitkomst;
+  },
+  /* dialoog: voor welke dagen moet de vaste volgorde worden aangepast? */
+  kiesDagen(mode, items, klaar){
+    const huidig = groep();
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;color:#1a2433;border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow:auto;padding:18px;font-family:inherit';
+    ov.appendChild(box); document.body.appendChild(ov);
+    function sluit(){ if(ov.parentNode) document.body.removeChild(ov); if(klaar) klaar(); }
+    let h = '<div style="font-size:18px;font-weight:800;margin-bottom:4px">Vaste volgorde aanpassen</div>';
+    h += '<div style="font-size:14px;margin-bottom:10px">Voor welke dagen wil je deze volgorde overnemen?</div>';
+    GROEP_VOLGORDE.forEach(k=>{
+      h += '<label style="display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #c9d3cd;border-radius:10px;margin:6px 0;font-size:15px;font-weight:700"><input type="checkbox" data-g="'+k+'" '+(k===huidig?'checked':'')+' style="width:20px;height:20px"> '+DAGGROEPEN[k]+(k===huidig?' <span style="font-weight:500;font-size:12px;color:#6b7a72">(deze looplijst)</span>':'')+'</label>';
+    });
+    h += '<div style="font-size:12px;color:#6b7a72;margin:8px 0 12px">Bij andere dagen worden alleen adressen herschikt die daar al in de volgorde staan; er komen geen adressen bij.</div>';
+    h += '<div style="display:flex;gap:8px"><button id="kdNee" style="flex:1;padding:13px;border:none;border-radius:10px;background:#eef1ef;font-weight:700;font-size:14px">Annuleren</button><button id="kdOk" style="flex:2;padding:13px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Toepassen</button></div>';
+    box.innerHTML = h;
+    box.querySelector('#kdNee').onclick = ()=>{ document.body.removeChild(ov); };
+    box.querySelector('#kdOk').onclick = ()=>{
+      const gekozen = Array.prototype.filter.call(box.querySelectorAll('input[data-g]'), c=>c.checked).map(c=>c.dataset.g);
+      if(!gekozen.length){ alert('Kies minstens één dag.'); return; }
+      const res = window.LV.neemOver(mode, items, gekozen);
+      let t = '<div style="font-size:18px;font-weight:800;margin-bottom:8px">'+(res.length?'Vaste volgorde bijgewerkt':'Niets aangepast')+'</div>';
+      res.forEach(r=>{
+        t += '<div style="margin:8px 0;padding:10px;background:#f4f6f5;border-radius:10px;font-size:14px"><b>'+r.naam+'</b>';
+        if(r.stops.length) r.stops.forEach(s=>{ t += '<div style="margin-top:4px">⏸ '+s.label+' staat nu na <b>'+s.na+'</b></div>'; });
+        t += '</div>';
+      });
+      if(res.some(r=>r.stops.length)) t += '<div style="font-size:12px;color:#6b7a72;margin-top:8px">Klopt de plek van de herlading niet? Verplaats hem via Vaste volgorde › Loopvolgorde bewerken.</div>';
+      t += '<button id="kdSluit" style="width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Sluiten</button>';
+      box.innerHTML = t;
+      box.querySelector('#kdSluit').onclick = sluit;
+    };
+  },
   sorteer(items){ const r = bereken(items); return r ? r.lijst : null; },
   onbekenden(){ if(typeof volgordeModus==='undefined' || volgordeModus!=='vast') return []; const r = bereken(alleItems()); return r ? r.onbekend : []; },
   heeftOnbekend(){ return !overgeslagen && this.onbekenden().length>0; },
@@ -12521,12 +12671,11 @@ function vraagDialoog(klaar){
 }
 
 function bewerkDialoog(klaar){
-  let g = groep() || 'mavr';
+  let g = groep() || 'mawo';
   let regels = [];
   function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function laad(){
-    let t = LV_DATA[g];
-    try{ const c = localStorage.getItem(STORE_CUSTOM+g); if(c) t = c; }catch(e){}
+    const t = bronTekst(g);
     regels = t.split('\n').map(s=>s.trim()).filter(Boolean);
   }
   laad();
@@ -12536,7 +12685,7 @@ function bewerkDialoog(klaar){
   function sluit(){ document.body.removeChild(ov); if(klaar) klaar(); }
   function teken(){
     let h = '<div style="padding:12px 14px;background:#1a2d5a;color:#fff;display:flex;align-items:center;gap:10px"><div style="font-weight:800;font-size:17px;flex:1">✏️ Loopvolgorde bewerken</div><button id="lvX" style="background:transparent;border:none;color:#fff;font-size:22px">✕</button></div>';
-    h += '<div style="display:flex;gap:6px;padding:10px 14px"><button data-g="mavr" style="flex:1;padding:10px;border:none;border-radius:9px;font-weight:700;background:'+(g==='mavr'?'#1a2d5a':'#dfe6e2')+';color:'+(g==='mavr'?'#fff':'#1a2433')+'">Ma t/m vr</button><button data-g="za" style="flex:1;padding:10px;border:none;border-radius:9px;font-weight:700;background:'+(g==='za'?'#1a2d5a':'#dfe6e2')+';color:'+(g==='za'?'#fff':'#1a2433')+'">Zaterdag</button></div>';
+    h += '<div style="display:flex;gap:6px;padding:10px 14px">'+GROEP_VOLGORDE.map(k=>'<button data-g="'+k+'" style="flex:1;padding:10px 4px;border:none;border-radius:9px;font-weight:700;font-size:13px;background:'+(g===k?'#1a2d5a':'#dfe6e2')+';color:'+(g===k?'#fff':'#1a2433')+'">'+DAGGROEPEN[k]+'</button>').join('')+'</div>';
     h += '<div style="padding:0 14px 8px;font-size:12px;color:#5a6b63">Eén regel = één stap: <b>Straat: nummers</b> in loopvolgorde (bijv. <b>Tulpstraat: 7 9 39</b>). Letters achter het nummer: <b>26B</b>. <b>34*</b> = alle 34-adressen. <b>34..82</b> = bereik. Een stop begint met @ (bijv. <b>@Hubo herlading</b>).</div>';
     h += '<div id="lvRegels" style="flex:1;overflow:auto;padding:0 10px 10px">';
     regels.forEach((r,i)=>{
@@ -12561,7 +12710,7 @@ function bewerkDialoog(klaar){
     });
     ov.querySelector('#lvAddS').onclick = ()=>{ lees(); regels.push('Straatnaam: 1 2 3'); teken(); const l=ov.querySelector('#lvRegels'); l.scrollTop=l.scrollHeight; };
     ov.querySelector('#lvAddH').onclick = ()=>{ lees(); regels.push('@Hubo herlading'); teken(); const l=ov.querySelector('#lvRegels'); l.scrollTop=l.scrollHeight; };
-    ov.querySelector('#lvRes').onclick = ()=>{ if(confirm('Terug naar de standaard-volgorde voor deze dag? Je eigen aanpassingen gaan verloren.')){ try{ localStorage.removeItem(STORE_CUSTOM+g); }catch(e){} masterCache[g]=null; cache={sig:null,res:null}; laad(); teken(); } };
+    ov.querySelector('#lvRes').onclick = ()=>{ if(confirm('Terug naar de standaard-volgorde voor deze dag? Je eigen aanpassingen gaan verloren.')){ try{ if(g==='za') localStorage.removeItem(STORE_CUSTOM+g); else localStorage.setItem(STORE_CUSTOM+g, LV_DATA[g]); }catch(e){} masterCache[g]=null; cache={sig:null,res:null}; laad(); teken(); } };
     ov.querySelector('#lvSave').onclick = ()=>{
       lees();
       const fout = regels.find(r=> r[0]!=='@' && !/^[^:]+:\s*\S/.test(r));
