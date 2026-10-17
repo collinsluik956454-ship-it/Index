@@ -969,7 +969,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // echt is aangekomen, los van de PWA-cache.
 const APP_VERSION = '2026-10-17.1';
 const DEFAULT_DATA = [{"wijk": "Oldenzaal Oost", "rondes": [{"ronde": "Centrum", "straten": [{"naam": "Tulpstraat", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}]}, {"naam": "Nagelstraat", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "38", "prod": "NRC", "schema": true}, {"nr": "42", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}]}, {"naam": "Noordwal", "adressen": [{"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "98", "prod": "TT OL"}]}, {"naam": "Deurningerstraat", "adressen": [{"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "26 B", "prod": "TEL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "34 01", "prod": "TT OL"}, {"nr": "34 02", "prod": "NRC", "schema": true}, {"nr": "34 2", "prod": "TT OL"}, {"nr": "34 21", "prod": "TT OL"}, {"nr": "34 AP11", "prod": "TT OL"}, {"nr": "34 AP12", "prod": "TT OL"}, {"nr": "34 APP 2", "prod": "VK", "schema": true}]}, {"naam": "Kortestraat", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Steenstraat", "adressen": [{"nr": "29", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TEL", "naam": "Hesselink…", "schema": true}, {"nr": "41", "prod": "TT OL", "naam": "Hesselink"}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "NRC", "naam": "Beerlage", "schema": true}, {"nr": "49", "prod": "TT OL", "naam": "Platvoet", "start": true}]}, {"naam": "Prins Hendrikstraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TEL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "71", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TT OL"}]}, {"naam": "Pastoriestraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL", "schema": true}, {"nr": "81", "prod": "TT OL"}, {"nr": "83", "prod": "TT OL"}, {"nr": "87", "prod": "TT OL"}, {"nr": "91", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL", "schema": true}]}, {"naam": "Beatrixstraat", "adressen": [{"nr": "163", "prod": "TT OL"}]}, {"naam": "Wilhelminastraat", "adressen": [{"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TEL"}, {"nr": "44", "prod": "TEL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TEL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}, {"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "naam": "Wulfften …"}, {"nr": "10", "prod": "VK", "naam": "Palthe", "schema": true}, {"nr": "14", "prod": "TT OL"}, {"nr": "14 C", "prod": "TT OL"}, {"nr": "14 D", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}]}, {"naam": "Gasthuisstraat", "adressen": [{"nr": "2 b", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "14 F", "prod": "TT OL", "naam": "Backhuijs", "schema": true}, {"nr": "14 F", "prod": "VK", "naam": "Backhuys"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}]}, {"naam": "Ganzenmarkt", "adressen": [{"nr": "8", "prod": "NRC"}, {"nr": "10", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TEL", "naam": "Krakers"}, {"nr": "38", "prod": "TT OL", "naam": "Krakers-v…"}, {"nr": "40", "prod": "TT OL"}, {"nr": "27", "prod": "TEL", "naam": "Breuken -…", "schema": true}, {"nr": "27", "prod": "TT OL", "naam": "Hoogen"}, {"nr": "31", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Schoolstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TR", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "15", "prod": "VK", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "VK", "schema": true}, {"nr": "47", "prod": "TT OL"}, {"nr": "59", "prod": "TT OL"}, {"nr": "61", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}]}, {"naam": "Kloosterstraat", "adressen": [{"nr": "24", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "30", "prod": "NRC"}, {"nr": "42", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "102", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}]}, {"naam": "Zuidwal", "adressen": [{"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}]}, {"naam": "Boterstraat", "adressen": [{"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}]}, {"naam": "St. Plechelmusplein", "adressen": [{"nr": "9 A", "prod": "TT OL", "schema": true}, {"nr": "9 b", "prod": "TT OL"}, {"nr": "9 C", "prod": "TEL"}, {"nr": "9 C", "prod": "TT OL"}, {"nr": "9 D", "prod": "TEL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}]}]}, {"ronde": "Vierkant (Titus)", "straten": [{"naam": "Berkstraat", "adressen": [{"nr": "9", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL", "schema": true}]}, {"naam": "Titus Brandsmastraat", "adressen": [{"nr": "5", "prod": "TT OL"}, {"nr": "5", "prod": "VK", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "33", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "HFD", "naam": "L.H. van …"}, {"nr": "49", "prod": "TEL", "naam": "Woning"}, {"nr": "49", "prod": "TT OL", "naam": "Woning"}, {"nr": "49", "prod": "VK", "naam": "Woning", "schema": true}]}, {"naam": "Inslagstraat", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "NRC", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}]}, {"naam": "Lyceumstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "VK", "naam": "Twents Ca…"}, {"nr": "46", "prod": "TT OL"}, {"nr": "52", "prod": "TT OL"}, {"nr": "54", "prod": "TT OL"}]}, {"naam": "Carmelstraat", "adressen": [{"nr": "31", "prod": "TT OL", "naam": "Boerrigter"}, {"nr": "31", "prod": "TT OL", "naam": "Assink"}, {"nr": "31", "prod": "TT OL", "naam": "Faas-Steur"}, {"nr": "31", "prod": "TT OL", "naam": "Aa"}, {"nr": "31 01", "prod": "TT OL"}, {"nr": "31 -6", "prod": "TT OL"}, {"nr": "31 K5", "prod": "TT OL"}, {"nr": "31 K9", "prod": "TT OL"}, {"nr": "31 k12", "prod": "TT OL"}, {"nr": "31 St.7", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Spoorstraat", "adressen": [{"nr": "12", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Beukersmolen", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TEL"}, {"nr": "79", "prod": "TT OL", "schema": true}]}, {"naam": "Beukplein", "adressen": [{"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}]}, {"naam": "Sparstraat", "adressen": [{"nr": "124", "prod": "TT OL"}, {"nr": "128", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "78", "prod": "VK", "schema": true}, {"nr": "80", "prod": "TT OL"}, {"nr": "84", "prod": "TT OL", "schema": true}, {"nr": "40", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "48", "prod": "TT OL", "naam": "Hurenkamp"}, {"nr": "48", "prod": "VK", "naam": "hurenkamp", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "55", "prod": "TT OL"}, {"nr": "55", "prod": "VK", "schema": true}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "57", "prod": "VK", "schema": true}, {"nr": "63", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL", "schema": true}, {"nr": "99", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "NRC", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "TT OL", "naam": "Holsheime…"}, {"nr": "49", "prod": "NRC", "schema": true}]}, {"naam": "Eikstraat", "adressen": [{"nr": "7", "prod": "TT OL"}]}, {"naam": "Kastanjestraat", "adressen": [{"nr": "50", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "44", "prod": "TT OL"}, {"nr": "46", "prod": "NRC", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "HFD", "schema": true}, {"nr": "37", "prod": "TT OL", "schema": true}, {"nr": "35", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "31", "prod": "VK", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}]}]}]}, {"wijk": "Oldenzaal Mariahof", "rondes": [{"ronde": "Mariahof", "straten": [{"naam": "Beatrixstraat", "adressen": [{"nr": "64", "prod": "NRC", "naam": "Vloedgrav…"}, {"nr": "64", "prod": "TT OL", "naam": "St Mariah…"}, {"nr": "64", "prod": "TT OL", "naam": "Wellink"}, {"nr": "64 0.25", "prod": "TT OL"}, {"nr": "64 103", "prod": "TT OL"}, {"nr": "64 1.06", "prod": "TT OL", "schema": true}, {"nr": "64 2.19", "prod": "TT OL"}, {"nr": "64 027", "prod": "TT OL", "naam": "Linde"}, {"nr": "64 027", "prod": "TT OL", "naam": "Egberts"}, {"nr": "64 109", "prod": "TT OL"}, {"nr": "64 124", "prod": "TT OL"}, {"nr": "64 202", "prod": "TT OL"}, {"nr": "64 A28", "prod": "TT OL"}, {"nr": "64 A122", "prod": "TT OL"}, {"nr": "64 A208", "prod": "TT OL"}, {"nr": "64 K 100", "prod": "TT OL"}, {"nr": "64 K.29", "prod": "TT OL"}, {"nr": "64 K112", "prod": "TT OL"}, {"nr": "64 K121", "prod": "TT OL"}, {"nr": "64 k200", "prod": "TT OL"}, {"nr": "64 K201", "prod": "TT OL"}, {"nr": "64 K211", "prod": "TT OL"}, {"nr": "64 K212", "prod": "TT OL"}, {"nr": "64 K218", "prod": "TT OL"}, {"nr": "64 k223", "prod": "TT OL", "schema": true}]}]}]}, {"wijk": "Oldenzaal-West", "rondes": [{"ronde": "De Essen", "straten": [{"naam": "Brem", "adressen": [{"nr": "49", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "62", "prod": "AD NL", "schema": true}, {"nr": "66", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TR"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}]}, {"naam": "Honingklaver", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Geelster", "adressen": [{"nr": "4", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL"}, {"nr": "66", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "96", "prod": "TT OL"}, {"nr": "104", "prod": "TT OL", "schema": true}, {"nr": "106", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}, {"nr": "110", "prod": "TT OL", "schema": true}, {"nr": "1", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TEL", "schema": true}]}, {"naam": "Look", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "27", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TEL", "schema": true}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "73", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}, {"nr": "81", "prod": "TT OL", "schema": true}, {"nr": "89", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL"}, {"nr": "99", "prod": "TT OL"}, {"nr": "103", "prod": "TT OL"}, {"nr": "107", "prod": "TT OL"}, {"nr": "113", "prod": "TT OL"}, {"nr": "115", "prod": "TT OL"}, {"nr": "117", "prod": "TT OL"}, {"nr": "119", "prod": "TT OL"}]}, {"naam": "Ootmarsumsedijk", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "NRC", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}]}, {"naam": "Weerselosestraat", "adressen": [{"nr": "73", "prod": "TT OL"}, {"nr": "79", "prod": "TT OL"}]}]}, {"ronde": "De Kampjes", "straten": [{"naam": "Saasvelderlaan", "adressen": [{"nr": "97", "prod": "TEL", "naam": "Wildeboer…"}, {"nr": "97", "prod": "TT OL", "naam": "Wildeboer"}]}, {"naam": "Telgenkamp", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TR", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "NRC", "schema": true}, {"nr": "12", "prod": "NRC"}, {"nr": "12", "prod": "VK"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "VK", "schema": true}, {"nr": "22", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "NRC", "schema": true}]}, {"naam": "Wijntjeskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "2", "prod": "VK", "schema": true}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "20", "prod": "TEL"}, {"nr": "21", "prod": "NRC", "schema": true}, {"nr": "22", "prod": "VK", "schema": true}, {"nr": "25", "prod": "NRC"}, {"nr": "25", "prod": "TT OL", "schema": true}]}, {"naam": "Waterhamskamp", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "naam": "Ter Huurne"}, {"nr": "12", "prod": "VK", "naam": "Huurne"}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL"}]}, {"naam": "Kruijskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "5", "prod": "VK"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "AD NL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "NRC"}, {"nr": "17", "prod": "TT OL", "schema": true}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "HFD", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "32", "prod": "VK"}, {"nr": "33", "prod": "AD NL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "naam": "Van Dijck"}, {"nr": "42", "prod": "VK", "naam": "dijck", "schema": true}, {"nr": "46", "prod": "TEL"}]}, {"naam": "Nijhuiskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TEL"}, {"nr": "17", "prod": "VK"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL", "schema": true}, {"nr": "32", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}]}, {"naam": "Wortkamp", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "3", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "naam": "Bosma"}, {"nr": "7", "prod": "VK", "naam": "Borghorst…"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "VK"}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TR", "naam": "Marle - A…"}, {"nr": "23", "prod": "TT OL", "naam": "Marle"}, {"nr": "24", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "33", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Hulsbekenkamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "8", "prod": "NRC", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "23", "prod": "NRC", "naam": "Lage Vent…"}, {"nr": "23", "prod": "TT OL", "naam": "Venterink"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "25", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "34", "prod": "VK"}, {"nr": "36", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "VK", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}, {"nr": "44", "prod": "VK", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "56", "prod": "TT OL", "schema": true}]}, {"naam": "Marellenkamp", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "13", "prod": "TR", "schema": true}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "VK"}, {"nr": "22", "prod": "TEL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "24", "prod": "NRC"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}]}, {"naam": "Bolkskamp", "adressen": [{"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "schema": true}, {"nr": "43", "prod": "NRC", "schema": true}, {"nr": "43", "prod": "TR", "schema": true}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "VK", "schema": true}, {"nr": "52", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}]}]}, {"ronde": "Sportlaan", "straten": [{"naam": "Sportlaan", "adressen": [{"nr": "1", "prod": "NRC"}, {"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "10 A", "prod": "HFD", "naam": "Triple M …"}, {"nr": "10 A", "prod": "TT OL", "naam": "Schaepers"}, {"nr": "10 C", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL", "naam": "J. Koende…", "schema": true}, {"nr": "16", "prod": "TT OL", "naam": "Koenders"}, {"nr": "25", "prod": "NRC", "naam": "Droste", "schema": true}, {"nr": "25", "prod": "TT OL", "naam": "Brand"}, {"nr": "26", "prod": "HFD", "naam": "Bruijsten", "schema": true}, {"nr": "26", "prod": "TEL", "naam": "Bruijsten"}, {"nr": "26", "prod": "TT OL", "naam": "Kuiphuis …"}, {"nr": "27", "prod": "HFD", "schema": true}, {"nr": "27", "prod": "VK", "schema": true}, {"nr": "28", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "naam": "Wilbrink", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "naam": "Troost"}, {"nr": "32", "prod": "TT OL", "naam": "Bekhuis"}, {"nr": "33", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "39", "prod": "TEL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "HFD", "naam": "Willemsen", "schema": true}, {"nr": "46", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "54", "prod": "TT OL"}]}]}, {"ronde": "Graven Es", "straten": [{"naam": "Alpenlaan", "adressen": [{"nr": "2", "prod": "TT OL"}]}, {"naam": "Kretalaan", "adressen": [{"nr": "19", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL"}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL"}, {"nr": "62", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL", "schema": true}, {"nr": "69", "prod": "TT OL"}, {"nr": "70", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL", "schema": true}, {"nr": "75", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}]}, {"naam": "Rhodoslaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "12", "prod": "TT OL"}, {"nr": "9", "prod": "TEL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "14", "prod": "VK"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "naam": "Obdeijn"}, {"nr": "21", "prod": "VK", "naam": "Obdeyn"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}]}, {"naam": "Parnonlaan", "adressen": [{"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Corfulaan", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK"}]}, {"naam": "Delagoslaan", "adressen": [{"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "schema": true}, {"nr": "32", "prod": "TT OL"}]}, {"naam": "Samoslaan", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL", "schema": true}]}, {"naam": "Kassandralaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "23", "prod": "VK"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Deloslaan", "adressen": [{"nr": "4", "prod": "NRC", "schema": true}, {"nr": "4", "prod": "TR", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "4", "prod": "VK"}, {"nr": "5", "prod": "TR", "schema": true}, {"nr": "8", "prod": "TT OL"}]}, {"naam": "Koslaan", "adressen": [{"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}]}]}]}];
-const MAPPING = {"RONDE_MAPPING": {"brem": "De Essen", "look": "De Essen", "geelster": "De Essen", "honingklaver": "De Essen", "ootmarsumsedijk": "De Essen", "weerselosestraat": "De Essen", "kretalaan": "Graven Es", "koslaan": "Graven Es", "kassandralaan": "Graven Es", "delagoslaan": "Graven Es", "deloslaan": "Graven Es", "alpenlaan": "Graven Es", "rhodoslaan": "Graven Es", "corfulaan": "Graven Es", "samoslaan": "Graven Es", "parnonlaan": "Graven Es", "tulpstraat": "Centrum", "noordwal": "Centrum", "kloosterstraat": "Centrum", "boterstraat": "Centrum", "nagelstraat": "Centrum", "deurningerstraat": "Centrum", "st. plechelmusplein": "Centrum", "st plechelmusplein": "Centrum", "plechelmusplein": "Centrum", "ganzenmarkt": "Centrum", "gasthuisstraat": "Centrum", "schoolstraat": "Centrum", "wilhelminastraat": "Centrum", "beatrixstraat": "Centrum", "prins hendrikstraat": "Centrum", "pastoriestraat": "Centrum", "kortestraat": "Centrum", "steenstraat": "Centrum", "zuidwal": "Centrum", "beukersmolen": "Vierkant (Titus)", "berkstraat": "Vierkant (Titus)", "beukplein": "Vierkant (Titus)", "kastanjestraat": "Vierkant (Titus)", "eikstraat": "Vierkant (Titus)", "sparstraat": "Vierkant (Titus)", "carmelstraat": "Vierkant (Titus)", "spoorstraat": "Vierkant (Titus)", "lyceumstraat": "Vierkant (Titus)", "titus brandsmastraat": "Vierkant (Titus)", "inslagstraat": "Vierkant (Titus)", "wortkamp": "De Kampjes", "nijhuiskamp": "De Kampjes", "kruijskamp": "De Kampjes", "saasvelderlaan": "De Kampjes", "waterhamskamp": "De Kampjes", "bolkskamp": "De Kampjes", "telgenkamp": "De Kampjes", "wijntjeskamp": "De Kampjes", "marellenkamp": "De Kampjes", "hulsbekenkamp": "De Kampjes", "sportlaan": "Sportlaan"}, "RONDE_VOLGORDE": ["De Essen", "Centrum", "Vierkant (Titus)", "Mariahof", "De Kampjes", "Sportlaan", "Graven Es"], "WIJK_VAN_RONDE": {"De Essen": "Oldenzaal-West", "Centrum": "Oldenzaal Oost", "Vierkant (Titus)": "Oldenzaal Oost", "De Kampjes": "Oldenzaal-West", "Sportlaan": "Oldenzaal-West", "Graven Es": "Oldenzaal-West", "Mariahof": "Oldenzaal Mariahof"}, "WIJK_VOLGORDE": ["Oldenzaal Oost", "Oldenzaal Mariahof", "Oldenzaal-West"], "RONDE_MAPPING_BY_SECTIE": {"mariahof": {"beatrixstraat": "Mariahof"}}};
+const MAPPING = {"RONDE_MAPPING": {"brem": "De Essen", "look": "De Essen", "geelster": "De Essen", "honingklaver": "De Essen", "ootmarsumsedijk": "De Essen", "weerselosestraat": "De Essen", "kretalaan": "Graven Es", "koslaan": "Graven Es", "kassandralaan": "Graven Es", "delagoslaan": "Graven Es", "deloslaan": "Graven Es", "alpenlaan": "Graven Es", "rhodoslaan": "Graven Es", "corfulaan": "Graven Es", "samoslaan": "Graven Es", "parnonlaan": "Graven Es", "tulpstraat": "Centrum", "langestraat": "Centrum", "lariksstraat": "Vierkant (Titus)", "noordwal": "Centrum", "kloosterstraat": "Centrum", "boterstraat": "Centrum", "nagelstraat": "Centrum", "deurningerstraat": "Centrum", "st. plechelmusplein": "Centrum", "st plechelmusplein": "Centrum", "plechelmusplein": "Centrum", "ganzenmarkt": "Centrum", "gasthuisstraat": "Centrum", "schoolstraat": "Centrum", "wilhelminastraat": "Centrum", "beatrixstraat": "Centrum", "prins hendrikstraat": "Centrum", "pastoriestraat": "Centrum", "kortestraat": "Centrum", "steenstraat": "Centrum", "zuidwal": "Centrum", "beukersmolen": "Vierkant (Titus)", "berkstraat": "Vierkant (Titus)", "beukplein": "Vierkant (Titus)", "kastanjestraat": "Vierkant (Titus)", "eikstraat": "Vierkant (Titus)", "sparstraat": "Vierkant (Titus)", "carmelstraat": "Vierkant (Titus)", "spoorstraat": "Vierkant (Titus)", "lyceumstraat": "Vierkant (Titus)", "titus brandsmastraat": "Vierkant (Titus)", "inslagstraat": "Vierkant (Titus)", "wortkamp": "De Kampjes", "nijhuiskamp": "De Kampjes", "kruijskamp": "De Kampjes", "saasvelderlaan": "De Kampjes", "waterhamskamp": "De Kampjes", "bolkskamp": "De Kampjes", "telgenkamp": "De Kampjes", "wijntjeskamp": "De Kampjes", "marellenkamp": "De Kampjes", "hulsbekenkamp": "De Kampjes", "sportlaan": "Sportlaan"}, "RONDE_VOLGORDE": ["De Essen", "Centrum", "Vierkant (Titus)", "Mariahof", "De Kampjes", "Sportlaan", "Graven Es"], "WIJK_VAN_RONDE": {"De Essen": "Oldenzaal-West", "Centrum": "Oldenzaal Oost", "Vierkant (Titus)": "Oldenzaal Oost", "De Kampjes": "Oldenzaal-West", "Sportlaan": "Oldenzaal-West", "Graven Es": "Oldenzaal-West", "Mariahof": "Oldenzaal Mariahof"}, "WIJK_VOLGORDE": ["Oldenzaal Oost", "Oldenzaal Mariahof", "Oldenzaal-West"], "RONDE_MAPPING_BY_SECTIE": {"mariahof": {"beatrixstraat": "Mariahof"}}};
 
 // Canonieke straatnamen (juiste hoofdletters)
 const CANON_NAMES = {
@@ -978,7 +978,7 @@ const CANON_NAMES = {
   "corfulaan":"Corfulaan","alpenlaan":"Alpenlaan","brem":"Brem","look":"Look","geelster":"Geelster",
   "honingklaver":"Honingklaver","ootmarsumsedijk":"Ootmarsumsedijk","weerselosestraat":"Weerselosestraat",
   "tulpstraat":"Tulpstraat","noordwal":"Noordwal","kloosterstraat":"Kloosterstraat","boterstraat":"Boterstraat",
-  "langestraat":"Langestraat",
+  "langestraat":"Langestraat","lariksstraat":"Lariksstraat",
   "nagelstraat":"Nagelstraat","deurningerstraat":"Deurningerstraat","st. plechelmusplein":"St. Plechelmusplein",
   "st plechelmusplein":"St. Plechelmusplein","plechelmusplein":"St. Plechelmusplein","ganzenmarkt":"Ganzenmarkt",
   "gasthuisstraat":"Gasthuisstraat","schoolstraat":"Schoolstraat","wilhelminastraat":"Wilhelminastraat",
@@ -1542,7 +1542,7 @@ function fooiClear(key){ delete fooi[key]; saveFooi(); }
 // === Wijken-volgorde (door gebruiker aanpasbaar) ===
 let wijkOrder = [];  // lijst van wijk-namen in user-gekozen volgorde
 const STORAGE_VOLGORDE_MODUS = 'looplijst_v23_volgorde_modus';
-let volgordeModus = localStorage.getItem(STORAGE_VOLGORDE_MODUS) || 'vast'; // 'perwijk', 'gemengd' of 'vast'
+let volgordeModus = localStorage.getItem(STORAGE_VOLGORDE_MODUS) || 'perwijk'; // 'perwijk' of 'gemengd'
 function saveVolgordeModus(){ localStorage.setItem(STORAGE_VOLGORDE_MODUS, volgordeModus); }
 const GEMENGD_KEY = '__GEMENGD__';
 // Weergave-modus voor het afvinken van kerstkaartjes per ronde: 'straat' = lijst met
@@ -7192,6 +7192,7 @@ const STRAAT_COORDS = {
   'beukersmolen':         {lat:52.3083, lng:6.9272},
   'beukplein':            {lat:52.3083, lng:6.9268},
   'sparstraat':           {lat:52.3083, lng:6.9282},
+  'lariksstraat':         {lat:52.3086, lng:6.9275},
   'eikstraat':            {lat:52.3077, lng:6.9268},
   'kastanjestraat':       {lat:52.3092, lng:6.9295},
   // === OLDENZAAL-WEST — Sportlaan (NW van centrum, bij hockey club) ===
@@ -8115,13 +8116,6 @@ function bezorgLijstGemengd(){
 }
 
 function bezorgLijst(){
-  const basis = bezorgLijstBasis();
-  if(volgordeModus === 'vast' && window.LV){
-    try{ const v = LV.sorteer(basis); if(v) return v; }catch(e){ console.error('LV', e); }
-  }
-  return basis;
-}
-function bezorgLijstBasis(){
   if(volgordeModus === 'gemengd'){
     return bezorgLijstGemengd();
   }
@@ -8167,7 +8161,6 @@ function bezorgLijstBasis(){
   return lijst;
 }
 function startBezorgModus(){
-  if(volgordeModus==='vast' && window.LV && LV.heeftOnbekend()){ LV.vraag(()=>startBezorgModus()); return; }
   // Begin bij eerste niet-afgevinkte adres
   const lijst = bezorgLijst();
   let startIdx = 0;
@@ -8210,24 +8203,6 @@ function renderBezorg(){
   view.bezorgIdx = idx;
   const item = lijst[idx];
   const k = keyFor(item.wi, item.ri, item.si, item.ai);
-  if(item.lvStop){
-    crumb.textContent = 'Vaste loopvolgorde';
-    title.textContent = 'Bezorgen ' + (idx+1) + ' / ' + lijst.length;
-    const sw = document.createElement('div');
-    sw.className = 'bezorg-screen';
-    sw.innerHTML =
-      '<div class="bezorg-card" style="text-align:center"><div style="font-size:56px">🚚</div>'+
-      '<div class="bezorg-straat" style="font-size:26px">'+item.label+'</div>'+
-      '<div class="bezorg-naam">Pak hier je nieuwe kranten</div></div>'+
-      '<div class="bezorg-actions"><button class="bezorg-done">✓ Klaar — Volgende ›</button></div>'+
-      (idx>0 ? '<div style="text-align:center;margin-top:14px"><button class="prev" style="background:transparent;border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px">‹ Vorige adres</button></div>' : '');
-    main.appendChild(sw);
-    const sb = sw.querySelector('.bezorg-done');
-    sb.onclick = (e)=>{ if(e){e.stopPropagation();e.preventDefault();} if(sb.disabled) return; sb.disabled=true; done[k]=Date.now(); save(); view.bezorgIdx = idx+1; render(); };
-    const pv = sw.querySelector('.prev'); if(pv) pv.onclick = ()=>{ view.bezorgIdx = idx-1; render(); };
-    updateHeaderProgress();
-    return;
-  }
   const isDone = !!done[k];
   // Tel hoeveel klaar / totaal
   let aantalDone = 0;
@@ -8255,13 +8230,6 @@ function renderBezorg(){
   info.className = 'bezorg-info';
   info.textContent = aantalDone + ' van ' + lijst.length + ' bezorgd · ' + pct + '%';
   wrap.appendChild(info);
-  if(item.lvStap){
-    const sd = document.createElement('div');
-    sd.style.cssText = 'text-align:center;font-size:13px;font-weight:700;color:var(--muted);margin:2px 0 10px';
-    const nrsTxt = (item.lvNrs||[]).map(n=> String(n)===String(item.adres.nr) ? '<span style="background:#e0a800;color:#111;border-radius:6px;padding:1px 7px;font-size:15px">'+n+'</span>' : n).join(' · ');
-    sd.innerHTML = 'Stap '+item.lvStap+' / '+item.lvTot+'<div style="font-weight:600;margin-top:3px">'+item.straat+': '+nrsTxt+'</div>';
-    wrap.appendChild(sd);
-  }
 
   // Nieuwe-straat banner
   if(nieuweStraat && idx > 0){
@@ -8637,8 +8605,7 @@ function renderOrder(){
     modusToggle.style.cssText = 'display:flex;gap:6px;margin-bottom:12px;background:#f0f5f2;padding:4px;border-radius:11px';
     modusToggle.innerHTML =
       '<button data-modus="perwijk" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='perwijk'?'#fff':'transparent')+';color:'+(volgordeModus==='perwijk'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='perwijk'?'var(--shadow)':'none')+'">Per wijk</button>'+
-      '<button data-modus="gemengd" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='gemengd'?'#fff':'transparent')+';color:'+(volgordeModus==='gemengd'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='gemengd'?'var(--shadow)':'none')+'">Wijken door elkaar</button>'+
-      '<button data-modus="vast" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='vast'?'#fff':'transparent')+';color:'+(volgordeModus==='vast'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='vast'?'var(--shadow)':'none')+'">Vaste volgorde</button>';
+      '<button data-modus="gemengd" style="flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:'+(volgordeModus==='gemengd'?'#fff':'transparent')+';color:'+(volgordeModus==='gemengd'?'var(--ink)':'var(--muted)')+';box-shadow:'+(volgordeModus==='gemengd'?'var(--shadow)':'none')+'">Wijken door elkaar</button>';
     modusToggle.querySelectorAll('button').forEach(btn=>{
       btn.onclick = ()=>{ volgordeModus = btn.dataset.modus; saveVolgordeModus(); render(); };
     });
@@ -8646,33 +8613,10 @@ function renderOrder(){
 
     const info = document.createElement('div');
     info.className='order-header-info';
-    info.innerHTML = volgordeModus==='vast'
-      ? 'Je loopt de <b>vaste loopvolgorde</b> van deze dag (straat en huisnummer). Staat er een nieuw adres op de looplijst, dan vraagt de app waar het hoort.'
-      : volgordeModus==='gemengd'
+    info.innerHTML = volgordeModus==='gemengd'
       ? 'Stel hieronder één doorlopende route in met adressen uit al je wijken door elkaar.'
       : 'Tik <b>▲</b> of <b>▼</b> om de volgorde te wijzigen. Tik op <b>›</b> om dieper te gaan.';
     main.appendChild(info);
-    // Volgorde aangepast in Per wijk / Wijken door elkaar? Vraag of de vaste volgorde ook mee moet.
-    if(volgordeModus!=='vast' && window.LV){
-      let lvItems = [];
-      try{ lvItems = bezorgLijstBasis(); }catch(e){}
-      let lvGewijzigd = false;
-      try{ lvGewijzigd = LV.gewijzigd(volgordeModus, lvItems); }catch(e){ console.error('LV gewijzigd', e); }
-      if(lvGewijzigd){
-        const modusNaam = volgordeModus==='gemengd' ? 'Wijken door elkaar' : 'Per wijk';
-        const dagNaam = LV.dagNaam();
-        const vb = document.createElement('div');
-        vb.style.cssText = 'border:2px solid #e0a800;background:#fff8e1;border-radius:12px;padding:12px 14px;margin:10px 0;color:#1a2433';
-        vb.innerHTML = '<div style="font-weight:800;font-size:14px">Volgorde aangepast ('+modusNaam+')</div>'+
-          '<div style="font-size:13px;margin:4px 0 10px">Ook in de <b>vaste volgorde</b> zetten? Je kiest daarna voor welke dagen (ma t/m wo, do, vr, za).</div>'+
-          '<div style="display:flex;gap:8px">'+
-          '<button class="lv-nee" style="flex:1;padding:11px;border:none;border-radius:10px;background:#eef1ef;font-weight:700;font-size:14px;cursor:pointer">Nee</button>'+
-          '<button class="lv-ja" style="flex:2;padding:11px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:14px;cursor:pointer">Ja, ook aanpassen</button></div>';
-        vb.querySelector('.lv-nee').onclick = ()=>{ LV.negeer(volgordeModus, lvItems); render(); };
-        vb.querySelector('.lv-ja').onclick = ()=>{ LV.kiesDagen(volgordeModus, lvItems, ()=>render()); };
-        main.appendChild(vb);
-      }
-    }
     // Start-knop voor bezorg-modus
     const lijstAantal = bezorgLijst().length;
     const startBtn = document.createElement('button');
@@ -8680,25 +8624,6 @@ function renderOrder(){
     startBtn.innerHTML = '▶ Start bezorgen (1 voor 1)<div style="font-size:12px;font-weight:500;opacity:.9;margin-top:4px">'+lijstAantal+' adressen · volgorde wordt onthouden tijdens lopen</div>';
     startBtn.onclick = ()=>{ startBezorgModus(); };
     main.appendChild(startBtn);
-    if(volgordeModus==='vast' && window.LV){
-      const eb = document.createElement('button');
-      eb.className = 'order-row';
-      eb.style.cssText = 'width:100%;margin:10px 0;font-weight:800;text-align:left;padding:14px';
-      eb.innerHTML = '✏️ Loopvolgorde bewerken<div style="font-weight:500;font-size:12px;margin-top:3px">Stappen verplaatsen, nummers aanpassen, stops toevoegen</div>';
-      eb.onclick = ()=>{ LV.bewerk(()=>render()); };
-      main.appendChild(eb);
-    }
-    if(volgordeModus==='vast' && window.LV){
-      const onb = LV.onbekenden();
-      if(onb.length){
-        const wb = document.createElement('button');
-        wb.className = 'order-row';
-        wb.style.cssText = 'width:100%;margin:10px 0;border:2px solid #e0a800;background:#fff8e1;font-weight:800;text-align:left;padding:14px';
-        wb.innerHTML = '⚠ '+onb.length+' onbekend'+(onb.length>1?'e adressen':' adres')+' — tik om te plaatsen<div style="font-weight:500;font-size:12px;margin-top:3px">'+onb.slice(0,3).map(u=>u.straat+' '+u.nr).join(', ')+(onb.length>3?' …':'')+'</div>';
-        wb.onclick = ()=>{ LV.vraag(()=>render()); };
-        main.appendChild(wb);
-      }
-    }
 
     if(volgordeModus === 'gemengd'){
       const gemengdAantal = alleAdresItemsGemengd().length;
@@ -12180,561 +12105,6 @@ syncToggle();
 render();
 
 // Firebase sync uitgeschakeld
-</script>
-<script id="lv-module">
-/* ===== Module: Vaste loopvolgorde (ma t/m vr + za) =====
-   - Vaste volgorde per dag-groep, op straat + huisnummer.
-   - Nieuwe/onbekende adressen: de app vraagt waar ze in de volgorde komen.
-   - Antwoorden worden onthouden (localStorage) en gelden voor alle volgende looplijsten. */
-(function(){
-const LV_DATA = {
-mavr: `Tulpstraat: 7 9 39 45 65 73
-Noordwal: 98 16 18 12
-Kloosterstraat: 108 102 60 42 30 28 24
-Boterstraat: 21 23 27 31 35 43 55
-Nagelstraat: 26 32 42 50
-Deurningerstraat: 34*
-Langestraat: 3
-Deurningerstraat: 26B 16 6 17 19
-Kortestraat: 4
-Gasthuisstraat: 9 7 2B 4B
-Steenstraat: 29 31
-St. Plechelmusplein: 15 13 9D 9C 9A
-Ganzenmarkt: 8 14 16 22 24 26 28 34 36 38 40
-Gasthuisstraat: 14F 19 34 38 42 58 72 74 76 78
-Schoolstraat: 1 5 7 13 15 17 35 37 39 43 47 59 61 65 67 69
-Wilhelminastraat: 34..82
-Pastoriestraat: 55 71 81 83 87 91 46
-Zuidwal: 82 80
-Schoolstraat: 32 30 24 20 16 10
-Ganzenmarkt: 39 31 27
-Wilhelminastraat: 4 6 8 10 14 14C 14D 22
-Beatrixstraat: 163
-Prins Hendrikstraat: 71 57 79 39 43
-Pastoriestraat: 24 30 32 50
-Pastoriestraat: 13
-Steenstraat: 35 37 39 41 47 49
-Beukersmolen: 35 37 53 67 69 79 1 5 7 34 38 40 26
-Berkstraat: 9 23 27 43 45
-Kastanjestraat: 16 20 34 38 42 44
-Beukplein: 11
-Kastanjestraat: 31 35 37 50
-Eikstraat: 7
-Sparstraat: 73 67 65 63 57 55 43 42 48 50 56 78 80 84 89 93 99 124 128
-Carmelstraat: 37 39 41 43 31*
-Kastanjestraat: 63 55 53 51 68
-Carmelstraat: 18 16 12 10 8 2
-Spoorstraat: 12 18
-Lyceumstraat: 10 18 24 26
-Lyceumstraat: 36
-Titus Brandsmastraat: 5 7 9 13
-Lyceumstraat: 46 52 54
-Inslagstraat: 29 25 19 17 13 7 5 2 1
-Titus Brandsmastraat: 43 39 33 29 25 49
-Ootmarsumsedijk: 3 8 4
-Honingklaver: 4
-Brem: 8 12
-Geelster: 66 46 42 39 40 38 17 16 11 1
-Look: 2 10 19 27 39 63 51 55
-Geelster: 108 106 96 88
-Look: 89 93 75 99 73 18 103 107 119 117 115 113
-Geelster: 82
-Brem: 66 55 53 51 58 31 36 38 40 50
-Ootmarsumsedijk: 18 24 26 71 69 65 25 31 43
-Weerselosestraat: 79 73
-Kretalaan: 55 57 51
-Kassandralaan: 23 21
-Kretalaan: 39 35 33 25 23 19 17
-Parnonlaan: 26 18 16 10 4
-Samoslaan: 3 9
-Rhodoslaan: 26 14 12 4 21 19 17 11
-Corfulaan: 1
-Rhodoslaan: 9
-Kassandralaan: 16 8 4
-Delagoslaan: 22 24 32
-Kretalaan: 76 70
-Koslaan: 11 8 6
-Deloslaan: 5 4 8
-Kretalaan: 59 61 63 62 64 68 75
-Alpenlaan: 2
-Telgenkamp: 23 30 15 7 12 14
-Bolkskamp: 2 5 7 72 75 13
-Wijntjeskamp: 25 1 20 11 10 9 6 8 15 16 18
-Bolkskamp: 52 60 41 39
-Kruijskamp: 42 40 46 47 28 24 20 15 17 11 8 4 5 7
-Waterhamskamp: 28 27 26 22 21 17 15 12 10 8 7
-Saasvelderlaan: 97
-Nijhuiskamp: 12 13 8 14 15 16 17 7
-Wortkamp: 24 23 27 39 33 3 7 8 9 11 18 16 17
-Nijhuiskamp: 44 32 30 28 35 4 3 1 40
-Kruijskamp: 27 25 26 32 33 34
-Marellenkamp: 1 9 5 6 10 13 14 3 31 19 20 30 27 24 21 22 23
-Hulsbekenkamp: 44 34 38 43 29 19 18 16 15 22 23 25 26 50 8 1
-Sportlaan: 1 2 6 7 5 54 46 39 40 38 33 34 32 31 30 29 28 26 25 22 16 10A 10B 10C`,
-za: `Ootmarsumsedijk: 3 9 23 8 4
-Honingklaver: 4
-Brem: 14 6 8 12
-Geelster: 51 66 46 42 41 39 40 38 32 17 16 13 11 9 4 1
-Look: 2 10 19 27 39 63 45 51 55
-Geelster: 110 108 106 104 96 90 88
-Look: 89 93 75 99 69 73 18 103 107 119 117 115 113
-Geelster: 82
-Brem: 66 55 53 51 49 58 31 36 38 40 50 30 13 23
-Ootmarsumsedijk: 18 24 26 71 69 65 31 45 43
-Weerselosestraat: 79 73
-Kretalaan: 55 57 51
-Kassandralaan: 23 24 21 16 9 8 4 2
-Koslaan: 6 9 11 8 10
-Deloslaan: 5 4 8
-Kretalaan: 59 61 63 67 62 64 68 75
-Alpenlaan: 2
-Kretalaan: 70 76
-Delagoslaan: 32 24 22
-Rhodoslaan: 9
-Corfulaan: 1
-Rhodoslaan: 11 17 19 21 25 2 4 10 12 14
-Parnonlaan: 26 18 12 10 4
-Samoslaan: 3
-Rhodoslaan: 26
-Samoslaan: 9 11
-Kretalaan: 39 35 33 25 23 19 17
-@Depot herlading
-Tulpstraat: 7 9 25 39 43 45 47 65 73
-Noordwal: 98 16 18 12
-Kloosterstraat: 108 102 90 60 42 52 30 24 28
-Boterstraat: 21 23 27 31 35 43 55
-Nagelstraat: 26B 32B 38 42 50 66
-St. Plechelmusplein: 15 13 9A 9C 9D
-Ganzenmarkt: 8 14 16 22 24 26 28 34 36 38 40
-Gasthuisstraat: 34 38 42 58 72 74 76 78
-Ganzenmarkt: 39 27 31
-Wilhelminastraat: 4 6 8 10 14 14C 14D
-@Hubo herlading
-Wilhelminastraat: 22
-Beatrixstraat: 163
-Prins Hendrikstraat: 71 57 79 39 43
-Berkstraat: 9 23 27 45 43
-Kastanjestraat: 16 20 21
-Berkstraat: 55
-Titus Brandsmastraat: 49 43 39 33 29 25
-Inslagstraat: 1 5 2 7 13 17 19 25 29
-Lyceumstraat: 54 52 46
-Titus Brandsmastraat: 5 7 9 13
-Lyceumstraat: 36
-Sparstraat: 128 124 84 80 78 56 50 48 42 40 43 55 57 63 65 67 73 89 93 99
-Carmelstraat: 37 39 43 41
-Lyceumstraat: 10 18 24 26
-Spoorstraat: 18 12
-Carmelstraat: 2 8 10 12 16 18 31
-Kastanjestraat: 63 68 55 53 51
-Eikstraat: 7
-Kastanjestraat: 50 37 35 31 46 44 42 38 34
-Beukplein: 11
-Beukersmolen: 34 38 40 26 7 5 1 35 37 53 67 69 79
-Steenstraat: 35 37 39 41 47 49
-Pastoriestraat: 13 24 30 32 46 55 71 75 81 83 87 91
-Zuidwal: 82 80
-Wilhelminastraat: 32 34 36 40 42 44 50 56 60 64 68 72 74 78 80 82
-@Hubo herlading
-Schoolstraat: 32 16 20 24 30 59 61 69 67 65 10 47 43 39 37 35 1 5 7 13 15 17
-Gasthuisstraat: 19 14F 7 9 4B 2B
-Steenstraat: 31 29
-Kortestraat: 4
-Deurningerstraat: 19 17 6 16 26B
-Langestraat: 3
-Deurningerstraat: 34*
-Telgenkamp: 23 25 22 21 20 30 31 6 15 8 7 9 12 14 11 1
-Bolkskamp: 2 5 6 7 72 75 13
-Wijntjeskamp: 25 2 22 21 1 20 11 10 9 6 8 15 16 18
-Bolkskamp: 52 45 43 60 39 41
-Kruijskamp: 42 40 46 47 28 24 23 21 20 12 15 17 11 8 4 7 5
-Waterhamskamp: 28 27 25 26 22 21 17 15 10 12 8 7
-Saasvelderlaan: 97
-Nijhuiskamp: 12 10 13 8 14 15 16 17 7
-Wortkamp: 24 23 27 30 39 33 2 3 7 8 9 11 13 18 16 17
-Nijhuiskamp: 32 31 30 28 35 6 4 3 1 40
-Kruijskamp: 27 25 26 32 33 34
-Marellenkamp: 5 6 7 10 9 13 15 3 31 19 20 30 27 24 21 22 23
-Hulsbekenkamp: 44 50 22 23 24 25 26 31 34 36 38 41 43 20 29 19 18 16 15 8 56 1
-Sportlaan: 1 2 6 7 5 54 47 46 39 44 40 38 33 34 32 31 30 29 27 28 26 25 22 16 14 10A 10B 10C`
-};
-const STORE_EXTRA = 'looplijst_v23_lv_extra';
-const STORE_INIT = 'looplijst_v23_lv_init';
-const STORE_CUSTOM = 'looplijst_v23_lv_custom_';
-/* Dag-groepen: ma t/m wo samen, donderdag, vrijdag en zaterdag elk apart.
-   Do en vr starten als kopie van de oude ma-vr volgorde (eigen aanpassingen daaruit worden meegenomen). */
-const DAGGROEPEN = { mawo:'Ma t/m wo', do:'Donderdag', vr:'Vrijdag', za:'Zaterdag' };
-const GROEP_VOLGORDE = ['mawo','do','vr','za'];
-LV_DATA.mawo = LV_DATA.mavr; LV_DATA.do = LV_DATA.mavr; LV_DATA.vr = LV_DATA.mavr;
-function bronTekst(g){
-  try{
-    const c = localStorage.getItem(STORE_CUSTOM+g); if(c) return c;
-    if(g!=='za'){ const oud = localStorage.getItem(STORE_CUSTOM+'mavr'); if(oud) return oud; }
-  }catch(e){}
-  return LV_DATA[g];
-}
-let extra = {};
-try{ extra = JSON.parse(localStorage.getItem(STORE_EXTRA)||'{}') || {}; }catch(e){ extra = {}; }
-if(extra.mavr){ ['mawo','do','vr'].forEach(g=>{ if(!extra[g]) extra[g] = extra.mavr.slice(); }); }
-function saveExtra(){ try{ localStorage.setItem(STORE_EXTRA, JSON.stringify(extra)); }catch(e){} }
-let overgeslagen = false;
-
-function normS(s){ return String(s||'').toLowerCase().replace(/[\s.]/g,''); }
-function normNr(n){ return String(n==null?'':n).toLowerCase().replace(/[\s.]/g,''); }
-function baseNr(n){ const m = String(n).match(/\d+/); return m ? parseInt(m[0],10) : NaN; }
-function labelNr(k){ return String(k).replace(/^(\d+)([a-z])/i,(m,a,b)=>a+' '+b.toUpperCase()); }
-function groep(){
-  let d = 'Route';
-  try{ d = dagVanLooplijst(); }catch(e){}
-  if(d==='Zaterdag') return 'za';
-  if(d==='Vrijdag') return 'vr';
-  if(d==='Donderdag') return 'do';
-  if(['Maandag','Dinsdag','Woensdag'].indexOf(d)>=0) return 'mawo';
-  return null;
-}
-const masterCache = {};
-function masterSlots(g){
-  if(masterCache[g]) return masterCache[g];
-  const slots = []; let stopN = 0;
-  const bron = bronTekst(g);
-  bron.split('\n').forEach(line=>{
-    line = line.trim(); if(!line) return;
-    if(line[0]==='@'){ stopN++; slots.push({stop:true, label:line.slice(1).trim(), id:'stop|'+stopN}); return; }
-    const i = line.indexOf(':'); const straat = line.slice(0,i).trim(); const sk = normS(straat);
-    line.slice(i+1).trim().split(/\s+/).forEach(t=>{
-      if(!t) return;
-      const s = {straat, sk};
-      if(t.slice(-1)==='*'){ s.kind='all'; s.b=parseInt(t,10); s.label=parseInt(t,10)+' (alle)'; s.id=sk+'|'+parseInt(t,10)+'*'; }
-      else if(t.indexOf('..')>0){ const p=t.split('..'); s.kind='rng'; s.a=parseInt(p[0],10); s.b=parseInt(p[1],10); s.label=s.a+' t/m '+s.b; s.id=sk+'|'+t; }
-      else { s.kind='nr'; s.k=normNr(t); s.label=labelNr(t); s.id=sk+'|'+s.k; }
-      slots.push(s);
-    });
-  });
-  masterCache[g] = slots; return slots;
-}
-function slotsMetExtra(g){
-  const slots = masterSlots(g).slice();
-  const lastPos = {};
-  (extra[g]||[]).forEach(e=>{
-    const sk = normS(e.straat), k = normNr(e.nr);
-    if(slots.some(s=>s.kind==='nr' && s.sk===sk && s.k===k)) return;
-    let ai = slots.findIndex(s=>s.id===e.na);
-    if(e.na==='@end') ai = slots.length-1;
-    if(ai<0) ai = slots.length-1;
-    let pos = ai+1;
-    if(lastPos[e.na]!=null && lastPos[e.na]>ai) pos = lastPos[e.na]+1;
-    slots.splice(pos,0,{straat:e.straat, sk, kind:'nr', k, label:labelNr(k), id:sk+'|'+k, extra:true});
-    // verschuif eerder onthouden posities
-    Object.keys(lastPos).forEach(a=>{ if(lastPos[a]>=pos) lastPos[a]++; });
-    lastPos[e.na] = pos;
-  });
-  return slots;
-}
-function matchIdx(slots, it){
-  const sk = normS(it.straat), k = normNr(it.adres.nr), b = baseNr(it.adres.nr);
-  for(let i=0;i<slots.length;i++){ const s=slots[i]; if(s.kind==='nr' && s.sk===sk && s.k===k) return i; }
-  for(let i=0;i<slots.length;i++){ const s=slots[i]; if(s.kind==='all' && s.sk===sk && s.b===b) return i; }
-  for(let i=0;i<slots.length;i++){ const s=slots[i]; if(s.kind==='rng' && s.sk===sk && b>=s.a && b<=s.b) return i; }
-  return -1;
-}
-/* Berekent {lijst, onbekend} voor de huidige looplijst; null als er voor deze dag geen vaste volgorde is */
-function bereken(items){
-  const g = groep(); if(!g) return null;
-  let slots = slotsMetExtra(g);
-  // onbekende adressen
-  const onbekend = {};
-  items.forEach(it=>{
-    if(matchIdx(slots,it)<0){
-      const k = normS(it.straat)+'|'+normNr(it.adres.nr);
-      if(!onbekend[k]) onbekend[k] = {straat:it.straat, nr:it.adres.nr, sk:normS(it.straat), k:normNr(it.adres.nr), key:k};
-    }
-  });
-  const unk = Object.keys(onbekend).map(k=>onbekend[k]);
-  // automatische plaatsing (zolang de gebruiker het nog niet heeft aangegeven)
-  unk.slice().sort((a,b)=>baseNr(a.nr)-baseNr(b.nr)).forEach(u=>{
-    let last = -1;
-    slots.forEach((s,i)=>{ if(s.sk===u.sk && !s.stop) last=i; });
-    const ns = {straat:u.straat, sk:u.sk, kind:'nr', k:u.k, label:labelNr(u.k), id:u.sk+'|'+u.k, auto:true};
-    if(last<0) slots.push(ns); else slots.splice(last+1,0,ns);
-  });
-  const buckets = slots.map(()=>[]);
-  items.forEach((it,n)=>{ const i = matchIdx(slots,it); if(i>=0) buckets[i].push({it,n}); });
-  const out = []; let stopSi = 0;
-  slots.forEach((s,i)=>{
-    if(s.stop){
-      out.push({wi:-1,ri:-1,si:++stopSi,ai:0,wijk:'',ronde:'',straat:s.label,adres:{nr:'',prod:'',stop:false},lvStop:true,label:s.label,key:'lvstop|'+s.id});
-      return;
-    }
-    buckets[i].sort((a,b)=>{
-      const d = baseNr(a.it.adres.nr)-baseNr(b.it.adres.nr);
-      return (s.kind==='nr' || d===0) ? (a.n-b.n) : d;
-    });
-    buckets[i].forEach(o=>out.push(o.it));
-  });
-  // stappen nummeren: opeenvolgende adressen in dezelfde straat = 1 stap
-  let stap = 0, prev = null; const stapNrs = []; let cur = null;
-  out.forEach(it=>{
-    if(it.lvStop){ prev = null; cur = null; return; }
-    const sk = normS(it.straat);
-    if(!prev || prev!==sk){ stap++; cur = {nrs:[]}; stapNrs[stap]=cur; prev = sk; }
-    it.lvStap = stap;
-    const lab = String(it.adres.nr);
-    if(cur.nrs.indexOf(lab)<0) cur.nrs.push(lab);
-  });
-  out.forEach(it=>{ if(it.lvStap){ it.lvTot = stap; it.lvNrs = stapNrs[it.lvStap].nrs; } });
-  return {lijst:out, onbekend:unk, slots};
-}
-let cache = {sig:null, res:null};
-function lijstSorteer(items){
-  const sig = (groep()||'-')+'|'+items.length+'|'+(items[0]?items[0].key:'')+'|'+(items.length?items[items.length-1].key:'')+'|'+JSON.stringify(extra[groep()]||[]);
-  if(cache.sig===sig && cache.items===items) return cache.res;
-  const res = bereken(items);
-  cache = {sig, items, res};
-  return res;
-}
-function alleItems(){ return (typeof bezorgLijstBasis==='function') ? bezorgLijstBasis() : []; }
-
-/* ===== Aanpassingen uit "Per wijk" / "Wijken door elkaar" doorgeven aan de vaste volgorde =====
-   - Per modus wordt onthouden (localStorage) welke volgorde je het laatst hebt bevestigd.
-   - Wijkt de huidige volgorde daarvan af, dan vraagt de app of de vaste volgorde ook aangepast moet worden.
-   - Bij "Ja" worden alleen de adressen van de huidige looplijst herschikt; overige adressen en stops
-     in de vaste volgorde blijven bij hun buurman staan. */
-const STORE_SNAP = 'looplijst_v23_lv_snap_';
-function hash(str){ let h = 5381; for(let i=0;i<str.length;i++){ h = ((h<<5)+h+str.charCodeAt(i))|0; } return String(h>>>0)+':'+str.length; }
-function sigVan(items){
-  const keys = items.map(it=>it.key);
-  return { set: hash(keys.slice().sort().join('|')), ord: hash(keys.join('|')) };
-}
-function laadSnap(mode){ try{ return JSON.parse(localStorage.getItem(STORE_SNAP+mode)||'null'); }catch(e){ return null; } }
-function bewaarSnap(mode, items){ try{ localStorage.setItem(STORE_SNAP+mode, JSON.stringify(sigVan(items))); }catch(e){} }
-function slotTok(s){
-  if(s.kind==='all') return s.b+'*';
-  if(s.kind==='rng') return s.a+'..'+s.b;
-  return String(s.k).toUpperCase();
-}
-function nieuweTekst(items, g, metOnbekend){
-  const slots = slotsMetExtra(g);
-  const idxOf = items.map(it=>matchIdx(slots,it));
-  const matched = {}; idxOf.forEach(i=>{ if(i>=0) matched[i] = true; });
-  // niet-aangeraakte slots (andere adressen, stops) hangen aan het vorige aangeraakte slot
-  const start = [], groepen = {}; let anker = -1;
-  slots.forEach((s,i)=>{
-    if(matched[i]){ anker = i; return; }
-    if(anker<0) start.push(s); else (groepen[anker] = groepen[anker]||[]).push(s);
-  });
-  const laatste = {}; idxOf.forEach((i,n)=>{ if(i>=0) laatste[i] = n; });
-  const uit = []; const gezien = {}; const onbGezien = {};
-  function pushSlot(s){ uit.push(s.stop ? {stop:true, label:s.label} : {straat:s.straat, sk:s.sk, tok:slotTok(s)}); }
-  start.forEach(pushSlot);
-  items.forEach((it,n)=>{
-    const i = idxOf[n];
-    if(i<0){
-      if(!metOnbekend) return; // andere dag: adressen die daar niet in staan niet toevoegen
-      const k = normS(it.straat)+'|'+normNr(it.adres.nr);
-      if(onbGezien[k]) return; onbGezien[k] = true;
-      uit.push({straat:it.straat, sk:normS(it.straat), tok:String(it.adres.nr).replace(/\s+/g,'')});
-      return;
-    }
-    if(!gezien[i]){ gezien[i] = true; pushSlot(slots[i]); }
-    if(laatste[i]===n && groepen[i]) groepen[i].forEach(pushSlot);
-  });
-  const regels = []; let cur = null; const stops = []; let vorige = null;
-  uit.forEach(e=>{
-    if(e.stop){ regels.push('@'+e.label); cur = null; stops.push({label:e.label, na: vorige ? vorige.straat+' '+vorige.tok : 'het begin'}); return; }
-    vorige = e;
-    if(cur && cur.sk===e.sk){ cur.toks.push(e.tok); }
-    else { cur = {sk:e.sk, straat:e.straat, toks:[e.tok]}; regels.push(cur); }
-  });
-  return { tekst: regels.map(r=> typeof r==='string' ? r : r.straat+': '+r.toks.join(' ')).join('\n'), stops };
-}
-
-window.LV = {
-  /* true als de volgorde van deze modus is gewijzigd sinds de laatste keer dat je er iets over hebt beantwoord */
-  gewijzigd(mode, items){
-    if(!groep() || !items || !items.length) return false;
-    const snap = laadSnap(mode), s = sigVan(items);
-    if(!snap || snap.set!==s.set){ bewaarSnap(mode, items); return false; } // eerste keer of nieuwe looplijst
-    return snap.ord!==s.ord;
-  },
-  negeer(mode, items){ bewaarSnap(mode, items); },
-  dagNaam(){ try{ return dagVanLooplijst(); }catch(e){ return ''; } },
-  /* zet de volgorde van de huidige looplijst ook in de vaste volgorde van de gekozen dag-groepen */
-  neemOver(mode, items, groepen){
-    const huidig = groep();
-    const uitkomst = [];
-    (groepen||[]).forEach(g=>{
-      if(!DAGGROEPEN[g]) return;
-      const r = nieuweTekst(items, g, g===huidig);
-      try{ localStorage.setItem(STORE_CUSTOM+g, r.tekst); }catch(e){ return; }
-      masterCache[g] = null;
-      extra[g] = [];
-      uitkomst.push({g, naam:DAGGROEPEN[g], stops:r.stops});
-    });
-    cache = {sig:null, res:null};
-    saveExtra();
-    if(uitkomst.length) bewaarSnap(mode, items);
-    return uitkomst;
-  },
-  /* dialoog: voor welke dagen moet de vaste volgorde worden aangepast? */
-  kiesDagen(mode, items, klaar){
-    const huidig = groep();
-    const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#fff;color:#1a2433;border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow:auto;padding:18px;font-family:inherit';
-    ov.appendChild(box); document.body.appendChild(ov);
-    function sluit(){ if(ov.parentNode) document.body.removeChild(ov); if(klaar) klaar(); }
-    let h = '<div style="font-size:18px;font-weight:800;margin-bottom:4px">Vaste volgorde aanpassen</div>';
-    h += '<div style="font-size:14px;margin-bottom:10px">Voor welke dagen wil je deze volgorde overnemen?</div>';
-    GROEP_VOLGORDE.forEach(k=>{
-      h += '<label style="display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #c9d3cd;border-radius:10px;margin:6px 0;font-size:15px;font-weight:700"><input type="checkbox" data-g="'+k+'" '+(k===huidig?'checked':'')+' style="width:20px;height:20px"> '+DAGGROEPEN[k]+(k===huidig?' <span style="font-weight:500;font-size:12px;color:#6b7a72">(deze looplijst)</span>':'')+'</label>';
-    });
-    h += '<div style="font-size:12px;color:#6b7a72;margin:8px 0 12px">Bij andere dagen worden alleen adressen herschikt die daar al in de volgorde staan; er komen geen adressen bij.</div>';
-    h += '<div style="display:flex;gap:8px"><button id="kdNee" style="flex:1;padding:13px;border:none;border-radius:10px;background:#eef1ef;font-weight:700;font-size:14px">Annuleren</button><button id="kdOk" style="flex:2;padding:13px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Toepassen</button></div>';
-    box.innerHTML = h;
-    box.querySelector('#kdNee').onclick = ()=>{ document.body.removeChild(ov); };
-    box.querySelector('#kdOk').onclick = ()=>{
-      const gekozen = Array.prototype.filter.call(box.querySelectorAll('input[data-g]'), c=>c.checked).map(c=>c.dataset.g);
-      if(!gekozen.length){ alert('Kies minstens één dag.'); return; }
-      const res = window.LV.neemOver(mode, items, gekozen);
-      let t = '<div style="font-size:18px;font-weight:800;margin-bottom:8px">'+(res.length?'Vaste volgorde bijgewerkt':'Niets aangepast')+'</div>';
-      res.forEach(r=>{
-        t += '<div style="margin:8px 0;padding:10px;background:#f4f6f5;border-radius:10px;font-size:14px"><b>'+r.naam+'</b>';
-        if(r.stops.length) r.stops.forEach(s=>{ t += '<div style="margin-top:4px">⏸ '+s.label+' staat nu na <b>'+s.na+'</b></div>'; });
-        t += '</div>';
-      });
-      if(res.some(r=>r.stops.length)) t += '<div style="font-size:12px;color:#6b7a72;margin-top:8px">Klopt de plek van de herlading niet? Verplaats hem via Vaste volgorde › Loopvolgorde bewerken.</div>';
-      t += '<button id="kdSluit" style="width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Sluiten</button>';
-      box.innerHTML = t;
-      box.querySelector('#kdSluit').onclick = sluit;
-    };
-  },
-  sorteer(items){ const r = bereken(items); return r ? r.lijst : null; },
-  onbekenden(){ if(typeof volgordeModus==='undefined' || volgordeModus!=='vast') return []; const r = bereken(alleItems()); return r ? r.onbekend : []; },
-  heeftOnbekend(){ return !overgeslagen && this.onbekenden().length>0; },
-  reset(){ extra = {}; saveExtra(); },
-  vraag(klaar){ vraagDialoog(klaar); },
-  bewerk(klaar){ bewerkDialoog(klaar); }
-};
-function vraagDialoog(klaar){
-  const g = groep();
-  const r = bereken(alleItems());
-  if(!g || !r || !r.onbekend.length){ if(klaar) klaar(); return; }
-  const lijst = r.onbekend.slice().sort((a,b)=> a.sk<b.sk ? -1 : a.sk>b.sk ? 1 : baseNr(a.nr)-baseNr(b.nr));
-  let i = 0;
-  const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-  const box = document.createElement('div');
-  box.style.cssText = 'background:#fff;color:#1a2433;border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow:auto;padding:18px;font-family:inherit';
-  ov.appendChild(box); document.body.appendChild(ov);
-  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function toon(){
-    if(i>=lijst.length){ document.body.removeChild(ov); if(klaar) klaar(); return; }
-    const u = lijst[i];
-    const slots = slotsMetExtra(g);
-    const eigen = slots.filter(s=>s.sk===u.sk && !s.stop);
-    const straatBekend = eigen.length>0;
-    // stappen: opeenvolgende slots in dezelfde straat
-    const stappen = []; 
-    slots.forEach((s,n)=>{
-      if(s.stop){ stappen.push({id:s.id, txt:'⏸ '+s.label, na:s.id}); return; }
-      const lst = stappen[stappen.length-1];
-      if(lst && lst.sk===s.sk && !lst.stopStap){ lst.nrs.push(s.label); lst.na=s.id; }
-      else stappen.push({sk:s.sk, straat:s.straat, nrs:[s.label], na:s.id});
-    });
-    let h = '<div style="font-size:12px;font-weight:700;color:#6b7a72">Onbekend adres '+(i+1)+' / '+lijst.length+'</div>';
-    h += '<div style="font-size:22px;font-weight:800;margin:6px 0">'+esc(u.straat)+' '+esc(u.nr)+'</div>';
-    h += '<div style="font-size:14px;margin-bottom:12px">'+(straatBekend?'Deze straat staat al in de loopvolgorde. Na welk adres moet dit nummer komen?':'Deze straat staat nog niet in de loopvolgorde. Na welke stap moet deze straat komen?')+'</div>';
-    h += '<select id="lvSel" style="width:100%;padding:12px;font-size:15px;border-radius:10px;border:1px solid #c9d3cd">';
-    if(straatBekend){
-      h += '<optgroup label="Na een adres in '+esc(u.straat)+'">';
-      eigen.forEach(s=>{ h += '<option value="'+esc(s.id)+'">Na '+esc(s.straat)+' '+esc(s.label)+'</option>'; });
-      h += '</optgroup>';
-    }
-    h += '<optgroup label="'+(straatBekend?'Of na een andere stap':'Na stap')+'">';
-    stappen.forEach((st,n)=>{
-      const t = st.txt ? st.txt : (st.straat+' '+(st.nrs.length>6 ? st.nrs.slice(0,3).join(', ')+' … '+st.nrs.slice(-2).join(', ') : st.nrs.join(', ')));
-      h += '<option value="'+esc(st.na)+'">Na stap '+(n+1)+': '+esc(t)+'</option>';
-    });
-    h += '<option value="@end">Helemaal aan het einde</option></optgroup></select>';
-    h += '<div style="display:flex;gap:8px;margin-top:14px"><button id="lvSkip" style="flex:1;padding:13px;border:none;border-radius:10px;background:#eef1ef;font-weight:700;font-size:14px">Overslaan</button><button id="lvOk" style="flex:2;padding:13px;border:none;border-radius:10px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Opslaan ›</button></div>';
-    h += '<div style="font-size:12px;color:#6b7a72;margin-top:10px">Overslaan: het adres komt automatisch achter het laatste bekende nummer in de straat (of aan het einde) en je wordt er later weer naar gevraagd.</div>';
-    box.innerHTML = h;
-    box.querySelector('#lvOk').onclick = ()=>{
-      const na = box.querySelector('#lvSel').value;
-      (extra[g] = extra[g]||[]).push({straat:u.straat, nr:u.nr, na});
-      saveExtra(); i++; toon();
-    };
-    box.querySelector('#lvSkip').onclick = ()=>{ overgeslagen = true; i++; toon(); };
-  }
-  toon();
-}
-
-function bewerkDialoog(klaar){
-  let g = groep() || 'mawo';
-  let regels = [];
-  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function laad(){
-    const t = bronTekst(g);
-    regels = t.split('\n').map(s=>s.trim()).filter(Boolean);
-  }
-  laad();
-  const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#f4f6f5;color:#1a2433;display:flex;flex-direction:column;font-family:inherit';
-  document.body.appendChild(ov);
-  function sluit(){ document.body.removeChild(ov); if(klaar) klaar(); }
-  function teken(){
-    let h = '<div style="padding:12px 14px;background:#1a2d5a;color:#fff;display:flex;align-items:center;gap:10px"><div style="font-weight:800;font-size:17px;flex:1">✏️ Loopvolgorde bewerken</div><button id="lvX" style="background:transparent;border:none;color:#fff;font-size:22px">✕</button></div>';
-    h += '<div style="display:flex;gap:6px;padding:10px 14px">'+GROEP_VOLGORDE.map(k=>'<button data-g="'+k+'" style="flex:1;padding:10px 4px;border:none;border-radius:9px;font-weight:700;font-size:13px;background:'+(g===k?'#1a2d5a':'#dfe6e2')+';color:'+(g===k?'#fff':'#1a2433')+'">'+DAGGROEPEN[k]+'</button>').join('')+'</div>';
-    h += '<div style="padding:0 14px 8px;font-size:12px;color:#5a6b63">Eén regel = één stap: <b>Straat: nummers</b> in loopvolgorde (bijv. <b>Tulpstraat: 7 9 39</b>). Letters achter het nummer: <b>26B</b>. <b>34*</b> = alle 34-adressen. <b>34..82</b> = bereik. Een stop begint met @ (bijv. <b>@Hubo herlading</b>).</div>';
-    h += '<div id="lvRegels" style="flex:1;overflow:auto;padding:0 10px 10px">';
-    regels.forEach((r,i)=>{
-      const stop = r[0]==='@';
-      h += '<div data-i="'+i+'" style="display:flex;gap:4px;align-items:center;margin:5px 0;background:'+(stop?'#fdecea':'#fff')+';border:1px solid #d5ddd9;border-radius:10px;padding:6px">'+
-        '<div style="width:26px;text-align:center;font-size:12px;color:#5a6b63;font-weight:700">'+(i+1)+'</div>'+
-        '<input value="'+esc(r)+'" style="flex:1;min-width:0;padding:9px;font-size:14px;border:1px solid #c9d3cd;border-radius:8px">'+
-        '<button class="u" style="width:34px;height:36px;border:none;border-radius:8px;background:#eef1ef">▲</button>'+
-        '<button class="d" style="width:34px;height:36px;border:none;border-radius:8px;background:#eef1ef">▼</button>'+
-        '<button class="x" style="width:34px;height:36px;border:none;border-radius:8px;background:#fdecea;color:#c0392b">✕</button></div>';
-    });
-    h += '</div>';
-    h += '<div style="padding:10px 14px;border-top:1px solid #d5ddd9;background:#fff;display:flex;flex-wrap:wrap;gap:8px"><button id="lvAddS" style="flex:1;padding:11px;border:none;border-radius:9px;background:#eef1ef;font-weight:700">+ Stap</button><button id="lvAddH" style="flex:1;padding:11px;border:none;border-radius:9px;background:#eef1ef;font-weight:700">+ Stop</button><button id="lvRes" style="flex:1;padding:11px;border:none;border-radius:9px;background:#eef1ef;font-weight:700">Standaard</button><button id="lvSave" style="flex:2;padding:13px;border:none;border-radius:9px;background:#1a2d5a;color:#fff;font-weight:800;font-size:15px">Opslaan</button></div>';
-    ov.innerHTML = h;
-    ov.querySelector('#lvX').onclick = sluit;
-    ov.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{ lees(); g=b.dataset.g; laad(); teken(); });
-    ov.querySelectorAll('#lvRegels > div').forEach(row=>{
-      const i = +row.dataset.i;
-      row.querySelector('.u').onclick = ()=>{ lees(); if(i>0){ const t=regels[i-1]; regels[i-1]=regels[i]; regels[i]=t; } teken(); };
-      row.querySelector('.d').onclick = ()=>{ lees(); if(i<regels.length-1){ const t=regels[i+1]; regels[i+1]=regels[i]; regels[i]=t; } teken(); };
-      row.querySelector('.x').onclick = ()=>{ lees(); regels.splice(i,1); teken(); };
-    });
-    ov.querySelector('#lvAddS').onclick = ()=>{ lees(); regels.push('Straatnaam: 1 2 3'); teken(); const l=ov.querySelector('#lvRegels'); l.scrollTop=l.scrollHeight; };
-    ov.querySelector('#lvAddH').onclick = ()=>{ lees(); regels.push('@Hubo herlading'); teken(); const l=ov.querySelector('#lvRegels'); l.scrollTop=l.scrollHeight; };
-    ov.querySelector('#lvRes').onclick = ()=>{ if(confirm('Terug naar de standaard-volgorde voor deze dag? Je eigen aanpassingen gaan verloren.')){ try{ if(g==='za') localStorage.removeItem(STORE_CUSTOM+g); else localStorage.setItem(STORE_CUSTOM+g, LV_DATA[g]); }catch(e){} masterCache[g]=null; cache={sig:null,res:null}; laad(); teken(); } };
-    ov.querySelector('#lvSave').onclick = ()=>{
-      lees();
-      const fout = regels.find(r=> r[0]!=='@' && !/^[^:]+:\s*\S/.test(r));
-      if(fout){ alert('Deze regel klopt niet (straat: nummers):\n'+fout); return; }
-      try{ localStorage.setItem(STORE_CUSTOM+g, regels.join('\n')); }catch(e){}
-      masterCache[g]=null; cache={sig:null,res:null};
-      sluit();
-    };
-  }
-  function lees(){
-    const rows = ov.querySelectorAll('#lvRegels > div');
-    if(!rows.length) return;
-    regels = Array.prototype.map.call(rows, r=>r.querySelector('input').value.trim()).filter(Boolean);
-  }
-  teken();
-}
-// Eerste keer na deze update: standaard op "Vaste volgorde" zetten
-try{
-  if(!localStorage.getItem(STORE_INIT)){
-    localStorage.setItem(STORE_INIT,'1');
-    if(typeof volgordeModus!=='undefined' && volgordeModus!=='gemengd'){ volgordeModus='vast'; saveVolgordeModus(); }
-  }
-}catch(e){}
-})();
 </script>
 </body>
 </html>
