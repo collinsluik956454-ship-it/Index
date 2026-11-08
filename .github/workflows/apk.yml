@@ -74,8 +74,7 @@ jobs:
           npx cap init "Looplijst" nl.collin.looplijst --web-dir www
           npx cap add android
           npx cap sync android
-          sed- i "s/versionCode 1/versionCode ${{ github. run_number }}/" android/app/build.gradle
-
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
       - name: APK bouwen
         run: |
           cd android
