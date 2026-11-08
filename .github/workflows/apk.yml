@@ -1,4 +1,4 @@
-vname: Looplijst APK bouwen
+name: Looplijst APK bouwen
 
 on:
   workflow_dispatch:
