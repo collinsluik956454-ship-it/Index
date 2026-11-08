@@ -1,0 +1,96 @@
+vname: Looplijst APK bouwen
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - index.html
+
+permissions:
+  contents: write
+
+jobs:
+  bouw:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Vaste handtekening zetten (zodat updates over de oude app heen kunnen)
+        run: |
+          mkdir -p ~/.android
+          echo "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" | base64 -d > ~/.android/debug.keystore
+
+      - name: Web-bestanden klaarzetten + opslaan/delen-brug inbouwen
+        run: |
+          mkdir www
+          cp index.html www/index.html
+          cat > brug.js <<'EOF'
+          (function(){
+            var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;
+            var blobs={}; var oc=URL.createObjectURL;
+            URL.createObjectURL=function(b){var u=oc.call(URL,b);blobs[u]=b;return u;};
+            function opslaan(a){
+              var b=blobs[a.href]; if(!b) return false;
+              var P=C.Plugins; var naam=a.download||'bestand';
+              var r=new FileReader();
+              r.onloadend=function(){
+                var data=String(r.result).split(',')[1];
+                P.Filesystem.writeFile({path:naam,data:data,directory:'CACHE'})
+                  .then(function(res){return P.Share.share({title:naam,url:res.uri,dialogTitle:'Opslaan of delen'});})
+                  .catch(function(e){alert('Opslaan mislukt: '+((e&&e.message)||e));});
+              };
+              r.readAsDataURL(b); return true;
+            }
+            var klik=HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click=function(){ if(this.download&&opslaan(this)) return; return klik.apply(this,arguments); };
+            var disp=EventTarget.prototype.dispatchEvent;
+            EventTarget.prototype.dispatchEvent=function(e){
+              if(this instanceof HTMLAnchorElement&&this.download&&e&&e.type==='click'&&opslaan(this)) return true;
+              return disp.apply(this,arguments);
+            };
+          })();
+          EOF
+          python3 - <<'PY'
+          s=open('www/index.html',encoding='utf-8').read()
+          j=open('brug.js',encoding='utf-8').read()
+          i=s.index('<head>')+len('<head>')
+          s=s[:i]+'<script>'+j+'</script>'+s[i:]
+          open('www/index.html','w',encoding='utf-8').write(s)
+          PY
+
+      - name: Android-project maken
+        run: |
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/share@6
+          npx cap init "Looplijst" nl.collin.looplijst --web-dir www
+          npx cap add android
+          npx cap sync android
+
+      - name: APK bouwen
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: APK klaarzetten
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Looplijst.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Looplijst-APK
+          path: Looplijst.apk
+
+      - name: Release maken (directe downloadlink)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-${{ github.run_number }}" Looplijst.apk --title "Looplijst APK ${{ github.run_number }}" --notes "Download Looplijst.apk en installeer hem op je telefoon."
