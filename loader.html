@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="nl"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Looplijst</title>
+<style>html,body{margin:0;height:100%;background:#0d1b3e}</style>
+</head><body>
+<script>
+/* Start-pagina van de Android-app: kiest de nieuwste versie van de Looplijst (ingebouwd of eerder opgehaald) en start die. */
+(function(){
+  var HKEY='looplijst_update_html', VKEY='looplijst_update_versie', PKEY='looplijst_update_poging';
+  function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
+  function versieUit(t){ var m=String(t).match(/APP_VERSION\s*=\s*'([^']+)'/); return m?m[1]:''; }
+  function start(html){ document.open(); document.write(html); document.close(); }
+  fetch('app.html',{cache:'no-store'}).then(function(r){ return r.text(); }).then(function(ingebouwd){
+    var html=ingebouwd;
+    try{
+      var st=localStorage.getItem(HKEY), sv=num(localStorage.getItem(VKEY)), bv=num(versieUit(ingebouwd));
+      var pog=parseInt(localStorage.getItem(PKEY)||'0',10)||0;
+      if(st && (sv<=bv || pog>=2)){ localStorage.removeItem(HKEY); localStorage.removeItem(VKEY); localStorage.setItem(PKEY,'0'); st=null; }
+      if(st && sv>bv && st.indexOf('</html>')>0){ localStorage.setItem(PKEY,String(pog+1)); html=st; }
+    }catch(e){}
+    function doe(){ start(html); }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',doe); else doe();
+  }).catch(function(e){ document.body.innerHTML='<p style="color:#fff;font:16px sans-serif;padding:20px">Kon de Looplijst niet starten: '+e+'</p>'; });
+})();
+</script>
+</body></html>
