@@ -7,6 +7,7 @@ on:
       - index.html
       - loader.html
       - icons/**
+      - android-extra/**
 
 permissions:
   contents: write
@@ -44,6 +45,8 @@ jobs:
           npx cap init "Looplijst" nl.collin.looplijst --web-dir www
           npx cap add android
           cp -r icons/res/* android/app/src/main/res/
+          cp android-extra/MainActivity.java android/app/src/main/java/nl/collin/looplijst/MainActivity.java
+          cp android-extra/patch_manifest.py patch_manifest.py && python3 patch_manifest.py
           npx cap sync android
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
       - name: APK bouwen
