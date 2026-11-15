@@ -1107,6 +1107,22 @@ body.nj-tabs main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .nj-groot-titel{font-size:17px;font-weight:800}
 .nj-groot-sub{font-size:13px;color:#DCE8FA}
 .nj-groot-knop .nj-chev{color:#fff}
+/* Vandaag: focus op bezorgen (voortgangsring) */
+.nj-ring{position:relative;width:210px;height:210px;align-self:center;margin:2px 0}
+.nj-ring svg{display:block}
+.nj-ring-tekst{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.nj-ring .nj-groot{font-size:48px}
+.nj-ring-sub{font-size:14px;font-weight:600;color:var(--nj-muted)}
+.nj-ring-pct{margin-top:2px;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:800;color:var(--nj-accent);background:var(--nj-accent-zacht)}
+.nj-ring-pct.klaar{color:#15803D;background:#E7F6EC}
+.nj-focus .nj-hero-extra{align-self:center}
+.nj-knop-primair.groot{height:58px;font-size:18px;font-weight:800;border-radius:16px}
+.nj-duo-knoppen{gap:10px}
+.nj-knop-rand{height:48px;border:1px solid #D5DDE8;border-radius:14px;background:#fff;color:var(--nj-ink);font-family:inherit;font-size:14px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;cursor:pointer;min-width:0}
+.nj-knop-rand svg{color:var(--nj-accent);flex:0 0 auto}
+.nj-knop-rand b{color:var(--nj-accent);font-weight:800}
+.nj-knop-rand:active{transform:scale(.97);background:#F1F4F8}
 /* agenda-widget (deze week) */
 .nj-agenda{background:var(--nj-kaart);border:1px solid var(--nj-lijn);border-radius:18px;overflow:hidden;padding-bottom:6px}
 
@@ -5658,12 +5674,12 @@ function renderHome(){
   const wrap = document.createElement('div');
   wrap.className = 'nj-pagina scherm-fade';
 
-  // ===== Vandaag: voortgang + verder bezorgen =====
+  // ===== Focus op bezorgen: voortgangsring + Verder bezorgen =====
   const hero = document.createElement('section');
-  hero.className = 'nj-kaart nj-hero';
+  hero.className = 'nj-kaart nj-hero nj-focus';
   if(totaal === 0){
-    hero.innerHTML = '<div class="nj-hero-kop"><span>Vandaag</span></div>'+
-      '<div class="nj-hero-leeg">Nog geen looplijst ingeladen</div>';
+    hero.innerHTML = '<div class="nj-hero-leeg">Nog geen looplijst ingeladen</div>'+
+      '<div class="nj-stat-sub">Laad de looplijst-PDF van vandaag in om te beginnen.</div>';
     const laad = document.createElement('button');
     laad.type = 'button';
     laad.className = 'nj-knop-primair';
@@ -5672,68 +5688,49 @@ function renderHome(){
     hero.appendChild(laad);
   } else {
     const allesKlaar = klaar >= totaal;
+    const omtrek = 2*Math.PI*90;
+    const boog = Math.max(0, Math.min(1, klaar/totaal))*omtrek;
     hero.innerHTML =
-      '<div class="nj-hero-kop"><span>'+(allesKlaar ? 'Alles bezorgd' : 'Vandaag bezorgd')+'</span><b>'+pct+'%</b></div>'+
-      '<div class="nj-hero-getal"><span class="nj-groot">'+klaar+'</span><span class="nj-van">van '+totaal+' adressen</span></div>'+
-      (totaalExtra>0 ? '<div class="nj-hero-extra">Waarvan '+klaarExtra+' / '+totaalExtra+' extra wijk</div>' : '')+
-      '<div class="nj-balk'+(allesKlaar?' groen':'')+'"><i style="width:'+pct+'%"></i></div>';
+      '<div class="nj-ring">'+
+        '<svg width="210" height="210" viewBox="0 0 210 210" role="img" aria-label="'+pct+' procent bezorgd">'+
+          '<circle cx="105" cy="105" r="90" fill="none" stroke="#E6EBF2" stroke-width="16"/>'+
+          (boog > 0 ? '<circle cx="105" cy="105" r="90" fill="none" stroke="'+(allesKlaar?'#15803D':'#0B63CE')+'" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+boog.toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 105 105)"/>' : '')+
+        '</svg>'+
+        '<div class="nj-ring-tekst"><span class="nj-groot">'+klaar+'</span><span class="nj-ring-sub">van '+totaal+' bezorgd</span><b class="nj-ring-pct'+(allesKlaar?' klaar':'')+'">'+(allesKlaar?'Alles bezorgd':pct+'%')+'</b></div>'+
+      '</div>'+
+      (totaalExtra>0 ? '<div class="nj-hero-extra">Waarvan '+klaarExtra+' / '+totaalExtra+' extra wijk</div>' : '');
     const verder = [M.order, M.looplijst, M.route].find(m=>m.actief);
     if(verder){
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'nj-knop-primair';
-      b.innerHTML = (allesKlaar ? 'Bekijk looplijst' : 'Verder bezorgen')+njIco('pijl', 20, 2.4);
+      b.className = 'nj-knop-primair groot';
+      b.innerHTML = (allesKlaar ? 'Bekijk looplijst' : 'Verder bezorgen')+njIco('pijl', 22, 2.4);
       b.onclick = verder.go;
       hero.appendChild(b);
     }
   }
+  // Twee knoppen eronder: Volgorde en Promillage
+  const duo = document.createElement('div');
+  duo.className = 'nj-duo nj-duo-knoppen';
+  const kVolg = document.createElement('button');
+  kVolg.type = 'button';
+  kVolg.className = 'nj-knop-rand';
+  kVolg.innerHTML = njIco('volgorde', 18)+'<span>Volgorde</span>';
+  kVolg.onclick = ()=>document.getElementById('reorderBtn').click();
+  duo.appendChild(kVolg);
+  const kProm = document.createElement('button');
+  kProm.type = 'button';
+  kProm.className = 'nj-knop-rand';
+  kProm.innerHTML = njIco('procent', 18)+'<span>Promillage'+(M.promillage.waarde ? ' <b>'+njEsc(M.promillage.waarde)+'</b>' : '')+'</span>';
+  kProm.onclick = M.promillage.go;
+  duo.appendChild(kProm);
+  hero.appendChild(duo);
   wrap.appendChild(hero);
 
-  // ===== Deze week (agenda met tijden per dag) =====
-  bouwTijdEnAgendaSectie(wrap, 'agenda');
-
-  // ===== Tijd vandaag + kilometers deze week =====
-  const duo = document.createElement('div');
-  duo.className = 'nj-duo';
-  const td = tijdLaadData();
-  const ts = td.huidig;
-  let tWaarde = '—', tSub = 'Nog niet gestart', tPil = 'Start', tPilKlas = '';
-  if(ts && ts.start && !ts.eind){
-    tWaarde = njUurMin(tijdNettoMs(ts));
-    tSub = ts.pauzeStart ? 'Pauze sinds '+njKlok(ts.pauzeStart) : 'Bezig sinds '+njKlok(ts.start);
-    tPil = ts.pauzeStart ? 'Pauze' : 'Bezig'; tPilKlas = ts.pauzeStart ? ' pauze' : ' bezig';
-  } else {
-    const vandaagStr = new Date().toDateString();
-    const sv = (td.sessies||[]).find(s2=>new Date(s2.start).toDateString()===vandaagStr);
-    if(sv){ tWaarde = njUurMin(sv.nettoMs!=null ? sv.nettoMs : tijdNettoMs(sv)); tSub = 'Klaar om '+njKlok(sv.eind); tPil = 'Bekijk'; }
-  }
-  const kTijd = document.createElement('button');
-  kTijd.type = 'button';
-  kTijd.className = 'nj-kaart nj-stat';
-  kTijd.innerHTML = '<span class="nj-stat-label">'+njIco('klok', 16)+'Tijd vandaag</span>'+
-    '<span class="nj-stat-waarde">'+tWaarde+'</span>'+
-    '<span class="nj-stat-sub">'+njEsc(tSub)+'</span>'+
-    '<span class="nj-pil'+tPilKlas+'">'+(tPil==='Start' ? njIco('start', 12)+' ' : '')+tPil+'</span>';
-  kTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
-  duo.appendChild(kTijd);
-
-  const kd = kmLaad();
-  const wk0 = kmWeekStart(new Date()), wk1 = new Date(wk0); wk1.setDate(wk1.getDate()+7);
-  const wkKm = kd.ritten.filter(r=>{ const t=new Date(r.datum+'T00:00:00'); return t>=wk0 && t<wk1; }).reduce((a,r)=>a+r.km,0);
-  const doelW = (kd.doelen && kd.doelen.week) || 0;
-  const kKm = document.createElement('button');
-  kKm.type = 'button';
-  kKm.className = 'nj-kaart nj-stat';
-  kKm.innerHTML = '<span class="nj-stat-label">'+njIco('fiets', 16)+'Km deze week</span>'+
-    '<span class="nj-stat-waarde">'+kmFmt(wkKm)+' km</span>'+
-    (doelW>0
-      ? '<span class="nj-balk klein'+(wkKm>=doelW?' groen':'')+'"><i style="width:'+Math.min(100, Math.round(wkKm/doelW*100))+'%"></i></span><span class="nj-stat-sub">doel '+kmFmt(doelW)+' km</span>'
-      : '<span class="nj-stat-sub">Werk en privé</span><span class="nj-pil">+ Rit</span>');
-  kKm.onclick = ()=>{ view={mode:'km'}; render(); };
-  duo.appendChild(kKm);
-  wrap.appendChild(duo);
-
   // ===== Snel naar =====
+  const snelSec = document.createElement('section');
+  snelSec.className = 'nj-sectie';
+  snelSec.innerHTML = '<h2 class="nj-label">Snel naar</h2>';
   const snel = document.createElement('div');
   snel.className = 'nj-snel';
   [[M.looplijst,'Looplijst'], [M.krant,'Per krant'], [M.kaart,'Kaart']].forEach(([m, naam])=>{
@@ -5743,7 +5740,11 @@ function renderHome(){
     if(m.actief) b.onclick = m.go; else b.disabled = true;
     snel.appendChild(b);
   });
-  wrap.appendChild(snel);
+  snelSec.appendChild(snel);
+  wrap.appendChild(snelSec);
+
+  // ===== Deze week (agenda met tijden per dag) =====
+  bouwTijdEnAgendaSectie(wrap, 'agenda');
 
   main.appendChild(wrap);
   updateHeaderProgress();
