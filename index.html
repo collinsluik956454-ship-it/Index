@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-15.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-15.5');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1151,6 +1151,46 @@ html[data-thema] .sheet button.action.danger{color:#B42318}
 html[data-thema] .sheet button.action.danger .ic{background:#FDECEC;color:#B42318}
 html[data-thema] .sheet .info{color:#5A6A7E;padding:10px 4px 0}
 html[data-thema] .sheet .apikey-form{margin:8px 0 0}
+
+/* ===================== KERSTKAARTJES: rustig + kerst-accent (donkergroen, klein rood) ===================== */
+.ringbox .rt{color:#0E1A2B}
+html[data-thema] body.nj-kerst #dateBanner{display:none !important}
+html[data-thema] body.nj-kerst-top header .progress-wrap{display:none}
+body.nj-kerst .check.done{border-color:#166534;background:#166534}
+html[data-thema] body.nj-kerst header .crumb{color:#B91C1C}
+html[data-thema="donker"] body.nj-kerst header .crumb{color:#F87171}
+body.nj-kerst header .crumb::before{content:'\2605';margin-right:5px}
+html[data-thema] body.nj-kerst header .pfill{background:#166534}
+html[data-thema="donker"] body.nj-kerst header .pfill{background:#4ADE80}
+html[data-thema] body.nj-kerst .footbar .toggle.on{background:#166534;color:#fff}
+body.nj-kerst main .row{border:1px solid #E2E7EE;box-shadow:none;border-radius:16px}
+body.nj-kerst .ringbox svg circle:nth-child(2){stroke:#166534}
+body.nj-kerst .fooi-pill{background:#E8F3EC;color:#166534;border-radius:99px;padding:4px 10px;font-size:13px}
+body.nj-kerst .fooi-pill.zero{background:#EEF1F5;color:#5A6A7E}
+.fooi-total-box{background:#fff;border:1px solid #E2E7EE;border-radius:18px;padding:14px 16px;box-shadow:none;margin-bottom:12px;color:#0E1A2B}
+.nj-fooi{display:flex;align-items:center;gap:14px}
+.nj-fooi-ic{width:44px;height:44px;border-radius:12px;background:#E8F3EC;color:#166534;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.nj-fooi-tekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.nj-fooi-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.nj-fooi-top span{font-size:13px;font-weight:600;color:#5A6A7E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-fooi-top b{font-size:22px;font-weight:800;letter-spacing:-.02em;color:#166534;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nj-fooi-sub{font-size:12.5px;color:#5A6A7E}
+.nj-kerst-voortgang{display:flex;flex-direction:column;gap:10px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid #EDF1F5}
+.nj-kerst-voortgang .nj-groot{font-size:36px}
+.nj-kerst-voortgang .nj-hero-kop b{color:#166534}
+.nj-kerst-voortgang .nj-balk i{background:#166534}
+.nj-plan-knop{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-family:inherit;margin-bottom:6px;padding:12px 14px;cursor:pointer}
+.nj-plan-knop:active{transform:scale(.99);background:#F7F9FB}
+.nj-plan-knop .nj-ico{background:#E8F3EC;color:#166534}
+.nj-rood{color:#B91C1C;font-weight:700}
+.nj-kerst-kop{margin:12px 0 8px 4px}
+.nj-paneel-bg{position:fixed;inset:0;z-index:70;background:rgba(10,18,32,.45);display:none;align-items:flex-end;justify-content:center}
+.nj-paneel-bg.open{display:flex}
+.nj-paneel{width:100%;max-width:680px;max-height:88vh;overflow-y:auto;box-sizing:border-box;background:#F4F6F9;border-radius:22px 22px 0 0;
+  padding:0 14px 24px;padding-bottom:max(24px, env(safe-area-inset-bottom));color:#0E1A2B}
+.nj-paneel-kop{position:sticky;top:0;z-index:2;background:#F4F6F9;display:flex;align-items:center;justify-content:space-between;padding:16px 2px 12px}
+.nj-paneel-kop b{font-size:19px;font-weight:800}
+.nj-paneel-sluit{min-height:42px;border:none;border-radius:12px;background:#E6EBF2;color:#0E1A2B;font-family:inherit;font-size:14px;font-weight:700;padding:0 16px;cursor:pointer}
 </style>
 <script>
 // Offline service worker
@@ -1404,7 +1444,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-15.4';
+const APP_VERSION = '2026-11-15.5';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -1442,8 +1482,10 @@ var NJ_IC = {
   oog:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   oogdicht:'<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   check:'<path d="M20 6L9 17l-5-5"/>',
-  start:'<path d="M7 4l12 8-12 8z" fill="currentColor"/>'
+  start:'<path d="M7 4l12 8-12 8z" fill="currentColor"/>',
+  munten:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'
 };
+var kerstPlanOpen = false, kerstPlanScroll = 0;   // paneel 'Planning, datums & PDF' bij Kerstkaartjes
 function njIco(n, s, sw){
   s = s || 20;
   return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(NJ_IC[n]||'')+'</svg>';
@@ -1471,6 +1513,9 @@ function njZetChrome(){
   var hub = (m === 'home' || njIsHub(m));
   document.body.classList.toggle('nj-hub', hub);
   document.body.classList.toggle('nj-tabs', njMetTabbar(m));
+  document.body.classList.toggle('nj-kerst', m === 'kerst');
+  document.body.classList.toggle('nj-kerst-top', m === 'kerst' && view.level === 'wijk');
+  if(m !== 'kerst') kerstPlanOpen = false;
   var tab = NJ_TAB_VAN[m] || '';
   document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
     var aan = b.getAttribute('data-tab') === tab;
@@ -2903,24 +2948,13 @@ function fooiTotaal(){
 
 // Bouwt de HTML voor een fooi-totaalbox met munten/biljetten/totaal als 3 blokken
 function fooiTotaalBoxHTML(label, totalen){
-  return '<div class="fooi-label">'+label+'</div>'+
-    '<div class="fooi-3kol">'+
-      '<div class="kol kol-munt">'+
-        '<div class="kol-ic">🪙</div>'+
-        '<div class="kol-lbl">Munten</div>'+
-        '<div class="kol-amt">'+formatEuro(totalen.munt)+'</div>'+
-      '</div>'+
-      '<div class="kol kol-biljet">'+
-        '<div class="kol-ic">💶</div>'+
-        '<div class="kol-lbl">Biljetten</div>'+
-        '<div class="kol-amt">'+formatEuro(totalen.biljet)+'</div>'+
-      '</div>'+
-      '<div class="kol kol-totaal">'+
-        '<div class="kol-ic">∑</div>'+
-        '<div class="kol-lbl">Totaal</div>'+
-        '<div class="kol-amt">'+formatEuro(totalen.totaal)+'</div>'+
-      '</div>'+
-    '</div>';
+  return '<div class="nj-fooi">'+
+    '<span class="nj-fooi-ic">'+njIco('munten', 22)+'</span>'+
+    '<div class="nj-fooi-tekst">'+
+      '<div class="nj-fooi-top"><span>'+label+'</span><b>'+formatEuro(totalen.totaal)+'</b></div>'+
+      '<div class="nj-fooi-sub">Munten '+formatEuro(totalen.munt)+' · Biljetten '+formatEuro(totalen.biljet)+'</div>'+
+    '</div>'+
+  '</div>';
 }
 // Ook munt/biljet split voor straat/ronde-rij (compacter)
 function fooiPillHTML(totalen){
@@ -4761,6 +4795,7 @@ function exportKerstPdf(modus, soort){
 }
 
 function renderKerst(){
+  if(view.level!=='wijk') kerstPlanOpen=false;
   const main=document.getElementById('main');
   const back=document.getElementById('back');
   const crumb=document.getElementById('crumb');
@@ -4768,8 +4803,8 @@ function renderKerst(){
   main.innerHTML='';
   if(view.level==='wijk'){
     njTopTerug(back);
-    crumb.textContent='🎄 Kerstkaartjes';
-    title.textContent=meta.bezorger;
+    crumb.textContent='Kerstkaartjes';
+    title.textContent='Wijken';
     // Totaalbox alle fooi
     const totBox = document.createElement('div');
     totBox.className='fooi-total-box';
@@ -4777,7 +4812,14 @@ function renderKerst(){
     const tAdr = fooiTotaal();
     let dM=0, dB=0;
     Object.keys(fooiDagen).forEach(i=>{ const pd=(fooiDagen[i]||{}).perDenom||{}; Object.keys(pd).forEach(c=>{ const v=parseInt(c)*(pd[c]||0); if(parseInt(c)>=500) dB+=v; else dM+=v; }); });
-    totBox.innerHTML=fooiTotaalBoxHTML('Totaal fooi', {munt:tAdr.munt+dM, biljet:tAdr.biljet+dB, totaal:tAdr.totaal+dM+dB})+
+    const kAllTop = countKerstAll();
+    const kPctTop = kAllTop.total ? Math.round(kAllTop.done/kAllTop.total*100) : 0;
+    totBox.innerHTML='<div class="nj-kerst-voortgang">'+
+        '<div class="nj-hero-kop"><span>Kaartjes bezorgd</span><b>'+kPctTop+'%</b></div>'+
+        '<div class="nj-hero-getal"><span class="nj-groot">'+kAllTop.done+'</span><span class="nj-van">van '+kAllTop.total+' brievenbussen</span></div>'+
+        '<div class="nj-balk"><i style="width:'+kPctTop+'%"></i></div>'+
+      '</div>'+
+      fooiTotaalBoxHTML('Fooi totaal', {munt:tAdr.munt+dM, biljet:tAdr.biljet+dB, totaal:tAdr.totaal+dM+dB})+
       ((dM+dB)>0 ? '<div style="text-align:center;font-size:11.5px;color:#6b7280;margin-top:8px">waarvan per dag ingevuld: <b>'+formatEuro(dM+dB)+'</b> · per adres: <b>'+formatEuro(tAdr.totaal)+'</b></div>' : '');
     // Gemiddelden: per afgevinkt kaartje en per dag met ingevuld dagbedrag
     {
@@ -4794,6 +4836,32 @@ function renderKerst(){
       if(delen.length) totBox.innerHTML += '<div style="text-align:center;font-size:12px;color:#374151;margin-top:6px;line-height:1.7">'+delen.join('<br>')+'</div>';
     }
     main.appendChild(totBox);
+
+    // ===== Eén knop: Planning, datums & PDF — opent een paneel met datums, planning, per dag en PDF =====
+    const _kStart = laadKerstStart(), _kEind = laadKerstEinddatum();
+    const _kort = iso => formatDatumNL(iso).replace(/ \d{4}$/, '');
+    const planKnop = document.createElement('button');
+    planKnop.type = 'button';
+    planKnop.className = 'nj-kaart nj-plan-knop';
+    planKnop.innerHTML = '<span class="nj-ico">'+njIco('schakel', 20)+'</span>'+
+      '<span class="nj-rij-tekst"><span class="nj-rij-titel">Planning, datums &amp; PDF</span>'+
+      '<span class="nj-rij-sub">'+(_kStart ? 'Binnen op '+_kort(_kStart) : 'Binnen op vandaag')+' · '+(_kEind ? 'einde '+_kort(_kEind) : '<span class="nj-rood">einddatum nog kiezen</span>')+'</span></span>'+
+      '<span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
+    main.appendChild(planKnop);
+    const planBg = document.createElement('div');
+    planBg.className = 'nj-paneel-bg'+(kerstPlanOpen ? ' open' : '');
+    const planPaneel = document.createElement('div');
+    planPaneel.className = 'nj-paneel';
+    planPaneel.setAttribute('role', 'dialog');
+    planPaneel.setAttribute('aria-label', 'Planning, datums en PDF');
+    planPaneel.innerHTML = '<div class="nj-paneel-kop"><b>Planning, datums &amp; PDF</b><button type="button" class="nj-paneel-sluit">Sluiten</button></div>';
+    planBg.appendChild(planPaneel);
+    main.appendChild(planBg);
+    const sluitPlan = ()=>{ kerstPlanOpen = false; planBg.classList.remove('open'); };
+    planKnop.onclick = ()=>{ kerstPlanOpen = true; kerstPlanScroll = 0; planPaneel.scrollTop = 0; planBg.classList.add('open'); };
+    planPaneel.querySelector('.nj-paneel-sluit').onclick = sluitPlan;
+    planBg.onclick = (e)=>{ if(e.target === planBg) sluitPlan(); };
+    planPaneel.onscroll = ()=>{ kerstPlanScroll = planPaneel.scrollTop; };
 
     // ===== Einddatum + benodigd tempo per dag =====
     const kerstAll = countKerstAll();
@@ -4833,7 +4901,7 @@ function renderKerst(){
         '<div style="flex:1;min-width:0"><div style="font-size:10.5px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Einddatum kerstronde</div><input type="date" id="kerstEinddatumInput" value="'+opgeslagenEinddatum+'" style="padding:6px 6px;border:1.5px solid #94a3b8;border-radius:9px;font-size:13.5px;font-weight:700;font-family:inherit;background:#fff;color:#111827;color-scheme:light;width:100%;box-sizing:border-box;-webkit-text-fill-color:#111827;opacity:1"><div style="font-size:11px;font-weight:800;color:#3730a3;margin-top:3px">'+(opgeslagenEinddatum?formatDatumNL(opgeslagenEinddatum):'⚠️ nog niet gekozen')+'</div></div>'+
       '</div>'+
       tempoHTML;
-    main.appendChild(eindKaart);
+    planPaneel.appendChild(eindKaart);
     eindKaart.querySelector('#kerstEinddatumInput').onchange = (e)=>{ saveKerstEinddatum(e.target.value); renderKerst(); };
     eindKaart.querySelector('#kerstStartInput').onchange = (e)=>{ saveKerstStart(e.target.value); renderKerst(); };
     if(opgeslagenEinddatum && teGaanBb>0){
@@ -4951,15 +5019,20 @@ function renderKerst(){
           dagKaart.appendChild(regel);
         }
       }
-      main.appendChild(dagKaart);
+      planPaneel.appendChild(dagKaart);
     }
 
     // PDF-export: één knop, daarna kiezen voor indeling en soort
     const btnPdfMaken = document.createElement('button');
-    btnPdfMaken.style.cssText = 'width:100%;padding:14px 10px;margin-bottom:12px;background:#1a2d5a;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800';
-    btnPdfMaken.textContent = '📄 PDF maken…';
+    btnPdfMaken.style.cssText = 'width:100%;min-height:52px;padding:12px 10px;margin:4px 0 12px;background:#166534;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px';
+    btnPdfMaken.innerHTML = njIco('pdf', 20)+' PDF maken…';
     btnPdfMaken.onclick = ()=>toonKerstPdfKeuze();
-    main.appendChild(btnPdfMaken);
+    planPaneel.appendChild(btnPdfMaken);
+    if(kerstPlanOpen) requestAnimationFrame(()=>{ planPaneel.scrollTop = kerstPlanScroll; });
+    const wijkKop = document.createElement('h2');
+    wijkKop.className = 'nj-label nj-kerst-kop';
+    wijkKop.textContent = 'Wijken';
+    main.appendChild(wijkKop);
 
     wijkVolgordeIdxs().forEach(wi=>{
       const w = DATA[wi];
@@ -5102,7 +5175,7 @@ function renderKerst(){
   else if(view.level==='ronde'){
     back.classList.remove('hidden');
     const w=DATA[view.wijk];
-    crumb.textContent='🎄 '+w.wijk;
+    crumb.textContent=w.wijk;
     title.textContent='Kies een ronde';
     // Totaalbox wijk
     const totBox = document.createElement('div');
@@ -5137,7 +5210,7 @@ function renderKerst(){
     back.classList.remove('hidden');
     const w=DATA[view.wijk];
     const r=w.rondes[view.ronde];
-    crumb.textContent='🎄 '+r.ronde;
+    crumb.textContent=r.ronde;
     title.textContent=kerstWeergave==='veld' ? 'Alle straten' : 'Kies een straat';
     // Totaalbox ronde
     const totBox = document.createElement('div');
@@ -5278,7 +5351,7 @@ function renderKerst(){
     const w=DATA[view.wijk];
     const r=w.rondes[view.ronde];
     const s=r.straten[view.straat];
-    crumb.textContent='🎄 '+s.naam;
+    crumb.textContent=r.ronde;
     title.textContent=s.naam;
 
     // Totaalbox voor deze straat
