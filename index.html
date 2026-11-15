@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-15.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-15.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -983,6 +983,158 @@ body{display:flex;flex-direction:column}
   #kaartWijkPanel .adr-grid{display:flex;flex-wrap:wrap;gap:4px}
   #kaartWijkPanel .adr-chip{padding:3px 9px;border-radius:8px;font-size:12px;font-weight:600;background:#eef2ee;color:#0d1b3e}
 
+
+/* ===================== NIEUW JASJE (2026-11): rustig & strak, tabbalk onderin ===================== */
+html[data-thema="licht"]{
+  --bg:#F4F6F9; --bg2:#EEF2F7; --surface:#FFFFFF; --accent:#0B63CE; --accent2:#2F80ED;
+  --ink:#0E1A2B; --ink2:#2B3A4F; --muted:#5A6A7E; --line:#E2E7EE;
+  --nj-bg:#F4F6F9; --nj-hdr-ink:#0E1A2B; --nj-hdr-muted:#5A6A7E; --nj-knop:#E6EBF2; --nj-knop-ink:#0E1A2B;
+  --nj-label:#5A6A7E; --nj-balk-spoor:#E6EBF2; --nj-balk:#0B63CE;
+  --nj-tab:#FFFFFF; --nj-tab-lijn:#E2E7EE; --nj-tab-ink:#5A6A7E; --nj-tab-aan:#0B63CE; --nj-tab-pil:#E8F0FB;
+  --nj-banner:#E8F0FB; --nj-banner-ink:#0E1A2B; --nj-ok:#15803D; --nj-let:#B45309;
+}
+html[data-thema="donker"]{
+  --bg:#0B1220; --bg2:#0F1829;
+  --nj-bg:#0B1220; --nj-hdr-ink:#E8EEF7; --nj-hdr-muted:#9AA8BC; --nj-knop:#1B2638; --nj-knop-ink:#E8EEF7;
+  --nj-label:#9AA8BC; --nj-balk-spoor:#1B2638; --nj-balk:#6CB0FF;
+  --nj-tab:#111A2B; --nj-tab-lijn:#223049; --nj-tab-ink:#9AA8BC; --nj-tab-aan:#6CB0FF; --nj-tab-pil:#1B2A44;
+  --nj-banner:#16213A; --nj-banner-ink:#E8EEF7; --nj-ok:#4ADE80; --nj-let:#FBBF24;
+}
+/* kaarten zijn in beide thema's licht (de bestaande schermen rekenen daarop) */
+html[data-thema]{
+  --nj-kaart:#FFFFFF; --nj-ink:#0E1A2B; --nj-muted:#5A6A7E; --nj-lijn:#E2E7EE; --nj-lijn2:#EDF1F5;
+  --nj-accent:#0B63CE; --nj-accent-zacht:#E8F0FB;
+}
+html[data-thema] body{background:var(--nj-bg)}
+html[data-thema] main{background:var(--nj-bg);width:100%;box-sizing:border-box}
+.sheet-bg.show{display:block}
+
+/* ----- Kopbalk ----- */
+html[data-thema] header{background:var(--nj-bg);box-shadow:none;border-bottom:1px solid transparent;padding:8px 16px 10px}
+html[data-thema] body:not(.nj-hub) header{border-bottom-color:var(--nj-tab-lijn)}
+html[data-thema] header .htop{gap:10px;min-height:48px}
+html[data-thema] header .back, html[data-thema] header .menu{width:44px;height:44px;border-radius:12px;background:var(--nj-knop);color:var(--nj-knop-ink);font-size:20px;padding:0}
+html[data-thema] header .back:active, html[data-thema] header .menu:active{transform:scale(.94);filter:brightness(.95)}
+html[data-thema] header .crumb{color:var(--nj-hdr-muted);font-size:12px;font-weight:700;letter-spacing:.08em}
+html[data-thema] header h1{color:var(--nj-hdr-ink);font-size:20px;font-weight:800;letter-spacing:-.01em;margin-top:1px}
+html[data-thema] body.nj-hub header{padding-top:14px;padding-bottom:6px}
+html[data-thema] body.nj-hub header h1{font-size:26px;letter-spacing:-.02em}
+html[data-thema] body.nj-hub header .menu,
+html[data-thema] body.nj-hub header .progress-wrap{display:none}
+html[data-thema] body.nj-hub #dateBanner{display:none !important}
+html[data-thema] body.nj-tabs header .progress-wrap{display:none}
+html[data-thema] body.nj-tabs #dateBanner{display:none !important}
+html[data-thema] header .progress-wrap{margin-top:10px}
+html[data-thema] header .pbar{height:6px;background:var(--nj-balk-spoor);border-radius:99px}
+html[data-thema] header .pfill{background:var(--nj-balk)}
+html[data-thema] header .pmeta{color:var(--nj-hdr-muted);font-size:12px}
+html[data-thema] header .date-banner{background:var(--nj-banner);color:var(--nj-banner-ink);border:none;border-radius:12px;margin-top:10px;padding:8px 12px}
+html[data-thema] header .date-banner .db-dag{color:var(--nj-banner-ink)}
+html[data-thema] header .date-banner .db-datum{color:var(--nj-hdr-muted);opacity:1}
+html[data-thema] #dbTijd{color:var(--nj-hdr-muted)}
+html[data-thema] #dbTijd.bezig{color:var(--nj-ok)}
+html[data-thema] #dbTijd.pauze{color:var(--nj-let)}
+
+/* ----- Tabbalk onderin ----- */
+.tabbar{display:none}
+body.nj-tabs .tabbar{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:45;grid-template-columns:repeat(5,minmax(0,1fr));
+  background:var(--nj-tab);border-top:1px solid var(--nj-tab-lijn);padding:6px 4px;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+.tabbar button{border:none;background:none;color:var(--nj-tab-ink);font-family:inherit;font-size:11.5px;font-weight:600;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;min-height:54px;padding:2px 0;cursor:pointer}
+.tabbar .nj-tab-ic{display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;transition:background .15s}
+.tabbar button.on{color:var(--nj-tab-aan);font-weight:800}
+.tabbar button.on .nj-tab-ic{background:var(--nj-tab-pil)}
+body.nj-tabs .footbar{display:none !important}
+body.nj-tabs main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+
+/* ----- Pagina's ----- */
+.nj-pagina{display:flex;flex-direction:column;gap:14px;padding-top:4px}
+.nj-kaart{background:var(--nj-kaart);color:var(--nj-ink);border:1px solid var(--nj-lijn);border-radius:18px;padding:16px}
+.nj-hero{display:flex;flex-direction:column;gap:12px;padding:18px}
+.nj-hero-kop{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;color:var(--nj-muted)}
+.nj-hero-kop b{color:var(--nj-accent);font-weight:800}
+.nj-hero-getal{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nj-groot{font-size:42px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--nj-ink);font-variant-numeric:tabular-nums}
+.nj-van{font-size:16px;font-weight:600;color:var(--nj-muted)}
+.nj-hero-extra{align-self:flex-start;font-size:12px;font-weight:700;color:#7A4D00;background:#FFF1C2;border-radius:8px;padding:4px 8px}
+.nj-hero-leeg{font-size:19px;font-weight:800;color:var(--nj-ink)}
+.nj-balk{display:block;height:8px;border-radius:99px;background:#E6EBF2;overflow:hidden}
+.nj-balk.klein{height:6px;margin-top:6px}
+.nj-balk i{display:block;height:100%;background:var(--nj-accent);border-radius:99px;transition:width .4s}
+.nj-balk.groen i{background:#15803D}
+.nj-knop-primair{height:52px;border:none;border-radius:14px;background:var(--nj-accent);color:#fff;font-family:inherit;font-size:16px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;cursor:pointer}
+.nj-knop-primair:active{transform:scale(.98);filter:brightness(.94)}
+.nj-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.nj-stat{display:flex;flex-direction:column;align-items:stretch;gap:4px;text-align:left;font-family:inherit;cursor:pointer;min-width:0}
+.nj-stat:active{transform:scale(.98)}
+.nj-stat-label{font-size:12px;font-weight:600;color:var(--nj-muted);display:flex;align-items:center;gap:6px}
+.nj-stat-label svg{color:var(--nj-accent);flex:0 0 auto}
+.nj-stat-waarde{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--nj-ink);font-variant-numeric:tabular-nums}
+.nj-stat-sub{font-size:12px;color:var(--nj-muted)}
+.nj-pil{align-self:flex-start;margin-top:6px;display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:99px;
+  background:var(--nj-accent-zacht);color:var(--nj-accent);font-size:12px;font-weight:800}
+.nj-pil.bezig{background:#E7F6EC;color:#15803D}
+.nj-pil.pauze{background:#FFF1E0;color:#B45309}
+.nj-snel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.nj-snel button{height:70px;border:1px solid var(--nj-lijn);border-radius:14px;background:var(--nj-kaart);color:var(--nj-ink);font-family:inherit;font-size:13px;
+  font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.nj-snel button svg{color:var(--nj-accent)}
+.nj-snel button:active{transform:scale(.97)}
+.nj-snel button:disabled{opacity:.4;cursor:default}
+.nj-sectie{display:flex;flex-direction:column;gap:8px}
+.nj-label{margin:6px 0 0 4px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--nj-label)}
+.nj-lijst{background:var(--nj-kaart);border:1px solid var(--nj-lijn);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.nj-rij{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;
+  font-family:inherit;text-align:left;color:var(--nj-ink);cursor:pointer;width:100%}
+.nj-rij:last-child{border-bottom:none}
+.nj-rij:active{background:#F1F4F8}
+.nj-rij:disabled{opacity:.4;cursor:default}
+.nj-ico{width:38px;height:38px;border-radius:11px;background:var(--nj-accent-zacht);color:var(--nj-accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.nj-rij-tekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nj-rij-titel{font-size:15px;font-weight:700;color:var(--nj-ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nj-rij-sub{font-size:12.5px;color:var(--nj-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-rij-waarde{font-size:13px;font-weight:700;color:var(--nj-muted);white-space:nowrap;flex:0 0 auto}
+.nj-rij-waarde.ok{color:#15803D}
+.nj-rij-waarde.let{color:#B45309}
+.nj-chev{color:#8A97A8;display:flex;flex:0 0 auto}
+.nj-badge{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#FFF1C2;color:#7A4D00;border-radius:6px;padding:2px 6px}
+.nj-groot-knop{display:flex;align-items:center;gap:14px;width:100%;padding:18px 16px;border:none;border-radius:18px;background:var(--nj-accent);color:#fff;
+  font-family:inherit;text-align:left;cursor:pointer}
+.nj-groot-knop:active{transform:scale(.98);filter:brightness(.94)}
+.nj-groot-knop:disabled{opacity:.4}
+.nj-groot-ico{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.nj-groot-titel{font-size:17px;font-weight:800}
+.nj-groot-sub{font-size:13px;color:#DCE8FA}
+.nj-groot-knop .nj-chev{color:#fff}
+/* agenda-widget (deze week) */
+.nj-agenda{background:var(--nj-kaart);border:1px solid var(--nj-lijn);border-radius:18px;overflow:hidden;padding-bottom:6px}
+
+/* ----- Voetbalk in de bezorgschermen ----- */
+html[data-thema] .footbar{background:var(--nj-tab);border-top:1px solid var(--nj-tab-lijn);box-shadow:none;padding:8px 12px;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+html[data-thema] .footbar .toggle{min-height:42px;border-radius:12px;background:var(--nj-knop);color:var(--nj-knop-ink);padding:8px 13px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+html[data-thema] .footbar .toggle.on{background:var(--nj-accent);color:#fff}
+html[data-thema] .footbar .home-btn{background:var(--nj-knop);color:var(--nj-knop-ink)}
+html[data-thema] .footbar .stat{color:var(--nj-hdr-muted)}
+html[data-thema] .footbar .stat b{color:var(--nj-hdr-ink)}
+.footbar .toggle svg{flex:0 0 auto}
+
+/* ----- Menu (Meer) ----- */
+html[data-thema] .sheet{background:#F4F6F9;padding:0 16px 28px;padding-bottom:max(28px, env(safe-area-inset-bottom))}
+html[data-thema] .sheet .grip{background:#CBD3DE;margin:10px auto 6px}
+html[data-thema] .sheet h3.sheet-kop{background:#F4F6F9;border-bottom:none;padding:6px 2px 4px;margin:0;font-size:22px;font-weight:800;color:#0E1A2B;text-align:left}
+html[data-thema] .sheet #sheetSluit{background:#E6EBF2;color:#0E1A2B;min-height:40px;border-radius:12px}
+.sheet .nj-sheet-label{margin:16px 4px 6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5A6A7E}
+.sheet .nj-sheet-groep{background:#fff;border:1px solid #E2E7EE;border-radius:16px;overflow:hidden}
+html[data-thema] .sheet .nj-sheet-groep button.action{background:none;border:none;border-bottom:1px solid #EDF1F5;border-radius:0;margin:0;padding:10px 14px;min-height:58px;
+  font-size:15px;font-weight:600;color:#0E1A2B;gap:12px}
+html[data-thema] .sheet .nj-sheet-groep button.action:last-child{border-bottom:none}
+html[data-thema] .sheet .nj-sheet-groep button.action:active{background:#F1F4F8}
+html[data-thema] .sheet button.action .ic{width:38px;height:38px;border-radius:11px;background:#E8F0FB;color:#0B63CE;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+html[data-thema] .sheet button.action.danger{color:#B42318}
+html[data-thema] .sheet button.action.danger .ic{background:#FDECEC;color:#B42318}
+html[data-thema] .sheet .info{color:#5A6A7E;padding:10px 4px 0}
+html[data-thema] .sheet .apikey-form{margin:8px 0 0}
 </style>
 <script>
 // Offline service worker
@@ -1040,7 +1192,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
       <div class="crumb" id="crumb">—</div>
       <h1 id="title">—</h1>
     </div>
-    <button class="menu" id="menuBtn" aria-label="Menu">⋮</button>
+    <button class="menu" id="menuBtn" aria-label="Menu"><span data-nj-ic="meer" data-nj-s="22" style="display:flex"></span></button>
   </div>
   <div class="progress-wrap">
     <div class="pbar"><div class="pfill" id="pfill"></div></div>
@@ -1054,55 +1206,45 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 </header>
 <main id="main"></main>
 <div class="footbar">
-  <button class="toggle home-btn" id="homeBtnFoot">🏠 Home</button>
+  <button class="toggle home-btn" id="homeBtnFoot"><span data-nj-ic="home" data-nj-s="18" style="display:flex"></span>Home</button>
   <div class="stat" id="footstat">—</div>
   <button class="toggle on" id="hideToggle">
-    <span id="eyeicon">🙈</span><span id="eyetxt">Verberg</span>
+    <span id="eyeicon" style="display:flex"></span><span id="eyetxt">Verberg</span>
   </button>
 </div>
+<nav class="tabbar" id="tabbar" aria-label="Hoofdmenu">
+  <button type="button" data-tab="home"><span class="nj-tab-ic" data-nj-ic="home" data-nj-s="22"></span>Vandaag</button>
+  <button type="button" data-tab="tab_bezorgen"><span class="nj-tab-ic" data-nj-ic="pakket" data-nj-s="22"></span>Bezorgen</button>
+  <button type="button" data-tab="tab_geld"><span class="nj-tab-ic" data-nj-ic="geld" data-nj-s="22"></span>Geld</button>
+  <button type="button" data-tab="tab_bijhouden"><span class="nj-tab-ic" data-nj-ic="grafiek" data-nj-s="22"></span>Bijhouden</button>
+  <button type="button" data-tab="meer"><span class="nj-tab-ic" data-nj-ic="meer" data-nj-s="22"></span>Meer</button>
+</nav>
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet">
   <div class="grip"></div>
-  <h3 class="sheet-kop"><span>Menu</span><button id="sheetSluit" type="button" aria-label="Sluiten">✕ Sluiten</button></h3>
-  <button class="action" id="loadPdfBtn">
-    <span class="ic">📄</span><span>Nieuwe looplijst (PDF) inladen</span>
-  </button>
-  <button class="action" id="exportPdfBtn">
-    <span class="ic">📄</span><span>Looplijst exporteren als PDF</span>
-  </button>
-  <button class="action" id="themaBtn">
-    <span class="ic">🎨</span><span>Thema: <b id="themaTxt">Auto</b></span>
-  </button>
-  <button class="action" id="syncNuBtn">
-    <span class="ic">☁️</span><span>Synchroniseren <small id="syncStatusTxt" style="opacity:.6;margin-left:6px"></small></span>
-  </button>
-  <button class="action" id="syncInfoBtn">
-    <span class="ic">🔍</span><span>Sync-info &amp; looplijst afdwingen</span>
-  </button>
-  <button class="action" id="exportBtn">
-    <span class="ic">💾</span><span>Voortgang exporteren (backup)</span>
-  </button>
-  <button class="action" id="importBtn">
-    <span class="ic">📥</span><span>Voortgang importeren</span>
-  </button>
-  <button class="action danger" id="resetBtn">
-    <span class="ic">🔄</span><span>Alle vinkjes wissen</span>
-  </button>
-  <button class="action" id="reorderBtn">
-    <span class="ic">↕️</span><span>Volgorde wijken aanpassen</span>
-  </button>
-  <button class="action" id="pakkenBtn">
-    <span class="ic">📦</span><span>Pakken maken (eind → begin)</span>
-  </button>
-  <button class="action" id="pdfDoelBtn">
-    <span class="ic">📋</span><span>Modules aan/uit voor huidige PDF</span>
-  </button>
-  <button class="action" id="apiKeyBtn">
-    <span class="ic">🔑</span><span>API-sleutel voor muntherkenning</span>
-  </button>
-  <button class="action" id="forceUpdateBtn">
-    <span class="ic">⬆️</span><span>Nieuwste versie ophalen (app verversen)</span>
-  </button>
+  <h3 class="sheet-kop"><span>Meer</span><button id="sheetSluit" type="button" aria-label="Sluiten">Sluiten</button></h3>
+  <div class="nj-sheet-label">Looplijst</div>
+  <div class="nj-sheet-groep">
+    <button class="action" id="loadPdfBtn"><span class="ic" data-nj-ic="inladen"></span><span>Nieuwe looplijst (PDF) inladen</span></button>
+    <button class="action" id="exportPdfBtn"><span class="ic" data-nj-ic="pdf"></span><span>Looplijst exporteren als PDF</span></button>
+    <button class="action" id="pdfDoelBtn"><span class="ic" data-nj-ic="schakel"></span><span>Modules aan/uit voor huidige PDF</span></button>
+    <button class="action" id="reorderBtn"><span class="ic" data-nj-ic="volgorde"></span><span>Volgorde wijken aanpassen</span></button>
+    <button class="action" id="pakkenBtn"><span class="ic" data-nj-ic="pakket"></span><span>Pakken maken (eind → begin)</span></button>
+    <button class="action danger" id="resetBtn"><span class="ic" data-nj-ic="wis"></span><span>Alle vinkjes wissen</span></button>
+  </div>
+  <div class="nj-sheet-label">Synchroniseren &amp; back-up</div>
+  <div class="nj-sheet-groep">
+    <button class="action" id="syncNuBtn"><span class="ic" data-nj-ic="wolk"></span><span>Synchroniseren <small id="syncStatusTxt" style="opacity:.6;margin-left:6px"></small></span></button>
+    <button class="action" id="syncInfoBtn"><span class="ic" data-nj-ic="zoek"></span><span>Sync-info &amp; looplijst afdwingen</span></button>
+    <button class="action" id="exportBtn"><span class="ic" data-nj-ic="uitvoer"></span><span>Voortgang exporteren (backup)</span></button>
+    <button class="action" id="importBtn"><span class="ic" data-nj-ic="inladen"></span><span>Voortgang importeren</span></button>
+  </div>
+  <div class="nj-sheet-label">App</div>
+  <div class="nj-sheet-groep">
+    <button class="action" id="themaBtn"><span class="ic" data-nj-ic="thema"></span><span>Thema: <b id="themaTxt">Auto</b></span></button>
+    <button class="action" id="apiKeyBtn"><span class="ic" data-nj-ic="sleutel"></span><span>API-sleutel voor muntherkenning</span></button>
+    <button class="action" id="forceUpdateBtn"><span class="ic" data-nj-ic="ververs"></span><span>Nieuwste versie ophalen (app verversen)</span></button>
+  </div>
   <div class="info" id="appVersionInfo" style="margin-top:-4px;margin-bottom:10px"></div>
   <div id="apiKeyForm" class="apikey-form" style="display:none">
     <label>Anthropic API-sleutel (begint met "sk-ant-")</label>
@@ -1246,7 +1388,270 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-15.2';
+const APP_VERSION = '2026-11-15.3';
+/* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
+var NJ_IC = {
+  home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
+  pakket:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  geld:'<path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1"/>',
+  grafiek:'<path d="M6 20v-7"/><path d="M12 20V8"/><path d="M18 20V4"/>',
+  meer:'<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
+  volgorde:'<path d="M7 3v18"/><path d="M3 7l4-4 4 4"/><path d="M17 21V3"/><path d="M13 17l4 4 4-4"/>',
+  kalender:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>',
+  lijst:'<path d="M3 5l2 2 4-4"/><path d="M3 13l2 2 4-4"/><path d="M13 6h8"/><path d="M13 14h8"/><path d="M13 20h8"/>',
+  krant:'<path d="M4 4h13v16H6a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><path d="M8 8h5"/><path d="M8 12h5"/><path d="M8 16h5"/>',
+  kaart:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/>',
+  segment:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  euro:'<path d="M18 7a7 7 0 1 0 0 10"/><path d="M4 10h10"/><path d="M4 14h10"/>',
+  bonus:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/>',
+  procent:'<path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  cadeau:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  klok:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  fiets:'<circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l4-8h5l3 8"/><path d="M10 9L8.5 6H7"/><path d="M15 9l-3 8"/>',
+  klacht:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v4"/><path d="M12 14h.01"/>',
+  mutatie:'<path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/>',
+  archief:'<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>',
+  pijl:'<path d="M9 6l6 6-6 6"/>',
+  terug:'<path d="M15 6l-6 6 6 6"/>',
+  pdf:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
+  inladen:'<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/>',
+  uitvoer:'<path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 21h16"/>',
+  thema:'<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  wolk:'<path d="M17.5 19H7a5 5 0 1 1 1.5-9.8A6 6 0 0 1 20 11.5a4 4 0 0 1-2.5 7.5z"/>',
+  zoek:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  wis:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/>',
+  schakel:'<path d="M4 6h9"/><path d="M19 6h1"/><circle cx="16" cy="6" r="2.5"/><path d="M4 18h3"/><path d="M13 18h7"/><circle cx="10" cy="18" r="2.5"/>',
+  sleutel:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2"/><path d="M16 7l3 3"/><path d="M19 4l2 2"/>',
+  ververs:'<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/>',
+  oog:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  oogdicht:'<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  start:'<path d="M7 4l12 8-12 8z" fill="currentColor"/>'
+};
+function njIco(n, s, sw){
+  s = s || 20;
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(NJ_IC[n]||'')+'</svg>';
+}
+function njEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+// Welke schermen horen bij welke tab, en waar staat de tabbalk
+var NJ_HUBS = ['tab_bezorgen','tab_geld','tab_bijhouden'];
+var NJ_MET_TABBAR = ['segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km','vergoeding'];
+var NJ_TAB_VAN = {
+  home:'home',
+  tab_bezorgen:'tab_bezorgen', route:'tab_bezorgen', looplijst:'tab_bezorgen', krant:'tab_bezorgen', order:'tab_bezorgen',
+  straten:'tab_bezorgen', kaart:'tab_bezorgen', segment:'tab_bezorgen', wijkenmenu:'tab_bezorgen',
+  tab_geld:'tab_geld', vergoeding:'tab_geld', vergoedingmenu:'tab_geld', bonus:'tab_geld', promillageperiode:'tab_geld', kerst:'tab_geld',
+  tab_bijhouden:'tab_bijhouden', tijd:'tab_bijhouden', km:'tab_bijhouden', klachten:'tab_bijhouden', mutaties:'tab_bijhouden',
+  jaararchief:'tab_bijhouden', agendahoofd:'tab_bijhouden'
+};
+var njLaatsteTab = 'home';
+function njTopTerug(back){ back.classList.remove('hidden'); back.innerHTML = njIco('terug', 22, 2.4); back.setAttribute('aria-label','Terug'); }
+function njIsHub(m){ return NJ_HUBS.indexOf(m) >= 0; }
+function njMetTabbar(m){ return m === 'home' || njIsHub(m) || NJ_MET_TABBAR.indexOf(m) >= 0; }
+
+function njZetChrome(){
+  var m = view.mode;
+  var hub = (m === 'home' || njIsHub(m));
+  document.body.classList.toggle('nj-hub', hub);
+  document.body.classList.toggle('nj-tabs', njMetTabbar(m));
+  var tab = NJ_TAB_VAN[m] || '';
+  document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
+    var aan = b.getAttribute('data-tab') === tab;
+    b.classList.toggle('on', aan);
+    if(aan) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+}
+function njTerugNaarTab(){
+  view = {mode: njLaatsteTab || 'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
+  render();
+}
+function njGaNaarTab(t){
+  if(t === 'meer'){ openSheet(); return; }
+  if(t === 'home') goHome();
+  else { view = {mode:t, level:null, wijk:null, ronde:null, straat:null, krant:null}; render(); }
+  var mn = document.getElementById('main'); if(mn) mn.scrollTop = 0;
+}
+
+// Alle onderdelen van de app op één plek (titel, uitleg, en waar je heen gaat)
+function njModules(){
+  var M = {};
+  var ga = function(v){ return function(){ view = v; syncModeButtons(); render(); }; };
+  var dag = dagVanLooplijst();
+  var totaal = 0;
+  DATA.forEach(function(w){ w.rondes.forEach(function(r){ r.straten.forEach(function(s){ totaal += s.adressen.length; }); }); });
+  var totaalAangevinkt = Object.values(volgordeVink).reduce(function(s,arr){ return s+(arr||[]).length; }, 0);
+
+  M.order = {ic:'volgorde', titel:'Volgorde & bezorgen', actief:isModeActief('order'),
+    sub: totaalAangevinkt>0 ? totaalAangevinkt+' adressen aangevinkt voor vandaag' : 'Vink adressen aan in jouw looproute',
+    go: ga({mode:'order',level:'wijk',wijk:null,ronde:null,straat:null,krant:null})};
+  M.route = {ic:'kalender', titel:dag || 'Route', sub:totaal+' adressen', actief:isModeActief('route'),
+    go: ga({mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null})};
+  M.looplijst = {ic:'lijst', titel:'Looplijst', sub:'Afvinken per adres', actief:isModeActief('looplijst'),
+    go: ga({mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null})};
+  var krantSet = new Set();
+  DATA.forEach(function(w){ w.rondes.forEach(function(r){ r.straten.forEach(function(s){ s.adressen.forEach(function(a){ krantSet.add(a.prod); }); }); }); });
+  M.krant = {ic:'krant', titel:'Per krant', sub:krantSet.size+' krantensoorten', actief:isModeActief('krant'),
+    go: ga({mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null})};
+  M.kaart = {ic:'kaart', titel:'Wijkenkaart', sub:'Kaart + navigeren', actief:true, go: ga({mode:'kaart',level:null})};
+  M.segment = {ic:'segment', titel:'Segmenten', sub:'Wijkindeling per segment · exporteren', actief:true, go: ga({mode:'segment',level:null})};
+
+  // Kerstfooi
+  var kaartTotaal = 0, fooiTot = {totaal:0};
+  try{ DATA.forEach(function(w,wi){ w.rondes.forEach(function(r,ri){ r.straten.forEach(function(s,si){ kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length; }); }); }); }catch(e){}
+  try{ fooiTot = fooiTotaal(); }catch(e){}
+  M.kerst = {ic:'cadeau', titel:'Kerstfooi', sub:kaartTotaal+' brievenbussen', waarde: fooiTot.totaal>0 ? formatEuro(fooiTot.totaal) : '',
+    actief:isModeActief('kerst'), go:function(){ toonKerstKeuzePopup(); }};
+
+  // Vergoeding
+  var vergoedingTotaal = 0;
+  DATA.forEach(function(w){ w.rondes.forEach(function(r){ var code = tariefPerRonde[w.wijk+'|'+r.ronde]; if(code && tariefcodes[code]) vergoedingTotaal += tariefcodes[code].bedrag; }); });
+  var vergNieuwSinds = parseInt(localStorage.getItem('looplijst_v23_nieuwePeriodeSinds')) || 0;
+  var vergIsNieuw = vergNieuwSinds > 0 && (Date.now() - vergNieuwSinds) < 14*86400000;
+  var vergSub = vergoedingPeriode ? 'Periode '+vergoedingPeriode.label : (vergoedingTotaal > 0 ? formatEuro(vergoedingTotaal) : 'DPG tarieven');
+  M.vergoeding = {ic:'euro', titel:'Vergoeding', badge: vergIsNieuw ? 'Nieuw' : '', sub:vergSub, actief:true,
+    go: ga({mode:'vergoeding', level:'overzicht'})};
+
+  // Bonus (klachtenpromillage 8 weken)
+  M.bonus = {ic:'bonus', titel:'Bonus', sub:'Klachtenpromillage · 8 weken', actief:true, go: ga({mode:'bonus'})};
+  try{
+    var bi = JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING));
+    if(bi && bi.start){
+      var bv = berekenBonusVenster(bi.start);
+      M.bonus.waarde = bv.promillage.toFixed(2).replace('.',',')+'‰';
+      M.bonus.toon = bv.onderGrens ? 'ok' : 'let';
+      M.bonus.sub = bv.onderGrens ? 'Onder 4‰ · 8 weken' : 'Boven 4‰ · let op';
+    }
+  }catch(e){}
+
+  // Promillage per periode
+  M.promillage = {ic:'procent', titel:'Promillage per periode', sub:'Nog geen data', actief:true, go: ga({mode:'promillageperiode'})};
+  try{
+    var ppLijst = promillagePerVierWekelijksePeriode();
+    var ppHuidig = ppLijst.find(function(p){ return p.isHuidig; });
+    if(ppHuidig && ppHuidig.promillage !== null){ M.promillage.sub = 'Deze periode'; M.promillage.waarde = ppHuidig.promillage.toFixed(2).replace('.',',')+'‰'; }
+    else if(ppLijst.length){ M.promillage.sub = ppLijst.length+' periode'+(ppLijst.length===1?'':'s'); }
+  }catch(e){}
+
+  // Klachten, mutaties, jaararchief
+  var nKlacht = 0; try{ nKlacht = laadKlachtenLog().length; }catch(e){}
+  M.klachten = {ic:'klacht', titel:'Klachten', sub:'Per periode', waarde: nKlacht+' totaal', actief:true, go: ga({mode:'klachten'})};
+  var mStart = 0, mStop = 0;
+  try{ var ml = laadMutatiesLog(); mStart = ml.filter(function(m){ return m.type==='START'; }).length; mStop = ml.filter(function(m){ return m.type==='STOP'; }).length; }catch(e){}
+  M.mutaties = {ic:'mutatie', titel:'Mutaties', sub:'Start '+mStart+' · Stop '+mStop, actief:true, go: ga({mode:'mutaties'})};
+  var jKand = [], jAant = 0;
+  try{ jKand = jaarAfrondenKandidaten(); jAant = Object.keys(laadJaarArchief()).length; }catch(e){}
+  M.jaararchief = {ic:'archief', titel:'Jaararchief', badge: jKand.length ? jKand.length+' te archiveren' : '',
+    sub: jAant ? jAant+' jaar gearchiveerd' : 'Nog niets gearchiveerd', actief:true, go: ga({mode:'jaararchief'})};
+
+  // Tijdregistratie
+  var ts = tijdLaadHuidigeSessie();
+  var tijdStatus = (ts && ts.start && !ts.eind) ? (ts.pauzeStart ? 'Pauze actief' : 'Bezig — tik om te stoppen')
+    : (ts && ts.eind) ? 'Klaar — '+tijdFormatDuur(ts.nettoMs) : 'Tik om te starten';
+  M.tijd = {ic:'klok', titel:'Tijdregistratie', sub:tijdStatus, actief:true, go: ga({mode:'tijd'})};
+
+  // Kilometers
+  M.km = {ic:'fiets', titel:'Kilometers', sub:'Werk en privé bijhouden', actief:true, go: ga({mode:'km'})};
+  try{
+    var kd = kmLaad(), kmM = new Date().toISOString().slice(0,7);
+    var mr = kd.ritten.filter(function(r){ return String(r.datum).slice(0,7) === kmM; });
+    if(mr.length){
+      M.km.sub = 'Deze maand: werk '+kmFmt(kmSom(mr,'werk'))+' · privé '+kmFmt(kmSom(mr,'prive'))+' km';
+    }
+  }catch(e){}
+  return M;
+}
+
+function njRij(it){
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nj-rij';
+  b.innerHTML = '<span class="nj-ico">'+njIco(it.ic, 20)+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(it.titel)+(it.badge ? ' <span class="nj-badge">'+njEsc(it.badge)+'</span>' : '')+'</span>'+
+    (it.sub ? '<span class="nj-rij-sub">'+njEsc(it.sub)+'</span>' : '')+'</span>'+
+    (it.waarde ? '<span class="nj-rij-waarde'+(it.toon ? ' '+it.toon : '')+'">'+njEsc(it.waarde)+'</span>' : '')+
+    '<span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
+  if(it.actief === false){ b.disabled = true; }
+  else b.onclick = it.go;
+  return b;
+}
+function njLijst(label, items){
+  var sec = document.createElement('section');
+  sec.className = 'nj-sectie';
+  if(label) sec.innerHTML = '<h2 class="nj-label">'+njEsc(label)+'</h2>';
+  var box = document.createElement('div');
+  box.className = 'nj-lijst';
+  items.forEach(function(it){ if(it) box.appendChild(njRij(it)); });
+  sec.appendChild(box);
+  return sec;
+}
+function njGroteKnop(it){
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nj-groot-knop';
+  b.innerHTML = '<span class="nj-groot-ico">'+njIco(it.ic, 24)+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-groot-titel">'+njEsc(it.titel)+'</span><span class="nj-groot-sub">'+njEsc(it.sub)+'</span></span>'+
+    '<span class="nj-chev">'+njIco('pijl', 22, 2.4)+'</span>';
+  if(it.actief === false) b.disabled = true; else b.onclick = it.go;
+  return b;
+}
+function njUurMin(ms){
+  var m = Math.floor((ms||0)/60000);
+  return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')+' u';
+}
+function njKlok(ts){ return new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
+
+// De drie tab-pagina's: Bezorgen, Geld, Bijhouden
+function renderNjHub(){
+  var t = view.mode;
+  njLaatsteTab = t;
+  var main = document.getElementById('main');
+  document.getElementById('back').classList.add('hidden');
+  var crumb = document.getElementById('crumb'), title = document.getElementById('title');
+  main.innerHTML = '';
+  var M = njModules();
+  var wrap = document.createElement('div');
+  wrap.className = 'nj-pagina scherm-fade';
+  if(t === 'tab_bezorgen'){
+    crumb.textContent = [dagVanLooplijst(), meta.date].filter(Boolean).join(' · ');
+    title.textContent = 'Bezorgen';
+    wrap.appendChild(njGroteKnop(M.order));
+    wrap.appendChild(njLijst('Lijsten', [M.route, M.looplijst, M.krant]));
+    wrap.appendChild(njLijst('Kaart & wijken', [M.kaart, M.segment]));
+    wrap.appendChild(njLijst('Voorbereiden', [
+      {ic:'volgorde', titel:'Volgorde wijken aanpassen', sub:'Geldt voor route, krant en kaart', actief:true, go:function(){ document.getElementById('reorderBtn').click(); }},
+      {ic:'pakket', titel:'Pakken maken', sub:'Van eind naar begin verdelen', actief:true, go:function(){ document.getElementById('pakkenBtn').click(); }},
+      {ic:'inladen', titel:'Nieuwe looplijst (PDF) inladen', sub: meta.date ? 'Nu ingeladen: '+meta.date : 'Nog geen looplijst', actief:true, go:function(){ document.getElementById('loadPdfBtn').click(); }}
+    ]));
+  } else if(t === 'tab_geld'){
+    crumb.textContent = vergoedingPeriode ? 'Periode '+vergoedingPeriode.label : 'Vergoeding & bonus';
+    title.textContent = 'Geld';
+    wrap.appendChild(njLijst('', [M.vergoeding, M.bonus, M.promillage, M.kerst]));
+    var sec = document.createElement('section');
+    sec.className = 'nj-sectie';
+    sec.innerHTML = '<h2 class="nj-label">Tijd &amp; verdienste deze periode</h2>';
+    bouwTijdEnAgendaSectie(sec, 'periode');
+    wrap.appendChild(sec);
+  } else {
+    crumb.textContent = 'Tijd, kilometers & klachten';
+    title.textContent = 'Bijhouden';
+    wrap.appendChild(njLijst('', [M.tijd, M.km]));
+    wrap.appendChild(njLijst('Klachten & adressen', [M.klachten, M.mutaties]));
+    wrap.appendChild(njLijst('Archief', [M.jaararchief]));
+  }
+  main.appendChild(wrap);
+  updateHeaderProgress();
+}
+
+// Tabbalk-knoppen en iconen in de vaste HTML vullen
+document.querySelectorAll('[data-nj-ic]').forEach(function(el){
+  el.innerHTML = njIco(el.getAttribute('data-nj-ic'), parseInt(el.getAttribute('data-nj-s'),10) || 20);
+});
+document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
+  b.onclick = function(){ njGaNaarTab(b.getAttribute('data-tab')); };
+});
+/* ===================== einde NIEUW JASJE (logica) ===================== */
+
 const DEFAULT_DATA = [{"wijk": "Oldenzaal Oost", "rondes": [{"ronde": "Centrum", "straten": [{"naam": "Tulpstraat", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}]}, {"naam": "Nagelstraat", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "38", "prod": "NRC", "schema": true}, {"nr": "42", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}]}, {"naam": "Noordwal", "adressen": [{"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "98", "prod": "TT OL"}]}, {"naam": "Deurningerstraat", "adressen": [{"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "26 B", "prod": "TEL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "34 01", "prod": "TT OL"}, {"nr": "34 02", "prod": "NRC", "schema": true}, {"nr": "34 2", "prod": "TT OL"}, {"nr": "34 21", "prod": "TT OL"}, {"nr": "34 AP11", "prod": "TT OL"}, {"nr": "34 AP12", "prod": "TT OL"}, {"nr": "34 APP 2", "prod": "VK", "schema": true}]}, {"naam": "Kortestraat", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Steenstraat", "adressen": [{"nr": "29", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TEL", "naam": "Hesselink…", "schema": true}, {"nr": "41", "prod": "TT OL", "naam": "Hesselink"}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "NRC", "naam": "Beerlage", "schema": true}, {"nr": "49", "prod": "TT OL", "naam": "Platvoet", "start": true}]}, {"naam": "Prins Hendrikstraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TEL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "71", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TT OL"}]}, {"naam": "Pastoriestraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL", "schema": true}, {"nr": "81", "prod": "TT OL"}, {"nr": "83", "prod": "TT OL"}, {"nr": "87", "prod": "TT OL"}, {"nr": "91", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL", "schema": true}]}, {"naam": "Beatrixstraat", "adressen": [{"nr": "163", "prod": "TT OL"}]}, {"naam": "Wilhelminastraat", "adressen": [{"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TEL"}, {"nr": "44", "prod": "TEL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TEL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}, {"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "naam": "Wulfften …"}, {"nr": "10", "prod": "VK", "naam": "Palthe", "schema": true}, {"nr": "14", "prod": "TT OL"}, {"nr": "14 C", "prod": "TT OL"}, {"nr": "14 D", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}]}, {"naam": "Gasthuisstraat", "adressen": [{"nr": "2 b", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "14 F", "prod": "TT OL", "naam": "Backhuijs", "schema": true}, {"nr": "14 F", "prod": "VK", "naam": "Backhuys"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}]}, {"naam": "Ganzenmarkt", "adressen": [{"nr": "8", "prod": "NRC"}, {"nr": "10", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TEL", "naam": "Krakers"}, {"nr": "38", "prod": "TT OL", "naam": "Krakers-v…"}, {"nr": "40", "prod": "TT OL"}, {"nr": "27", "prod": "TEL", "naam": "Breuken -…", "schema": true}, {"nr": "27", "prod": "TT OL", "naam": "Hoogen"}, {"nr": "31", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Schoolstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TR", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "15", "prod": "VK", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "VK", "schema": true}, {"nr": "47", "prod": "TT OL"}, {"nr": "59", "prod": "TT OL"}, {"nr": "61", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}]}, {"naam": "Kloosterstraat", "adressen": [{"nr": "24", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "30", "prod": "NRC"}, {"nr": "42", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "102", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}]}, {"naam": "Zuidwal", "adressen": [{"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}]}, {"naam": "Boterstraat", "adressen": [{"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}]}, {"naam": "St. Plechelmusplein", "adressen": [{"nr": "9 A", "prod": "TT OL", "schema": true}, {"nr": "9 b", "prod": "TT OL"}, {"nr": "9 C", "prod": "TEL"}, {"nr": "9 C", "prod": "TT OL"}, {"nr": "9 D", "prod": "TEL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}]}]}, {"ronde": "Vierkant (Titus)", "straten": [{"naam": "Berkstraat", "adressen": [{"nr": "9", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL", "schema": true}]}, {"naam": "Titus Brandsmastraat", "adressen": [{"nr": "5", "prod": "TT OL"}, {"nr": "5", "prod": "VK", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "33", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "HFD", "naam": "L.H. van …"}, {"nr": "49", "prod": "TEL", "naam": "Woning"}, {"nr": "49", "prod": "TT OL", "naam": "Woning"}, {"nr": "49", "prod": "VK", "naam": "Woning", "schema": true}]}, {"naam": "Inslagstraat", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "NRC", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}]}, {"naam": "Lyceumstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "VK", "naam": "Twents Ca…"}, {"nr": "46", "prod": "TT OL"}, {"nr": "52", "prod": "TT OL"}, {"nr": "54", "prod": "TT OL"}]}, {"naam": "Carmelstraat", "adressen": [{"nr": "31", "prod": "TT OL", "naam": "Boerrigter"}, {"nr": "31", "prod": "TT OL", "naam": "Assink"}, {"nr": "31", "prod": "TT OL", "naam": "Faas-Steur"}, {"nr": "31", "prod": "TT OL", "naam": "Aa"}, {"nr": "31 01", "prod": "TT OL"}, {"nr": "31 -6", "prod": "TT OL"}, {"nr": "31 K5", "prod": "TT OL"}, {"nr": "31 K9", "prod": "TT OL"}, {"nr": "31 k12", "prod": "TT OL"}, {"nr": "31 St.7", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Spoorstraat", "adressen": [{"nr": "12", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Beukersmolen", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TEL"}, {"nr": "79", "prod": "TT OL", "schema": true}]}, {"naam": "Beukplein", "adressen": [{"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}]}, {"naam": "Sparstraat", "adressen": [{"nr": "124", "prod": "TT OL"}, {"nr": "128", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "78", "prod": "VK", "schema": true}, {"nr": "80", "prod": "TT OL"}, {"nr": "84", "prod": "TT OL", "schema": true}, {"nr": "40", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "48", "prod": "TT OL", "naam": "Hurenkamp"}, {"nr": "48", "prod": "VK", "naam": "hurenkamp", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "55", "prod": "TT OL"}, {"nr": "55", "prod": "VK", "schema": true}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "57", "prod": "VK", "schema": true}, {"nr": "63", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL", "schema": true}, {"nr": "99", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "NRC", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "TT OL", "naam": "Holsheime…"}, {"nr": "49", "prod": "NRC", "schema": true}]}, {"naam": "Eikstraat", "adressen": [{"nr": "7", "prod": "TT OL"}]}, {"naam": "Kastanjestraat", "adressen": [{"nr": "50", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "44", "prod": "TT OL"}, {"nr": "46", "prod": "NRC", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "HFD", "schema": true}, {"nr": "37", "prod": "TT OL", "schema": true}, {"nr": "35", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "31", "prod": "VK", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}]}]}]}, {"wijk": "Oldenzaal Mariahof", "rondes": [{"ronde": "Mariahof", "straten": [{"naam": "Beatrixstraat", "adressen": [{"nr": "64", "prod": "NRC", "naam": "Vloedgrav…"}, {"nr": "64", "prod": "TT OL", "naam": "St Mariah…"}, {"nr": "64", "prod": "TT OL", "naam": "Wellink"}, {"nr": "64 0.25", "prod": "TT OL"}, {"nr": "64 103", "prod": "TT OL"}, {"nr": "64 1.06", "prod": "TT OL", "schema": true}, {"nr": "64 2.19", "prod": "TT OL"}, {"nr": "64 027", "prod": "TT OL", "naam": "Linde"}, {"nr": "64 027", "prod": "TT OL", "naam": "Egberts"}, {"nr": "64 109", "prod": "TT OL"}, {"nr": "64 124", "prod": "TT OL"}, {"nr": "64 202", "prod": "TT OL"}, {"nr": "64 A28", "prod": "TT OL"}, {"nr": "64 A122", "prod": "TT OL"}, {"nr": "64 A208", "prod": "TT OL"}, {"nr": "64 K 100", "prod": "TT OL"}, {"nr": "64 K.29", "prod": "TT OL"}, {"nr": "64 K112", "prod": "TT OL"}, {"nr": "64 K121", "prod": "TT OL"}, {"nr": "64 k200", "prod": "TT OL"}, {"nr": "64 K201", "prod": "TT OL"}, {"nr": "64 K211", "prod": "TT OL"}, {"nr": "64 K212", "prod": "TT OL"}, {"nr": "64 K218", "prod": "TT OL"}, {"nr": "64 k223", "prod": "TT OL", "schema": true}]}]}]}, {"wijk": "Oldenzaal-West", "rondes": [{"ronde": "De Essen", "straten": [{"naam": "Brem", "adressen": [{"nr": "49", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "62", "prod": "AD NL", "schema": true}, {"nr": "66", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TR"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}]}, {"naam": "Honingklaver", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Geelster", "adressen": [{"nr": "4", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL"}, {"nr": "66", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "96", "prod": "TT OL"}, {"nr": "104", "prod": "TT OL", "schema": true}, {"nr": "106", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}, {"nr": "110", "prod": "TT OL", "schema": true}, {"nr": "1", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TEL", "schema": true}]}, {"naam": "Look", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "27", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TEL", "schema": true}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "73", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}, {"nr": "81", "prod": "TT OL", "schema": true}, {"nr": "89", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL"}, {"nr": "99", "prod": "TT OL"}, {"nr": "103", "prod": "TT OL"}, {"nr": "107", "prod": "TT OL"}, {"nr": "113", "prod": "TT OL"}, {"nr": "115", "prod": "TT OL"}, {"nr": "117", "prod": "TT OL"}, {"nr": "119", "prod": "TT OL"}]}, {"naam": "Ootmarsumsedijk", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "NRC", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}]}, {"naam": "Weerselosestraat", "adressen": [{"nr": "73", "prod": "TT OL"}, {"nr": "79", "prod": "TT OL"}]}]}, {"ronde": "De Kampjes", "straten": [{"naam": "Saasvelderlaan", "adressen": [{"nr": "97", "prod": "TEL", "naam": "Wildeboer…"}, {"nr": "97", "prod": "TT OL", "naam": "Wildeboer"}]}, {"naam": "Telgenkamp", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TR", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "NRC", "schema": true}, {"nr": "12", "prod": "NRC"}, {"nr": "12", "prod": "VK"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "VK", "schema": true}, {"nr": "22", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "NRC", "schema": true}]}, {"naam": "Wijntjeskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "2", "prod": "VK", "schema": true}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "20", "prod": "TEL"}, {"nr": "21", "prod": "NRC", "schema": true}, {"nr": "22", "prod": "VK", "schema": true}, {"nr": "25", "prod": "NRC"}, {"nr": "25", "prod": "TT OL", "schema": true}]}, {"naam": "Waterhamskamp", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "naam": "Ter Huurne"}, {"nr": "12", "prod": "VK", "naam": "Huurne"}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL"}]}, {"naam": "Kruijskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "5", "prod": "VK"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "AD NL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "NRC"}, {"nr": "17", "prod": "TT OL", "schema": true}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "HFD", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "32", "prod": "VK"}, {"nr": "33", "prod": "AD NL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "naam": "Van Dijck"}, {"nr": "42", "prod": "VK", "naam": "dijck", "schema": true}, {"nr": "46", "prod": "TEL"}]}, {"naam": "Nijhuiskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TEL"}, {"nr": "17", "prod": "VK"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL", "schema": true}, {"nr": "32", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}]}, {"naam": "Wortkamp", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "3", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "naam": "Bosma"}, {"nr": "7", "prod": "VK", "naam": "Borghorst…"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "VK"}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TR", "naam": "Marle - A…"}, {"nr": "23", "prod": "TT OL", "naam": "Marle"}, {"nr": "24", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "33", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Hulsbekenkamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "8", "prod": "NRC", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "23", "prod": "NRC", "naam": "Lage Vent…"}, {"nr": "23", "prod": "TT OL", "naam": "Venterink"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "25", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "34", "prod": "VK"}, {"nr": "36", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "VK", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}, {"nr": "44", "prod": "VK", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "56", "prod": "TT OL", "schema": true}]}, {"naam": "Marellenkamp", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "13", "prod": "TR", "schema": true}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "VK"}, {"nr": "22", "prod": "TEL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "24", "prod": "NRC"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}]}, {"naam": "Bolkskamp", "adressen": [{"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "schema": true}, {"nr": "43", "prod": "NRC", "schema": true}, {"nr": "43", "prod": "TR", "schema": true}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "VK", "schema": true}, {"nr": "52", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}]}]}, {"ronde": "Sportlaan", "straten": [{"naam": "Sportlaan", "adressen": [{"nr": "1", "prod": "NRC"}, {"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "10 A", "prod": "HFD", "naam": "Triple M …"}, {"nr": "10 A", "prod": "TT OL", "naam": "Schaepers"}, {"nr": "10 C", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL", "naam": "J. Koende…", "schema": true}, {"nr": "16", "prod": "TT OL", "naam": "Koenders"}, {"nr": "25", "prod": "NRC", "naam": "Droste", "schema": true}, {"nr": "25", "prod": "TT OL", "naam": "Brand"}, {"nr": "26", "prod": "HFD", "naam": "Bruijsten", "schema": true}, {"nr": "26", "prod": "TEL", "naam": "Bruijsten"}, {"nr": "26", "prod": "TT OL", "naam": "Kuiphuis …"}, {"nr": "27", "prod": "HFD", "schema": true}, {"nr": "27", "prod": "VK", "schema": true}, {"nr": "28", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "naam": "Wilbrink", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "naam": "Troost"}, {"nr": "32", "prod": "TT OL", "naam": "Bekhuis"}, {"nr": "33", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "39", "prod": "TEL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "HFD", "naam": "Willemsen", "schema": true}, {"nr": "46", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "54", "prod": "TT OL"}]}]}, {"ronde": "Graven Es", "straten": [{"naam": "Alpenlaan", "adressen": [{"nr": "2", "prod": "TT OL"}]}, {"naam": "Kretalaan", "adressen": [{"nr": "19", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL"}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL"}, {"nr": "62", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL", "schema": true}, {"nr": "69", "prod": "TT OL"}, {"nr": "70", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL", "schema": true}, {"nr": "75", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}]}, {"naam": "Rhodoslaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "12", "prod": "TT OL"}, {"nr": "9", "prod": "TEL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "14", "prod": "VK"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "naam": "Obdeijn"}, {"nr": "21", "prod": "VK", "naam": "Obdeyn"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}]}, {"naam": "Parnonlaan", "adressen": [{"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Corfulaan", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK"}]}, {"naam": "Delagoslaan", "adressen": [{"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "schema": true}, {"nr": "32", "prod": "TT OL"}]}, {"naam": "Samoslaan", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL", "schema": true}]}, {"naam": "Kassandralaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "23", "prod": "VK"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Deloslaan", "adressen": [{"nr": "4", "prod": "NRC", "schema": true}, {"nr": "4", "prod": "TR", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "4", "prod": "VK"}, {"nr": "5", "prod": "TR", "schema": true}, {"nr": "8", "prod": "TT OL"}]}, {"naam": "Koslaan", "adressen": [{"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}]}]}]}];
 const MAPPING = {"RONDE_MAPPING": {"brem": "De Essen", "look": "De Essen", "geelster": "De Essen", "honingklaver": "De Essen", "ootmarsumsedijk": "De Essen", "weerselosestraat": "De Essen", "kretalaan": "Graven Es", "koslaan": "Graven Es", "kassandralaan": "Graven Es", "delagoslaan": "Graven Es", "deloslaan": "Graven Es", "alpenlaan": "Graven Es", "rhodoslaan": "Graven Es", "corfulaan": "Graven Es", "samoslaan": "Graven Es", "parnonlaan": "Graven Es", "tulpstraat": "Centrum", "langestraat": "Centrum", "lariksstraat": "Vierkant (Titus)", "noordwal": "Centrum", "kloosterstraat": "Centrum", "boterstraat": "Centrum", "nagelstraat": "Centrum", "deurningerstraat": "Centrum", "st. plechelmusplein": "Centrum", "st plechelmusplein": "Centrum", "plechelmusplein": "Centrum", "ganzenmarkt": "Centrum", "gasthuisstraat": "Centrum", "schoolstraat": "Centrum", "wilhelminastraat": "Centrum", "beatrixstraat": "Centrum", "prins hendrikstraat": "Centrum", "pastoriestraat": "Centrum", "kortestraat": "Centrum", "steenstraat": "Centrum", "zuidwal": "Centrum", "beukersmolen": "Vierkant (Titus)", "berkstraat": "Vierkant (Titus)", "beukplein": "Vierkant (Titus)", "kastanjestraat": "Vierkant (Titus)", "eikstraat": "Vierkant (Titus)", "sparstraat": "Vierkant (Titus)", "carmelstraat": "Vierkant (Titus)", "spoorstraat": "Vierkant (Titus)", "lyceumstraat": "Vierkant (Titus)", "titus brandsmastraat": "Vierkant (Titus)", "inslagstraat": "Vierkant (Titus)", "wortkamp": "De Kampjes", "nijhuiskamp": "De Kampjes", "kruijskamp": "De Kampjes", "saasvelderlaan": "De Kampjes", "waterhamskamp": "De Kampjes", "bolkskamp": "De Kampjes", "telgenkamp": "De Kampjes", "wijntjeskamp": "De Kampjes", "marellenkamp": "De Kampjes", "hulsbekenkamp": "De Kampjes", "sportlaan": "Sportlaan", "de kalder": "De Thij", "het nardusboer": "De Thij", "vloedbeldlaan": "De Thij", "thijsniederweg": "De Thij", "hogenkampweg": "De Thij", "hunenveldlaan": "De Thij", "hunenbultweg": "De Thij", "hunenborglaan": "De Thij"}, "RONDE_VOLGORDE": ["De Essen", "Centrum", "Vierkant (Titus)", "Mariahof", "De Kampjes", "De Thij", "Sportlaan", "Graven Es"], "WIJK_VAN_RONDE": {"De Thij": "Oldenzaal-West", "De Essen": "Oldenzaal-West", "Centrum": "Oldenzaal Oost", "Vierkant (Titus)": "Oldenzaal Oost", "De Kampjes": "Oldenzaal-West", "Sportlaan": "Oldenzaal-West", "Graven Es": "Oldenzaal-West", "Mariahof": "Oldenzaal Mariahof"}, "WIJK_VOLGORDE": ["Oldenzaal Oost", "Oldenzaal Mariahof", "Oldenzaal-West"], "RONDE_MAPPING_BY_SECTIE": {"mariahof": {"beatrixstraat": "Mariahof"}}};
 
@@ -2530,7 +2935,7 @@ function prodPillsHTML(tel){
 
 function updateHeaderProgress(){
   let c = {done:0, total:0};
-  if(view.mode==='home'){
+  if(view.mode==='home' || njIsHub(view.mode)){
     let t=0,d=0;
     DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>s.adressen.forEach((a,ai)=>{
       t++; if(done[keyFor(wi,ri,si,ai)]) d++;
@@ -2673,7 +3078,7 @@ function updateDateBanner(){
   const datum = document.getElementById('dbDatum');
   const tijdEl = document.getElementById('dbTijd');
   if(!banner) return;
-  if(view.mode === 'home'){
+  if(view.mode === 'home' || njIsHub(view.mode)){
     banner.style.display = 'none';
     return;
   }
@@ -2691,14 +3096,14 @@ function updateDateBanner(){
         // Bezig
         const isPauze = !!s.pauzeStart;
         tijdEl.textContent = '▶ '+fmt(s.start)+(isPauze?' ⏸':'');
-        tijdEl.style.color = isPauze ? '#ffb74d' : '#a5d6a7';
+        tijdEl.className = isPauze ? 'pauze' : 'bezig';
       } else if(td.sessies && td.sessies.length>0){
         // Laatste sessie vandaag tonen
         const vandaag = new Date().toDateString();
         const laatste = td.sessies.find(s2=> new Date(s2.start).toDateString()===vandaag);
         if(laatste){
           tijdEl.textContent = fmt(laatste.start)+' – '+fmt(laatste.eind);
-          tijdEl.style.color = 'rgba(255,255,255,.75)';
+          tijdEl.className = '';
         } else {
           tijdEl.textContent = '';
         }
@@ -2714,14 +3119,16 @@ function updateBackKnop(){
   const footbar = document.querySelector('.footbar');
   const hideBtn = document.getElementById('hideToggle');
   const footstat = document.getElementById('footstat');
-  if(view.mode === 'home'){
+  njZetChrome();
+  if(view.mode === 'home' || njIsHub(view.mode)){
     back.classList.add('hidden');
     if(footbar) footbar.style.display = 'none';
     return;
   }
-  if(view.mode === 'vergoeding'){
+  if(njMetTabbar(view.mode)){
+    // losse schermen (tijd, km, vergoeding, bonus, ...): terug-pijl + tabbalk
     back.classList.remove('hidden');
-    back.innerHTML = (view.level === 'tarieven' || view.level === 'detail') ? '‹' : '🏠';
+    back.innerHTML = njIco('terug', 22, 2.4);
     back.setAttribute('aria-label', 'Terug');
     if(footbar) footbar.style.display = 'none';
     return;
@@ -2737,7 +3144,7 @@ function updateBackKnop(){
   if(footstat) footstat.style.display = '';
   back.classList.remove('hidden');
   const isTop = (view.level === 'wijk');
-  back.innerHTML = isTop ? '🏠' : '‹';
+  back.innerHTML = isTop ? njIco('home', 20) : njIco('terug', 22, 2.4);
   back.setAttribute('aria-label', isTop ? 'Home' : 'Terug');
 }
 function render(){
@@ -2764,6 +3171,7 @@ function render(){
     DATA = DATA_ECHT; // buiten Kerstkaartjes altijd de echte, actuele looplijst
     kerstSessieNee = ''; // Kerstkaartjes verlaten: bij volgende keer openen weer vragen
   }
+  if(njIsHub(view.mode)) return renderNjHub();
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
@@ -2949,7 +3357,7 @@ function renderRoute(){
   const doneMap = done;
   const saveDoneMap = save;
   if(view.level==='wijk'){
-    back.classList.add('hidden');
+    njTopTerug(back);
     crumb.textContent='Looplijst · '+meta.date;
     title.textContent=meta.bezorger;
     const totaal={};
@@ -3473,7 +3881,7 @@ function renderStraten(){
   const crumb=document.getElementById('crumb');
   const title=document.getElementById('title');
   main.innerHTML='';
-  back.classList.add('hidden');
+  njTopTerug(back);
   crumb.textContent='Straten · '+(meta.date||'');
   title.textContent='Alle straten';
 
@@ -3537,7 +3945,7 @@ function renderKrant(){
   main.innerHTML='';
   if(view.level==='wijk'){
     // Laag 1: lijst van krant-types
-    back.classList.add('hidden');
+    njTopTerug(back);
     crumb.textContent='Looplijst · '+meta.date+' · per krant';
     title.textContent=meta.bezorger;
     const krs = kranten();
@@ -4343,7 +4751,7 @@ function renderKerst(){
   const title=document.getElementById('title');
   main.innerHTML='';
   if(view.level==='wijk'){
-    back.classList.add('hidden');
+    njTopTerug(back);
     crumb.textContent='🎄 Kerstkaartjes';
     title.textContent=meta.bezorger;
     // Totaalbox alle fooi
@@ -4937,10 +5345,11 @@ function renderKerst(){
 }
 
 // ===== Home-scherm: startpunt met grote keuze-knoppen =====
-function bouwTijdEnAgendaSectie(container){
+function bouwTijdEnAgendaSectie(container, deel){
+  // deel: 'periode' = alleen tijd+uurloon-kaart, 'agenda' = alleen de weekagenda, leeg = allebei
   // ===== Periode-tijd + uurloon kaart =====
   const periodeKaart = document.createElement('div');
-  periodeKaart.style.cssText = 'background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+  periodeKaart.className = 'nj-kaart';
 
   // Bereken totale netto tijd van alle sessies deze periode
   const tijdData = tijdLaadData();
@@ -5048,19 +5457,21 @@ function bouwTijdEnAgendaSectie(container){
   }
 
   periodeKaart.innerHTML = kaartHtml;
-  container.appendChild(periodeKaart);
+  if(deel !== 'agenda') container.appendChild(periodeKaart);
+  if(deel === 'periode') return;
 
 
   // Weekagenda met tijdregistratie per dag
   const agenda = document.createElement('div');
-  agenda.style.cssText = 'background:#fff;border-radius:18px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+  agenda.className = 'nj-agenda';
 
   const agHead = document.createElement('div');
-  agHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px';
-  agHead.innerHTML = '<div style="display:flex;align-items:center;gap:6px"><div style="font-size:13px;font-weight:800;color:var(--ink)">📅 Agenda · Weken</div></div>';
+  agHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 10px 4px 16px';
+  agHead.innerHTML = '<div style="font-size:15px;font-weight:800;color:#0E1A2B">Deze week</div>';
   const agToggle = document.createElement('button');
-  agToggle.style.cssText = 'border:none;background:none;color:var(--accent, #1565c0);font-size:11px;font-weight:800;padding:4px 6px;cursor:pointer';
-  agToggle.textContent = agendaToonAlleWeken ? 'Toon alleen deze week ▴' : 'Toon alle weken ▾';
+  agToggle.type = 'button';
+  agToggle.style.cssText = 'border:none;background:#E8F0FB;color:#0B63CE;font-size:12px;font-weight:800;padding:8px 12px;border-radius:99px;cursor:pointer;font-family:inherit';
+  agToggle.textContent = agendaToonAlleWeken ? 'Alleen deze week ▴' : 'Alle weken ▾';
   agToggle.onclick = ()=>{ agendaToonAlleWeken = !agendaToonAlleWeken; render(); };
   agHead.appendChild(agToggle);
   agenda.appendChild(agHead);
@@ -5147,19 +5558,19 @@ function bouwTijdEnAgendaSectie(container){
       const huidigDag = td2.huidig && new Date(td2.huidig.start).toDateString() === datumStr ? td2.huidig : null;
 
       const dagKnop = document.createElement('button');
-      const borderKleur = isVandaag ? 'var(--green)' : sessie || huidigDag ? '#bbf7d0' : 'var(--line)';
-      const bgKleur = isVandaag ? '#e8f0fe' : huidigDag ? '#fff9e6' : sessie ? '#f0faf4' : '#fff';
+      const borderKleur = isVandaag ? '#0B63CE' : sessie || huidigDag ? '#bbf7d0' : '#E2E7EE';
+      const bgKleur = isVandaag ? '#E8F0FB' : huidigDag ? '#fff9e6' : sessie ? '#f0faf4' : '#F7F9FB';
       dagKnop.style.cssText =
         'display:flex;flex-direction:column;align-items:center;padding:6px 3px;border-radius:10px;'+
         'border:2px solid '+borderKleur+';background:'+bgKleur+';cursor:pointer;gap:1px;'+
         (isVorigeW4 ? 'opacity:.65;' : '');
 
       const naamEl = document.createElement('div');
-      naamEl.style.cssText = 'font-size:10px;font-weight:800;color:'+(isVandaag?'var(--green)':'var(--muted)');
+      naamEl.style.cssText = 'font-size:10px;font-weight:800;color:'+(isVandaag?'#0B63CE':'#5A6A7E');
       naamEl.textContent = dagNamen[i+1];
 
       const nrEl = document.createElement('div');
-      nrEl.style.cssText = 'font-size:15px;font-weight:900;color:var(--ink)';
+      nrEl.style.cssText = 'font-size:15px;font-weight:800;color:#0E1A2B';
       nrEl.textContent = dagDatum.getDate();
 
       const tijdEl = document.createElement('div');
@@ -5218,13 +5629,14 @@ function bouwTijdEnAgendaSectie(container){
 }
 
 function renderHome(){
+  njLaatsteTab = 'home';
   const main = document.getElementById('main');
   const back = document.getElementById('back');
   const crumb = document.getElementById('crumb');
   const title = document.getElementById('title');
   main.innerHTML = '';
   back.classList.add('hidden');
-  crumb.textContent = meta.bezorger || '';
+  crumb.textContent = dagVanLooplijst() || '';
   title.textContent = meta.date || 'Looplijst';
 
   // Tel statistieken
@@ -5241,278 +5653,99 @@ function renderHome(){
     }
   }))));
   const pct = totaal ? Math.round(klaar/totaal*100) : 0;
-  const totaalAangevinkt = Object.values(volgordeVink).reduce((s,arr)=>s+(arr||[]).length, 0);
-  const dag = dagVanLooplijst();
+  const M = njModules();
 
-  // Welkomst-kop
-  const welk = document.createElement('div');
-  welk.className = 'home-welk';
-  welk.innerHTML = '<div class="home-dag">'+dag+'</div>'+
-    '<div class="home-datum">'+(meta.date||'')+'</div>'+
-    '<div class="home-progress"><div class="home-progress-fill" style="width:'+pct+'%"></div></div>'+
-    '<div class="home-stats">'+klaar+' / '+totaal+' bezorgd · '+pct+'%</div>'+
-    (totaalExtra>0 ? '<div style="font-size:11px;color:#ffd54f;font-weight:700;margin-top:2px">📍 waarvan '+klaarExtra+' / '+totaalExtra+' extra wijk</div>' : '');
-  main.appendChild(welk);
+  const wrap = document.createElement('div');
+  wrap.className = 'nj-pagina scherm-fade';
 
-  bouwTijdEnAgendaSectie(main);
-
-  // 4 grote keuze-kaarten
-  const grid = document.createElement('div');
-  grid.className = 'home-grid';
-
-  // Volgorde-kaart: vol-breed bovenaan
-  const cardVolgorde = document.createElement('button');
-  cardVolgorde.className = 'home-card primary full';
-  cardVolgorde.innerHTML =
-    '<div class="hc-ic">↕</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Volgorde &amp; Bezorgen</div>'+
-      '<div class="hc-sub">'+
-        (totaalAangevinkt>0
-          ? totaalAangevinkt+' adressen aangevinkt voor vandaag'
-          : 'Vink adressen aan in jouw looproute')+
-      '</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  if(!isModeActief('order')){ cardVolgorde.style.opacity='.35'; cardVolgorde.style.pointerEvents='none'; }
-  cardVolgorde.onclick = ()=>{ if(!isModeActief('order')) return; view={mode:'order',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardVolgorde);
-
-  // Route-kaart (zaterdag) — alleen tonen als looplijst van zaterdag is
-  const cardRoute = document.createElement('button');
-  cardRoute.className = 'home-card';
-  cardRoute.innerHTML =
-    '<div class="hc-ic">📅</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">'+dag+'</div>'+
-      '<div class="hc-sub">'+totaal+' adressen</div>'+
-    '</div>';
-  if(!isModeActief('route')){ cardRoute.style.opacity='.35'; cardRoute.style.pointerEvents='none'; }
-  cardRoute.onclick = ()=>{ if(!isModeActief('route')) return; view={mode:'route',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardRoute);
-
-  // Looplijst-kaart
-  const cardLooplijst = document.createElement('button');
-  cardLooplijst.className = 'home-card';
-  cardLooplijst.innerHTML =
-    '<div class="hc-ic">📋</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Looplijst</div>'+
-      '<div class="hc-sub">Afvinken per adres</div>'+
-    '</div>';
-  if(!isModeActief('looplijst')){ cardLooplijst.style.opacity='.35'; cardLooplijst.style.pointerEvents='none'; }
-  cardLooplijst.onclick = ()=>{ if(!isModeActief('looplijst')) return; view={mode:'looplijst',level:'wijk',wijk:null,ronde:null,straat:null,krant:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardLooplijst);
-
-  // Krant-kaart
-  const krantSet = new Set();
-  DATA.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>krantSet.add(a.prod)))));
-  const cardKrant = document.createElement('button');
-  cardKrant.className = 'home-card';
-  cardKrant.innerHTML =
-    '<div class="hc-ic">📰</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Per krant</div>'+
-      '<div class="hc-sub">'+krantSet.size+' krantensoorten</div>'+
-    '</div>';
-  if(!isModeActief('krant')){ cardKrant.style.opacity='.35'; cardKrant.style.pointerEvents='none'; }
-  cardKrant.onclick = ()=>{ if(!isModeActief('krant')) return; view={mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null}; syncModeButtons(); render(); };
-  grid.appendChild(cardKrant);
-
-  // Kerstkaarten / fooi — alleen op zaterdag
-  let kaartTotaal = 0;
-  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
-    kaartTotaal += brievenbussenVoorStraat(wi,ri,si).length;
-  })));
-  const fooiTot = fooiTotaal();
-  const cardKaart = document.createElement('button');
-  cardKaart.className = 'home-card';
-  cardKaart.innerHTML =
-    '<div class="hc-ic">🎄</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Kerstfooi</div>'+
-      '<div class="hc-sub">'+kaartTotaal+' bussen'+(fooiTot.totaal>0?' · '+formatEuro(fooiTot.totaal):'')+
-      '</div>'+
-    '</div>';
-  if(!isModeActief('kerst')){ cardKaart.style.opacity='.35'; cardKaart.style.pointerEvents='none'; }
-  cardKaart.onclick = ()=>{
-    if(!isModeActief('kerst')) return;
-    // Toon keuze popup: munt / biljet / afvinken
-    toonKerstKeuzePopup();
-  };
-  grid.appendChild(cardKaart);
-
-  // Vergoeding
-  let vergoedingTotaal = 0;
-  DATA.forEach((w,wi)=>{
-    w.rondes.forEach((r,ri)=>{
-      const code = tariefPerRonde[w.wijk+'|'+r.ronde];
-      if(code && tariefcodes[code]) vergoedingTotaal += tariefcodes[code].bedrag;
-    });
-  });
-  const vergNieuwSinds = parseInt(localStorage.getItem('looplijst_v23_nieuwePeriodeSinds')) || 0;
-  const vergIsNieuw = vergNieuwSinds > 0 && (Date.now() - vergNieuwSinds) < 14*86400000;
-  const cardVerg = document.createElement('button');
-  cardVerg.className = 'home-card';
-  let vergSub;
-  if(vergoedingPeriode){
-    vergSub = 'Periode '+vergoedingPeriode.label;
-  } else if(vergoedingTotaal > 0){
-    vergSub = formatEuro(vergoedingTotaal);
+  // ===== Vandaag: voortgang + verder bezorgen =====
+  const hero = document.createElement('section');
+  hero.className = 'nj-kaart nj-hero';
+  if(totaal === 0){
+    hero.innerHTML = '<div class="nj-hero-kop"><span>Vandaag</span></div>'+
+      '<div class="nj-hero-leeg">Nog geen looplijst ingeladen</div>';
+    const laad = document.createElement('button');
+    laad.type = 'button';
+    laad.className = 'nj-knop-primair';
+    laad.innerHTML = njIco('inladen', 20)+' Looplijst (PDF) inladen';
+    laad.onclick = ()=>document.getElementById('loadPdfBtn').click();
+    hero.appendChild(laad);
   } else {
-    vergSub = 'DPG tarieven';
+    const allesKlaar = klaar >= totaal;
+    hero.innerHTML =
+      '<div class="nj-hero-kop"><span>'+(allesKlaar ? 'Alles bezorgd' : 'Vandaag bezorgd')+'</span><b>'+pct+'%</b></div>'+
+      '<div class="nj-hero-getal"><span class="nj-groot">'+klaar+'</span><span class="nj-van">van '+totaal+' adressen</span></div>'+
+      (totaalExtra>0 ? '<div class="nj-hero-extra">Waarvan '+klaarExtra+' / '+totaalExtra+' extra wijk</div>' : '')+
+      '<div class="nj-balk'+(allesKlaar?' groen':'')+'"><i style="width:'+pct+'%"></i></div>';
+    const verder = [M.order, M.looplijst, M.route].find(m=>m.actief);
+    if(verder){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nj-knop-primair';
+      b.innerHTML = (allesKlaar ? 'Bekijk looplijst' : 'Verder bezorgen')+njIco('pijl', 20, 2.4);
+      b.onclick = verder.go;
+      hero.appendChild(b);
+    }
   }
-  cardVerg.innerHTML =
-    '<div class="hc-ic">💵</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Vergoeding'+(vergIsNieuw?' <span style="background:#ffd54f;color:#5d4900;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;vertical-align:middle">NIEUW</span>':'')+'</div>'+
-      '<div class="hc-sub">'+vergSub+'</div>'+
-    '</div>';
-  cardVerg.onclick = ()=>{ view={mode:'vergoeding', level:'overzicht'}; render(); };
-  grid.appendChild(cardVerg);
+  wrap.appendChild(hero);
 
-  // Wijkenkaart
-  const cardKaartMod = document.createElement('button');
-  cardKaartMod.className = 'home-card';
-  cardKaartMod.innerHTML =
-    '<div class="hc-ic">🗺️</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Wijkenkaart</div>'+
-      '<div class="hc-sub">Kaart + navigeren</div>'+
-    '</div>';
-  cardKaartMod.onclick = ()=>{ view={mode:'kaart', level:null}; render(); };
-  grid.appendChild(cardKaartMod);
+  // ===== Deze week (agenda met tijden per dag) =====
+  bouwTijdEnAgendaSectie(wrap, 'agenda');
 
-  // Segment-module
-  const cardSeg = document.createElement('button');
-  cardSeg.className = 'home-card';
-  cardSeg.innerHTML =
-    '<div class="hc-ic">📍</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Segmenten</div>'+
-      '<div class="hc-sub">Wijkindeling per segment · exporteren</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardSeg.onclick = ()=>{ view={mode:'segment', level:null}; render(); };
-  grid.appendChild(cardSeg);
-
-  // Bonus-module
-  const cardBonus = document.createElement('button');
-  cardBonus.className = 'home-card';
-  const _bonusInst = (()=>{ try{ return JSON.parse(localStorage.getItem(STORAGE_BONUS_INSTELLING)); }catch(e){ return null; } })();
-  let _bonusSub = 'Klachtenpromillage · 8 weken';
-  if(_bonusInst && _bonusInst.start){
-    const v = berekenBonusVenster(_bonusInst.start);
-    _bonusSub = v.promillage.toFixed(2).replace('.',',')+'‰ · '+(v.onderGrens ? 'onder 4‰ ✓' : 'boven 4‰ ⚠️');
+  // ===== Tijd vandaag + kilometers deze week =====
+  const duo = document.createElement('div');
+  duo.className = 'nj-duo';
+  const td = tijdLaadData();
+  const ts = td.huidig;
+  let tWaarde = '—', tSub = 'Nog niet gestart', tPil = 'Start', tPilKlas = '';
+  if(ts && ts.start && !ts.eind){
+    tWaarde = njUurMin(tijdNettoMs(ts));
+    tSub = ts.pauzeStart ? 'Pauze sinds '+njKlok(ts.pauzeStart) : 'Bezig sinds '+njKlok(ts.start);
+    tPil = ts.pauzeStart ? 'Pauze' : 'Bezig'; tPilKlas = ts.pauzeStart ? ' pauze' : ' bezig';
+  } else {
+    const vandaagStr = new Date().toDateString();
+    const sv = (td.sessies||[]).find(s2=>new Date(s2.start).toDateString()===vandaagStr);
+    if(sv){ tWaarde = njUurMin(sv.nettoMs!=null ? sv.nettoMs : tijdNettoMs(sv)); tSub = 'Klaar om '+njKlok(sv.eind); tPil = 'Bekijk'; }
   }
-  cardBonus.innerHTML =
-    '<div class="hc-ic">🎁</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Bonus</div>'+
-      '<div class="hc-sub">'+_bonusSub+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardBonus.onclick = ()=>{ view={mode:'bonus'}; render(); };
-  grid.appendChild(cardBonus);
+  const kTijd = document.createElement('button');
+  kTijd.type = 'button';
+  kTijd.className = 'nj-kaart nj-stat';
+  kTijd.innerHTML = '<span class="nj-stat-label">'+njIco('klok', 16)+'Tijd vandaag</span>'+
+    '<span class="nj-stat-waarde">'+tWaarde+'</span>'+
+    '<span class="nj-stat-sub">'+njEsc(tSub)+'</span>'+
+    '<span class="nj-pil'+tPilKlas+'">'+(tPil==='Start' ? njIco('start', 12)+' ' : '')+tPil+'</span>';
+  kTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
+  duo.appendChild(kTijd);
 
-  // Promillage per periode-module (los, 4-wekelijks, onafhankelijk van DPG-import)
-  const cardPromPeriode = document.createElement('button');
-  cardPromPeriode.className = 'home-card';
-  const _ppLijst = promillagePerVierWekelijksePeriode();
-  const _ppHuidig = _ppLijst.find(p=>p.isHuidig);
-  const _ppSub = _ppHuidig && _ppHuidig.promillage!==null
-    ? _ppHuidig.promillage.toFixed(2).replace('.',',')+'‰ deze periode'
-    : (_ppLijst.length ? _ppLijst.length+' periode'+(_ppLijst.length===1?'':'s') : 'Nog geen data');
-  cardPromPeriode.innerHTML =
-    '<div class="hc-ic">📊</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Promillage per periode</div>'+
-      '<div class="hc-sub">'+_ppSub+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardPromPeriode.onclick = ()=>{ view={mode:'promillageperiode'}; render(); };
-  grid.appendChild(cardPromPeriode);
+  const kd = kmLaad();
+  const wk0 = kmWeekStart(new Date()), wk1 = new Date(wk0); wk1.setDate(wk1.getDate()+7);
+  const wkKm = kd.ritten.filter(r=>{ const t=new Date(r.datum+'T00:00:00'); return t>=wk0 && t<wk1; }).reduce((a,r)=>a+r.km,0);
+  const doelW = (kd.doelen && kd.doelen.week) || 0;
+  const kKm = document.createElement('button');
+  kKm.type = 'button';
+  kKm.className = 'nj-kaart nj-stat';
+  kKm.innerHTML = '<span class="nj-stat-label">'+njIco('fiets', 16)+'Km deze week</span>'+
+    '<span class="nj-stat-waarde">'+kmFmt(wkKm)+' km</span>'+
+    (doelW>0
+      ? '<span class="nj-balk klein'+(wkKm>=doelW?' groen':'')+'"><i style="width:'+Math.min(100, Math.round(wkKm/doelW*100))+'%"></i></span><span class="nj-stat-sub">doel '+kmFmt(doelW)+' km</span>'
+      : '<span class="nj-stat-sub">Werk en privé</span><span class="nj-pil">+ Rit</span>');
+  kKm.onclick = ()=>{ view={mode:'km'}; render(); };
+  duo.appendChild(kKm);
+  wrap.appendChild(duo);
 
-  // Klachten-module
-  const cardKlachten = document.createElement('button');
-  cardKlachten.className = 'home-card';
-  const _klachtenAantal = laadKlachtenLog().length;
-  cardKlachten.innerHTML =
-    '<div class="hc-ic">📋</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Klachten</div>'+
-      '<div class="hc-sub">'+_klachtenAantal+' totaal · per periode</div>'+
-    '</div>';
-  cardKlachten.onclick = ()=>{ view={mode:'klachten'}; render(); };
-  grid.appendChild(cardKlachten);
+  // ===== Snel naar =====
+  const snel = document.createElement('div');
+  snel.className = 'nj-snel';
+  [[M.looplijst,'Looplijst'], [M.krant,'Per krant'], [M.kaart,'Kaart']].forEach(([m, naam])=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = njIco(m.ic, 22)+'<span>'+naam+'</span>';
+    if(m.actief) b.onclick = m.go; else b.disabled = true;
+    snel.appendChild(b);
+  });
+  wrap.appendChild(snel);
 
-  // Mutaties-module
-  const cardMutaties = document.createElement('button');
-  cardMutaties.className = 'home-card';
-  const _mutatiesLog = laadMutatiesLog();
-  const _mStarts = _mutatiesLog.filter(m=>m.type==='START').length;
-  const _mStops = _mutatiesLog.filter(m=>m.type==='STOP').length;
-  cardMutaties.innerHTML =
-    '<div class="hc-ic">🔀</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Mutaties</div>'+
-      '<div class="hc-sub">▶'+_mStarts+' · ■'+_mStops+'</div>'+
-    '</div>';
-  cardMutaties.onclick = ()=>{ view={mode:'mutaties'}; render(); };
-  grid.appendChild(cardMutaties);
-
-  // Jaararchief
-  const cardJaarArchief = document.createElement('button');
-  cardJaarArchief.className = 'home-card';
-  const _jaarKandidaten = jaarAfrondenKandidaten();
-  const _jaarArchiefAantal = Object.keys(laadJaarArchief()).length;
-  cardJaarArchief.innerHTML =
-    '<div class="hc-ic">📦</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Jaararchief'+(_jaarKandidaten.length ? ' <span style="background:#ffd54f;color:#5d4900;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;vertical-align:middle">'+_jaarKandidaten.length+' te archiveren</span>' : '')+'</div>'+
-      '<div class="hc-sub">'+(_jaarArchiefAantal ? _jaarArchiefAantal+' jaar gearchiveerd' : 'Nog niets gearchiveerd')+'</div>'+
-    '</div>';
-  cardJaarArchief.onclick = ()=>{ view={mode:'jaararchief'}; render(); };
-  grid.appendChild(cardJaarArchief);
-
-  // Tijdregistratie
-  const tijdSessie = tijdLaadHuidigeSessie();
-  const cardTijd = document.createElement('button');
-  cardTijd.className = 'home-card';
-  const tijdStatus = tijdSessie?.start && !tijdSessie?.eind
-    ? (tijdSessie.pauzeStart ? '⏸ Pauze actief' : '▶ Bezig — tik om te stoppen')
-    : tijdSessie?.eind ? '✓ Klaar — ' + tijdFormatDuur(tijdSessie.nettoMs)
-    : 'Tik om te starten';
-  cardTijd.innerHTML =
-    '<div class="hc-ic">⏱</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Tijdregistratie</div>'+
-      '<div class="hc-sub">'+tijdStatus+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardTijd.onclick = ()=>{ view={mode:'tijd'}; render(); };
-  grid.appendChild(cardTijd);
-
-  // Kilometers
-  const cardKm = document.createElement('button');
-  cardKm.className = 'home-card';
-  const _kmD = kmLaad(), _kmM = new Date().toISOString().slice(0,7);
-  const _kmMaandRitten = _kmD.ritten.filter(r=>String(r.datum).slice(0,7)===_kmM);
-  const _kmW = _kmMaandRitten.filter(r=>r.soort==='werk').reduce((a,r)=>a+r.km,0);
-  const _kmP = _kmMaandRitten.filter(r=>r.soort!=='werk').reduce((a,r)=>a+r.km,0);
-  cardKm.innerHTML =
-    '<div class="hc-ic">🚲</div>'+
-    '<div class="hc-body">'+
-      '<div class="hc-titel">Kilometers</div>'+
-      '<div class="hc-sub">'+(_kmMaandRitten.length ? 'Deze maand: werk '+kmFmt(_kmW)+' · privé '+kmFmt(_kmP)+' km' : 'Werk en privé bijhouden')+'</div>'+
-    '</div>'+
-    '<div class="hc-chev">›</div>';
-  cardKm.onclick = ()=>{ view={mode:'km'}; render(); };
-  grid.appendChild(cardKm);
-
-  main.appendChild(grid);
-
-
+  main.appendChild(wrap);
   updateHeaderProgress();
 }
 
@@ -9522,7 +9755,7 @@ function renderOrder(){
   main.innerHTML='';
 
   if(view.level==='wijk'){
-    back.classList.add('hidden');
+    njTopTerug(back);
     crumb.textContent='↕ Volgorde aanpassen';
     title.textContent='Wijken';
 
@@ -11196,7 +11429,7 @@ function goStart(){
 const navGeschiedenis = []; let navHuidig = null, navTerug = false;
 const _renderOrig = render;
 render = function(){
-  if(view.mode === 'home'){ navGeschiedenis.length = 0; navHuidig = Object.assign({}, view); }
+  if(view.mode === 'home' || njIsHub(view.mode)){ navGeschiedenis.length = 0; navHuidig = Object.assign({}, view); }
   else if(navHuidig && navHuidig.mode !== view.mode){ if(!navTerug) navGeschiedenis.push(navHuidig); navHuidig = Object.assign({}, view); }
   else navHuidig = Object.assign({}, view);
   navTerug = false;
@@ -11204,7 +11437,8 @@ render = function(){
 };
 const ENKEL_SCHERM = ['kaart','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km'];
 document.getElementById('back').onclick=()=>{
-  if(view.mode==='home') return; // home heeft geen back (privé tijdelijk uit)
+  const goHome = njTerugNaarTab; // terug naar de tab (Vandaag/Bezorgen/Geld/Bijhouden) waar je vandaan kwam
+  if(view.mode==='home' || njIsHub(view.mode)) return; // tab-pagina's hebben geen terug
   if(ENKEL_SCHERM.indexOf(view.mode)>=0){
     const vorige = navGeschiedenis.pop(); navTerug = true;
     if(vorige && vorige.mode !== view.mode && vorige.mode !== 'home'){ view = vorige; render(); } else { goHome(); }
@@ -11249,8 +11483,8 @@ document.getElementById('back').onclick=()=>{
 
 const hideBtn=document.getElementById('hideToggle');
 function syncToggle(){
-  if(hideChecked){ hideBtn.classList.add('on'); document.getElementById('eyeicon').textContent='🙈'; document.getElementById('eyetxt').textContent='Verberg'; }
-  else { hideBtn.classList.remove('on'); document.getElementById('eyeicon').textContent='👁'; document.getElementById('eyetxt').textContent='Toon'; }
+  if(hideChecked){ hideBtn.classList.add('on'); document.getElementById('eyeicon').innerHTML=njIco('oogdicht',18); document.getElementById('eyetxt').textContent='Verberg'; }
+  else { hideBtn.classList.remove('on'); document.getElementById('eyeicon').innerHTML=njIco('oog',18); document.getElementById('eyetxt').textContent='Toon'; }
 }
 hideBtn.onclick=()=>{ hideChecked=!hideChecked; savePref(); syncToggle(); render(); };
 
