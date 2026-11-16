@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-15.6');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-16.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1239,6 +1239,61 @@ html[data-thema="donker"] .nj-bus-uitleg{color:#9AA8BC}
 .nj-bus-volg button{min-height:56px;border-radius:14px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 #njBusOver{border:1px solid #D5DDE8;background:#fff;color:#0E1A2B}
 #njBusKlaar{border:none;background:#166534;color:#fff;font-size:16px;font-weight:800}
+
+/* ----- Lijsten in alle schermen in de nieuwe stijl ----- */
+html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radius:16px}
+.ringbox svg circle:nth-child(2){stroke:#0B63CE}
+.navrow.complete .ringbox svg circle:nth-child(2){stroke:#15803D}
+/* ----- Looplijst / Per krant: tegels met huisnummers ----- */
+.nj-adres{height:auto;min-height:100px;padding:22px 6px 10px;gap:6px;justify-content:flex-start}
+.nj-adres b{font-size:22px}
+.nj-adres small{font-size:11px;font-weight:600;color:#5A6A7E;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-adres.on{background:#15803D;border-color:#15803D}
+.nj-adres.on small{color:#DCFCE7}
+.nj-adres.half{border-color:#F0B429;background:#FFFBEB}
+.nj-kranten{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:100%}
+.nj-kranten .prod{font-size:10.5px !important;padding:2px 6px !important;margin:0 !important;border-radius:6px;font-weight:800;line-height:1.3;white-space:nowrap}
+.nj-vlag{position:absolute;top:6px;left:6px;display:flex;gap:3px;font-style:normal}
+.nj-vlag span{font-size:9px;font-weight:800;padding:2px 5px;border-radius:5px;line-height:1.2}
+.nj-vlag .stop{background:#FDECEC;color:#B42318}
+.nj-vlag .nieuw{background:#E7F6EC;color:#15803D}
+.nj-vlag .schema{background:#EEF1F5}
+.nj-bus.weg{opacity:0;transform:scale(.9);transition:.18s}
+.nj-volg-straat.blauw{background:#0B63CE}
+/* ----- Mijn volgorde ----- */
+.nj-volg-status{display:flex;flex-direction:column;gap:10px}
+.nj-volg-status-kop{display:flex;align-items:center;gap:12px}
+.nj-volg-status-kop div{display:flex;flex-direction:column;gap:2px}
+.nj-volg-status-kop b{font-size:16px;font-weight:800}
+.nj-volg-status-kop span{font-size:12.5px;color:#5A6A7E}
+.nj-volg-status p{margin:0;font-size:13.5px;line-height:1.5;color:#2B3A4F}
+.nj-ico.groen{background:#E7F6EC;color:#15803D}
+.nj-knop-rand.rood{color:#B42318;border-color:#F3C3C3}
+.nj-vrij{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid #EDF1F5;background:#fff}
+.nj-vrij.n2{padding-left:20px;background:#FAFBFC}
+.nj-vrij.n3{padding-left:34px;background:#F5F7FA}
+.nj-vpijl{width:40px;height:40px;flex:0 0 auto;border:1px solid #D5DDE8;border-radius:11px;background:#fff;color:#0B63CE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.nj-vpijl:disabled{opacity:.3;cursor:default}
+.nj-vpijl:active{background:#E8F0FB}
+.nj-vnaam{flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:48px;border:none;background:none;font-family:inherit;text-align:left;color:#0E1A2B;padding:0 2px;cursor:pointer}
+.nj-vpos{min-width:24px;height:24px;border-radius:12px;background:#E8F0FB;color:#0B63CE;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0 4px}
+.nj-vtekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.nj-vtekst .t{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-vrij.n1 .nj-vtekst .t{font-size:16px;font-weight:800}
+.nj-vtekst .s{font-size:12px;color:#5A6A7E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-vchev{color:#8A97A8;display:flex;transition:transform .15s}
+.nj-vrij.open .nj-vchev{transform:rotate(180deg)}
+.nj-vpaneel{padding:10px 12px 12px 34px;background:#EEF3FA;border-bottom:1px solid #E2E7EE;display:flex;flex-direction:column;gap:8px}
+.nj-vpaneel-kop{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5A6A7E}
+.nj-chips{display:flex;flex-wrap:wrap;gap:6px}
+.nj-chip{min-height:38px;border:1px solid #D5DDE8;border-radius:99px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:13px;font-weight:700;padding:0 12px;cursor:pointer}
+.nj-chip.aan{background:#0B63CE;border-color:#0B63CE;color:#fff}
+.nj-vvoorbeeld{font-size:12.5px;color:#2B3A4F;font-weight:600;line-height:1.5}
+.nj-vrand{display:flex;gap:8px;flex-wrap:wrap}
+.nj-vrand button{min-height:38px;border:1px solid #D5DDE8;border-radius:10px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:12.5px;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:4px;cursor:pointer}
+.nj-vbalk{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 2px;background:var(--nj-bg);box-shadow:0 -1px 0 var(--nj-tab-lijn),0 60px 0 0 var(--nj-bg)}
+.nj-vbalk span{flex:1;font-size:13px;color:var(--nj-hdr-muted)}
+.nj-vbalk .nj-knop-primair{width:auto;padding:0 22px;flex:0 0 auto}
 </style>
 <script>
 // Offline service worker
@@ -1332,7 +1387,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
     <button class="action" id="loadPdfBtn"><span class="ic" data-nj-ic="inladen"></span><span>Nieuwe looplijst (PDF) inladen</span></button>
     <button class="action" id="exportPdfBtn"><span class="ic" data-nj-ic="pdf"></span><span>Looplijst exporteren als PDF</span></button>
     <button class="action" id="pdfDoelBtn"><span class="ic" data-nj-ic="schakel"></span><span>Modules aan/uit voor huidige PDF</span></button>
-    <button class="action" id="reorderBtn"><span class="ic" data-nj-ic="volgorde"></span><span>Volgorde wijken aanpassen</span></button>
+    <button class="action" id="reorderBtn"><span class="ic" data-nj-ic="volgorde"></span><span>Mijn volgorde (looproute)</span></button>
     <button class="action" id="pakkenBtn"><span class="ic" data-nj-ic="pakket"></span><span>Pakken maken (eind → begin)</span></button>
     <button class="action danger" id="resetBtn"><span class="ic" data-nj-ic="wis"></span><span>Alle vinkjes wissen</span></button>
   </div>
@@ -1506,7 +1561,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-15.6';
+const APP_VERSION = '2026-11-16.1';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -1545,9 +1600,259 @@ var NJ_IC = {
   oogdicht:'<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   check:'<path d="M20 6L9 17l-5-5"/>',
   start:'<path d="M7 4l12 8-12 8z" fill="currentColor"/>',
+  op:'<path d="M6 15l6-6 6 6"/>',
+  neer:'<path d="M6 9l6 6 6-6"/>',
   munten:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'
 };
 var kerstPlanOpen = false, kerstPlanScroll = 0;
+// ----- Vaste volgorde (looproute): apart bewaard, zodat het automatisch meeleren hem niet verandert -----
+var STORAGE_VASTE_VOLGORDE = 'looplijst_v23_vaste_volgorde';
+var njVasteVolgorde = null;
+try{ njVasteVolgorde = JSON.parse(localStorage.getItem(STORAGE_VASTE_VOLGORDE)) || null; }catch(e){ njVasteVolgorde = null; }
+// De vaste volgorde geldt voor Looplijst, Kerstkaartjes en Pakken & PDF — niet voor Per krant.
+function njVast(){
+  if(!njVasteVolgorde) return null;
+  try{ if(view && view.mode === 'krant') return null; }catch(e){}
+  return njVasteVolgorde;
+}
+function njNrDelen(nr){
+  const m = String(nr==null?'':nr).trim().match(/^(\d+)\s*(.*)$/);
+  return m ? [parseInt(m[1],10), m[2].toLowerCase()] : [Infinity, String(nr==null?'':nr).toLowerCase()];
+}
+// Huisnummers sorteren: 'op' = oplopend, 'af' = aflopend, 'oe' = oneven oplopend en dan even teruglopend
+function njSorteerNummers(adressen, modus){
+  const idx = adressen.map((a,i)=>i);
+  const num = idx.filter(i=>njNrDelen(adressen[i].nr)[0] !== Infinity);
+  const rest = idx.filter(i=>njNrDelen(adressen[i].nr)[0] === Infinity);
+  const op = (x,y)=>{
+    const a = njNrDelen(adressen[x].nr), b = njNrDelen(adressen[y].nr);
+    if(a[0] !== b[0]) return a[0]-b[0];
+    if(a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
+    return x-y;
+  };
+  const af = (x,y)=>{
+    const a = njNrDelen(adressen[x].nr), b = njNrDelen(adressen[y].nr);
+    if(a[0] !== b[0]) return b[0]-a[0];
+    if(a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
+    return x-y;
+  };
+  if(modus === 'op') return num.sort(op).concat(rest);
+  if(modus === 'af') return num.sort(af).concat(rest);
+  if(modus === 'oe'){
+    const oneven = num.filter(i=>njNrDelen(adressen[i].nr)[0] % 2 === 1).sort(op);
+    const even = num.filter(i=>njNrDelen(adressen[i].nr)[0] % 2 === 0).sort(af);
+    return oneven.concat(even, rest);
+  }
+  return idx;
+}
+var NJ_NUMMER_MODI = [['nu','Zoals nu'],['op','Oplopend'],['af','Aflopend'],['oe','Oneven ↑, dan even ↓']];
+function njNummerLabel(md){ const m = NJ_NUMMER_MODI.find(x=>x[0]===md); return m ? m[1] : 'Zoals nu'; }
+
+var njVolgDraft = null, njVolgOpen = {}, njVolgVuil = false;
+function njVolgMaakDraft(){
+  const d = {wijk:[], ronde:{}, straat:{}, nummer:{}};
+  wijkVolgordeIdxs().forEach(wi=>{
+    const w = DATA[wi];
+    d.wijk.push(w.wijk);
+    d.ronde[w.wijk] = rondeIdxsInWijk(wi).map(ri=>w.rondes[ri].ronde);
+    w.rondes.forEach((r,ri)=>{
+      const rk = w.wijk+'|'+r.ronde;
+      d.straat[rk] = straatIdxsInRonde(wi, ri).map(si=>r.straten[si].naam);
+      r.straten.forEach(s=>{
+        const sk = rk+'|'+s.naam;
+        d.nummer[sk] = (njVasteVolgorde && njVasteVolgorde.nummer && njVasteVolgorde.nummer[sk]) || 'nu';
+      });
+    });
+  });
+  return d;
+}
+function njVolgOpslaan(){
+  const d = njVolgDraft;
+  if(!d) return;
+  const vast = {opgeslagen: Date.now(), wijk: d.wijk.slice(), ronde: {}, straat: {}, nummer: {}, adres: {}};
+  Object.keys(d.ronde).forEach(k=>{ vast.ronde[k] = d.ronde[k].slice(); });
+  Object.keys(d.straat).forEach(k=>{ vast.straat[k] = d.straat[k].slice(); });
+  DATA.forEach((w,wi)=>w.rondes.forEach((r,ri)=>r.straten.forEach((s,si)=>{
+    const sk = w.wijk+'|'+r.ronde+'|'+s.naam;
+    const md = d.nummer[sk] || 'nu';
+    if(md !== 'nu') vast.nummer[sk] = md;
+    else vast.adres[sk] = adresIdxsInStraat(wi, ri, si).map(ai=>adresKeyOf(s.adressen[ai]));   // huidige volgorde vastleggen
+  })));
+  njVasteVolgorde = vast;
+  try{ localStorage.setItem(STORAGE_VASTE_VOLGORDE, JSON.stringify(vast)); }catch(e){}
+  njVolgVuil = false;
+}
+function njVolgVerplaats(lijst, i, stap){
+  const j = i + stap;
+  if(j < 0 || j >= lijst.length) return false;
+  const t = lijst[i]; lijst[i] = lijst[j]; lijst[j] = t;
+  njVolgVuil = true;
+  return true;
+}
+function njVolgNaarRand(lijst, i, boven){
+  const t = lijst.splice(i, 1)[0];
+  if(boven) lijst.unshift(t); else lijst.push(t);
+  njVolgVuil = true;
+}
+function njDatumTijd(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+}
+
+// Scherm 'Mijn volgorde': wijken → rondes → straten met pijltjes, per straat de volgorde van de huisnummers
+function renderMijnVolgorde(){
+  const main = document.getElementById('main');
+  const back = document.getElementById('back');
+  back.classList.remove('hidden');
+  back.innerHTML = njIco('terug', 22, 2.4);
+  document.getElementById('crumb').textContent = 'Bezorgen';
+  document.getElementById('title').textContent = 'Mijn volgorde';
+  if(!njVolgDraft) njVolgDraft = njVolgMaakDraft();
+  const d = njVolgDraft;
+  const scroll = main.scrollTop;
+  main.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'nj-pagina nj-volg';
+
+  // Status
+  const st = document.createElement('section');
+  st.className = 'nj-kaart nj-volg-status';
+  if(njVasteVolgorde){
+    st.innerHTML = '<div class="nj-volg-status-kop"><span class="nj-ico groen">'+njIco('check', 20, 2.6)+'</span>'+
+      '<div><b>Vaste volgorde staat aan</b><span>Opgeslagen '+njDatumTijd(njVasteVolgorde.opgeslagen)+'</span></div></div>'+
+      '<p>Afvinken in een andere volgorde verandert hem niet. Looplijst, Kerstkaartjes en Pakken &amp; PDF volgen deze volgorde.</p>';
+    const uit = document.createElement('button');
+    uit.type = 'button';
+    uit.className = 'nj-knop-rand rood';
+    uit.textContent = 'Vaste volgorde uitzetten';
+    uit.onclick = ()=>{
+      if(!confirm('Vaste volgorde uitzetten? De app gaat dan weer leren van hoe je afvinkt.')) return;
+      njVasteVolgorde = null;
+      try{ localStorage.removeItem(STORAGE_VASTE_VOLGORDE); }catch(e){}
+      njVolgDraft = null; njVolgVuil = false;
+      toast('Vaste volgorde uitgezet');
+      renderMijnVolgorde();
+    };
+    st.appendChild(uit);
+  } else {
+    st.innerHTML = '<div class="nj-volg-status-kop"><span class="nj-ico">'+njIco('volgorde', 20)+'</span>'+
+      '<div><b>Nog geen vaste volgorde</b><span>Nu leert de app van hoe je afvinkt</span></div></div>'+
+      '<p>Zet hieronder je wijken, rondes en straten met de pijltjes in de volgorde van je looproute, kies per straat de volgorde van de huisnummers en tik op <b>Opslaan</b>. Daarna blijft hij vast.</p>';
+  }
+  wrap.appendChild(st);
+
+  const sec = document.createElement('section');
+  sec.className = 'nj-sectie';
+  sec.innerHTML = '<h2 class="nj-label">Wijken, rondes en straten</h2>';
+  const lijst = document.createElement('div');
+  lijst.className = 'nj-lijst';
+
+  const opnieuw = ()=>renderMijnVolgorde();
+  function rij(niveau, titel, sub, arr, i, sleutelOpen){
+    const r = document.createElement('div');
+    r.className = 'nj-vrij n'+niveau+(njVolgOpen[sleutelOpen] ? ' open' : '');
+    r.innerHTML =
+      '<button type="button" class="nj-vpijl" aria-label="Omhoog"'+(i===0?' disabled':'')+'>'+njIco('op', 18, 2.6)+'</button>'+
+      '<button type="button" class="nj-vpijl" aria-label="Omlaag"'+(i===arr.length-1?' disabled':'')+'>'+njIco('neer', 18, 2.6)+'</button>'+
+      '<button type="button" class="nj-vnaam" aria-expanded="'+(njVolgOpen[sleutelOpen]?'true':'false')+'"><span class="nj-vpos">'+(i+1)+'</span>'+
+        '<span class="nj-vtekst"><span class="t">'+njEsc(titel)+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</span>'+
+        '<span class="nj-vchev">'+njIco('neer', 18, 2.2)+'</span></button>';
+    const knoppen = r.querySelectorAll('.nj-vpijl');
+    knoppen[0].onclick = ()=>{ if(njVolgVerplaats(arr, i, -1)) opnieuw(); };
+    knoppen[1].onclick = ()=>{ if(njVolgVerplaats(arr, i, 1)) opnieuw(); };
+    r.querySelector('.nj-vnaam').onclick = ()=>{ njVolgOpen[sleutelOpen] = !njVolgOpen[sleutelOpen]; opnieuw(); };
+    lijst.appendChild(r);
+  }
+
+  d.wijk.forEach((wn, wpos)=>{
+    const wi = DATA.findIndex(w=>w.wijk===wn);
+    if(wi < 0) return;
+    const w = DATA[wi];
+    const rondes = d.ronde[wn] || [];
+    rij(1, wn, rondes.length+' ronde'+(rondes.length===1?'':'s'), d.wijk, wpos, 'w:'+wn);
+    if(!njVolgOpen['w:'+wn]) return;
+    rondes.forEach((rn, rpos)=>{
+      const ri = w.rondes.findIndex(r=>r.ronde===rn);
+      if(ri < 0) return;
+      const rk = wn+'|'+rn;
+      const straten = d.straat[rk] || [];
+      rij(2, rn, straten.length+' straten', rondes, rpos, 'r:'+rk);
+      if(!njVolgOpen['r:'+rk]) return;
+      straten.forEach((sn, spos)=>{
+        const si = w.rondes[ri].straten.findIndex(s=>s.naam===sn);
+        if(si < 0) return;
+        const s = w.rondes[ri].straten[si];
+        const sk = rk+'|'+sn;
+        const md = d.nummer[sk] || 'nu';
+        const nBus = new Set(s.adressen.map(a=>String(a.nr).trim())).size;
+        rij(3, sn, nBus+' nummers · '+njEsc(njNummerLabel(md)), straten, spos, 's:'+sk);
+        if(!njVolgOpen['s:'+sk]) return;
+        // Paneel: volgorde van de huisnummers + naar boven/onder
+        const p = document.createElement('div');
+        p.className = 'nj-vpaneel';
+        const volgorde = (md === 'nu') ? adresIdxsInStraat(wi, ri, si) : njSorteerNummers(s.adressen, md);
+        const gezien = [], voorbeeld = [];
+        volgorde.forEach(ai=>{ const nr = String(s.adressen[ai].nr).trim(); if(!gezien.includes(nr)){ gezien.push(nr); voorbeeld.push(nr); } });
+        p.innerHTML = '<div class="nj-vpaneel-kop">Huisnummers</div>'+
+          '<div class="nj-chips">'+NJ_NUMMER_MODI.map(m=>'<button type="button" data-md="'+m[0]+'" class="nj-chip'+(m[0]===md?' aan':'')+'">'+m[1]+'</button>').join('')+'</div>'+
+          '<div class="nj-vvoorbeeld">'+njEsc(voorbeeld.slice(0, 14).join(' · '))+(voorbeeld.length>14?' …':'')+'</div>'+
+          '<div class="nj-vrand"><button type="button" data-rand="boven">'+njIco('op', 16, 2.6)+' Bovenaan zetten</button>'+
+          '<button type="button" data-rand="onder">'+njIco('neer', 16, 2.6)+' Onderaan zetten</button></div>';
+        p.querySelectorAll('[data-md]').forEach(b=>{ b.onclick = ()=>{ d.nummer[sk] = b.getAttribute('data-md'); njVolgVuil = true; opnieuw(); }; });
+        p.querySelector('[data-rand="boven"]').onclick = ()=>{ njVolgNaarRand(straten, spos, true); opnieuw(); };
+        p.querySelector('[data-rand="onder"]').onclick = ()=>{ njVolgNaarRand(straten, spos, false); opnieuw(); };
+        lijst.appendChild(p);
+      });
+    });
+  });
+  sec.appendChild(lijst);
+  wrap.appendChild(sec);
+
+  // Opslaan-balk
+  const balk = document.createElement('div');
+  balk.className = 'nj-vbalk';
+  balk.innerHTML = '<span>'+(njVolgVuil ? '<b class="nj-rood">Nog niet opgeslagen</b>' : (njVasteVolgorde ? 'Opgeslagen ✓' : 'Tik op Opslaan om vast te zetten'))+'</span>';
+  const opsl = document.createElement('button');
+  opsl.type = 'button';
+  opsl.className = 'nj-knop-primair';
+  opsl.textContent = njVasteVolgorde && !njVolgVuil ? 'Opnieuw opslaan' : 'Opslaan';
+  opsl.onclick = ()=>{ njVolgOpslaan(); toast('Volgorde opgeslagen en vastgezet'); renderMijnVolgorde(); };
+  balk.appendChild(opsl);
+  wrap.appendChild(balk);
+
+  main.appendChild(wrap);
+  main.scrollTop = scroll;
+  updateHeaderProgress();
+}
+
+// Volgende straat (Looplijst/route) in de volgorde van de ronde(s)
+function njVolgendeStraatIn(telFn){
+  const wi = view.wijk;
+  const rondes = (view.rondeIdxs && view.rondeIdxs.length) ? view.rondeIdxs.filter(x=>x!=null) : [view.ronde];
+  let start = rondes.indexOf(view.ronde); if(start < 0) start = 0;
+  let voorbij = false;
+  for(let p=start; p<rondes.length; p++){
+    const ri = rondes[p];
+    for(const si of straatIdxsInRonde(wi, ri)){
+      if(!voorbij){ if(ri === view.ronde && si === view.straat) voorbij = true; continue; }
+      const c = telFn(wi, ri, si);
+      if(c.total > 0 && c.done < c.total) return {ri: ri, si: si};
+    }
+    voorbij = true;
+  }
+  return null;
+}
+function njVolgendeStraatKnop(main, volg){
+  if(!volg) return;
+  const naam = DATA[view.wijk].rondes[volg.ri].straten[volg.si].naam;
+  const k = document.createElement('button');
+  k.type = 'button';
+  k.className = 'nj-volg-straat blauw';
+  k.innerHTML = 'Volgende straat: '+njEsc(naam)+njIco('pijl', 20, 2.4);
+  k.onclick = ()=>{ view = Object.assign({}, view, {ronde: volg.ri, straat: volg.si}); render(); main.scrollTop = 0; };
+  main.appendChild(k);
+}
+
 // ----- Kerstkaartjes: één brievenbus tegelijk bij het invullen van munten/biljetten -----
 var njBus = null;   // {wi, ri, si, idx} van de bus die open staat
 function njBusLijst(){
@@ -1616,11 +1921,11 @@ function njEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ r
 
 // Welke schermen horen bij welke tab, en waar staat de tabbalk
 var NJ_HUBS = ['tab_bezorgen','tab_geld','tab_bijhouden'];
-var NJ_MET_TABBAR = ['segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km','vergoeding'];
+var NJ_MET_TABBAR = ['mijnvolgorde','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km','vergoeding'];
 var NJ_TAB_VAN = {
   home:'home',
   tab_bezorgen:'tab_bezorgen', route:'tab_bezorgen', looplijst:'tab_bezorgen', krant:'tab_bezorgen', order:'tab_bezorgen',
-  straten:'tab_bezorgen', kaart:'tab_bezorgen', segment:'tab_bezorgen', wijkenmenu:'tab_bezorgen',
+  straten:'tab_bezorgen', kaart:'tab_bezorgen', mijnvolgorde:'tab_bezorgen', segment:'tab_bezorgen', wijkenmenu:'tab_bezorgen',
   tab_geld:'tab_geld', vergoeding:'tab_geld', vergoedingmenu:'tab_geld', bonus:'tab_geld', promillageperiode:'tab_geld', kerst:'tab_geld',
   tab_bijhouden:'tab_bijhouden', tijd:'tab_bijhouden', km:'tab_bijhouden', klachten:'tab_bijhouden', mutaties:'tab_bijhouden',
   jaararchief:'tab_bijhouden', agendahoofd:'tab_bijhouden'
@@ -1802,7 +2107,7 @@ function renderNjHub(){
     wrap.appendChild(njLijst('Lijsten', [M.route, M.looplijst, M.krant]));
     wrap.appendChild(njLijst('Kaart & wijken', [M.kaart, M.segment]));
     wrap.appendChild(njLijst('Voorbereiden', [
-      {ic:'volgorde', titel:'Volgorde wijken aanpassen', sub:'Geldt voor route, krant en kaart', actief:true, go:function(){ document.getElementById('reorderBtn').click(); }},
+      {ic:'volgorde', titel:'Mijn volgorde', sub: njVasteVolgorde ? 'Vast · opgeslagen '+njDatumTijd(njVasteVolgorde.opgeslagen) : 'Straten en huisnummers in je looproute', actief:true, go:function(){ view = {mode:'mijnvolgorde'}; render(); }},
       {ic:'pakket', titel:'Pakken maken', sub:'Van eind naar begin verdelen', actief:true, go:function(){ document.getElementById('pakkenBtn').click(); }},
       {ic:'inladen', titel:'Nieuwe looplijst (PDF) inladen', sub: meta.date ? 'Nu ingeladen: '+meta.date : 'Nog geen looplijst', actief:true, go:function(){ document.getElementById('loadPdfBtn').click(); }}
     ]));
@@ -2418,7 +2723,7 @@ const GEMENGD_KEY = '__GEMENGD__';
 // straten om apart in te tikken (bestaand gedrag), 'veld' = alle straten van de ronde
 // in één keer als grid van blokjes (net als de Kerstkaartjes-PDF), rechtstreeks aftikbaar.
 const STORAGE_KERST_WEERGAVE = 'looplijst_v23_kerst_weergave';
-let kerstWeergave = localStorage.getItem(STORAGE_KERST_WEERGAVE) || 'straat'; // 'straat' of 'veld'
+let kerstWeergave = 'straat'; // 'Veld' is weggehaald: altijd per straat
 function saveKerstWeergave(){ localStorage.setItem(STORAGE_KERST_WEERGAVE, kerstWeergave); }
 try { wijkOrder = JSON.parse(localStorage.getItem(STORAGE_WIJKORDER)) || []; } catch(e){ wijkOrder = []; }
 function saveWijkOrder(){ localStorage.setItem(STORAGE_WIJKORDER, JSON.stringify(wijkOrder)); }
@@ -2533,7 +2838,8 @@ function fullAdresKeyFromItem(item, w){
 function rondeIdxsInWijk(wi){
   const w = DATA[wi];
   if(!w) return [];
-  const userOrder = rondeOrder[w.wijk] || [];
+  const _vv = njVast();
+  const userOrder = (_vv && _vv.ronde && _vv.ronde[w.wijk]) || rondeOrder[w.wijk] || [];
   const allNames = w.rondes.map(r => r.ronde);
   const seen = new Set(); const result = [];
   userOrder.forEach(naam=>{
@@ -2548,7 +2854,8 @@ function straatIdxsInRonde(wi, ri){
   if(!DATA[wi] || !DATA[wi].rondes[ri]) return [];
   const r = DATA[wi].rondes[ri];
   const key = DATA[wi].wijk+'|'+r.ronde;
-  const userOrder = straatOrder[key] || [];
+  const _vv = njVast();
+  const userOrder = (_vv && _vv.straat && _vv.straat[key]) || straatOrder[key] || [];
   const allNames = r.straten.map(s => s.naam);
   const seen = new Set(); const result = [];
   userOrder.forEach(naam=>{
@@ -2563,7 +2870,9 @@ function adresIdxsInStraat(wi, ri, si){
   if(!DATA[wi] || !DATA[wi].rondes[ri] || !DATA[wi].rondes[ri].straten[si]) return [];
   const s = DATA[wi].rondes[ri].straten[si];
   const key = DATA[wi].wijk+'|'+DATA[wi].rondes[ri].ronde+'|'+s.naam;
-  const userOrder = adresOrder[key] || [];
+  const _vv = njVast();
+  if(_vv && _vv.nummer){ const md = _vv.nummer[key]; if(md==='op' || md==='af' || md==='oe') return njSorteerNummers(s.adressen, md); }
+  const userOrder = (_vv && _vv.adres && _vv.adres[key]) || adresOrder[key] || [];
   const allKeys = s.adressen.map(adresKeyOf);
   const seen = new Set(); const result = [];
   userOrder.forEach(ak=>{
@@ -2581,7 +2890,7 @@ function wijkVolgordeIdxs(){
   const seen = new Set();
   const result = [];
   // Eerst user-volgorde
-  wijkOrder.forEach(naam => {
+  ((njVast() && njVast().wijk) || wijkOrder).forEach(naam => {
     const i = allNames.indexOf(naam);
     if(i >= 0 && !seen.has(i)){ result.push(i); seen.add(i); }
   });
@@ -3344,6 +3653,7 @@ function render(){
     kerstSessieNee = ''; // Kerstkaartjes verlaten: bij volgende keer openen weer vragen
   }
   if(njIsHub(view.mode)) return renderNjHub();
+  if(view.mode==='mijnvolgorde') return renderMijnVolgorde();
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
@@ -3950,6 +4260,10 @@ function renderRoute(){
 
     const order = ['TT OL','NRC','TEL','VK','TR','HFD','AD NL'];
     let shown=0, hiddenCount=0;
+    const isLooplijstMode = (view.mode === 'looplijst');
+    const isAfvinkMode = (view.mode === 'looplijst' || view.mode === 'route' || view.mode === 'straten');
+    const tegelGrid = document.createElement('div');
+    tegelGrid.className = 'nj-bus-grid nj-adres-grid';
     groepen.forEach(g=>{
       // Sorteer items binnen groep op product-volgorde
       g.items.sort((x,y)=>{
@@ -3964,74 +4278,45 @@ function renderRoute(){
       const hasStop = g.items.some(it=>it.a.stop);
       const hasStart = g.items.some(it=>it.a.start);
       const hasSchema = g.items.some(it=>it.a.schema);
-      // Suffixen tonen bij samengevoegde groepen waar dat zinvol is
-      // (alleen als alle items hetzelfde hoofdnummer hebben en er meerdere unieke suffixen zijn)
-      let suffixHTML = '';
+      let suffixTxt = '';
       if(g.isSamengevoegd){
-        const suffixen = [...new Set(g.items.map(it=>{
-          const rest = it.a.nr.replace(/^\d+\s*/,'').trim();
-          return rest;
-        }).filter(x=>x.length>0))];
-        if(suffixen.length>0 && suffixen.length<=8){
-          suffixHTML = ' <span class="aname">'+suffixen.join(' · ')+'</span>';
-        }
+        const suffixen = [...new Set(g.items.map(it=>it.a.nr.replace(/^\d+\s*/,'').trim()).filter(x=>x.length>0))];
+        if(suffixen.length>0 && suffixen.length<=8) suffixTxt = suffixen.join(' · ');
       }
-      // Bouw kranten-badges
-      const krantenHTML = krantenCompact(g.items.map(x=>({a:x.a})), {smallBadge:false});
-      const row=document.createElement('div');
-      row.className='row';
-      const isLooplijstMode = (view.mode === 'looplijst');
-      const isAfvinkMode = (view.mode === 'looplijst' || view.mode === 'route' || view.mode === 'straten');
-      // In afvink-modi (looplijst en zaterdag): vinkjes per groep, tikbaar.
-      // Verschil: looplijst leert auto-volgorde en verbergt afgevinkte; route doet beide niet.
-      const checkClass = allDone?'done':(someDone?'partial':'');
-      const checkHTML = isAfvinkMode
-        ? '<div class="check '+checkClass+'"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
-        : '';
-      row.innerHTML='<div class="addr">'+
-        checkHTML+
-        '<div class="ainfo"><div class="anum">'+g.hoofd+suffixHTML+
-        (hasStop?' <span class="flag stop">STOP</span>':'')+
-        (hasStart?' <span class="flag start">NIEUW</span>':'')+
-        (hasSchema?' <span class="flag schema" title="Heeft eigen bezorg-schema">📅</span>':'')+
-        '</div>'+
-        '<div class="addr-prods">'+krantenHTML+'</div>'+
-        '</div>'+
-        '</div>';
+      const krantenHTML = krantenCompact(g.items.map(x=>({a:x.a})), {smallBadge:true});
+      const tegel = document.createElement(isAfvinkMode ? 'button' : 'div');
+      if(isAfvinkMode) tegel.type = 'button';
+      tegel.className = 'nj-bus nj-adres'+(allDone ? ' on' : (someDone ? ' half' : ''));
+      tegel.innerHTML = (allDone ? '<em>'+njIco('check', 12, 3.6)+'</em>' : '')+
+        ((hasStop||hasStart||hasSchema) ? '<i class="nj-vlag">'+(hasStop?'<span class="stop">STOP</span>':'')+(hasStart?'<span class="nieuw">NIEUW</span>':'')+(hasSchema?'<span class="schema" title="Eigen bezorg-schema">📅</span>':'')+'</i>' : '')+
+        '<b>'+g.hoofd+'</b>'+
+        (suffixTxt ? '<small>'+suffixTxt+'</small>' : '')+
+        '<span class="nj-kranten">'+krantenHTML+'</span>';
       if(isAfvinkMode){
-        row.querySelector('.addr').onclick=()=>{
+        tegel.onclick=()=>{
           const wasAllDone = allDone;
           if(allDone){
             keys.forEach(k=>delete doneMap[k]);
           } else {
             keys.forEach(k=>{ doneMap[k]=Date.now(); });
-            // Alleen Looplijst leert auto-volgorde; Zaterdag is een puur afvink-overzicht
+            // Alleen Looplijst leert auto-volgorde (de vaste volgorde verandert daar niet door)
             if(isLooplijstMode){
               const w = DATA[view.wijk];
               const ronde = w.rondes[view.ronde].ronde;
               const straat = w.rondes[view.ronde].straten[view.straat].naam;
-              const adresKeys = g.items.map(it => ({
-                nr: it.a.nr, prod: it.a.prod, naam: it.a.naam || ''
-              }));
+              const adresKeys = g.items.map(it => ({ nr: it.a.nr, prod: it.a.prod, naam: it.a.naam || '' }));
               leerLooplijstVolgorde(view.wijk, ronde, straat, adresKeys);
             }
           }
           saveDoneMap();
-          // Beide modi verbergen afgevinkte items als hideChecked aan staat
-          if(hideChk && !wasAllDone){
-            row.style.transition='.22s ease';
-            row.style.opacity='0';
-            row.style.transform='translateX(40px)';
-            row.style.maxHeight=row.offsetHeight+'px';
-            setTimeout(()=>{ render(); },200);
-          } else {
-            render();
-          }
+          if(hideChk && !wasAllDone){ tegel.classList.add('weg'); setTimeout(()=>{ render(); }, 180); }
+          else render();
           updateHeaderProgress();
         };
       }
-      main.appendChild(row);
+      tegelGrid.appendChild(tegel);
     });
+    if(shown>0) main.appendChild(tegelGrid);
     if(shown===0){
       main.innerHTML='<div class="empty"><div class="big">✅</div><h2>Straat klaar!</h2><p>'+s.naam+' is volledig bezorgd.</p></div>';
     } else if(hideChk && hiddenCount>0){
@@ -4040,6 +4325,7 @@ function renderRoute(){
       note.textContent=hiddenCount+' adres'+(hiddenCount===1?'':'sen')+' afgevinkt (verborgen)';
       main.appendChild(note);
     }
+    if(view.mode !== 'straten') njVolgendeStraatKnop(main, njVolgendeStraatIn(countStraat));
   }
   updateHeaderProgress();
 }
@@ -4331,6 +4617,8 @@ function renderKrant(){
     crumb.textContent=view.krant+' · '+r.ronde;
     title.textContent=s.naam;
     let shown=0, hiddenCount=0;
+    const kGrid = document.createElement('div');
+    kGrid.className = 'nj-bus-grid nj-adres-grid';
     adresIdxsInStraat(view.wijk, view.ronde, view.straat).forEach(ai=>{
       const a = s.adressen[ai];
       if(a.prod !== view.krant) return; // alleen deze krant
@@ -4339,34 +4627,24 @@ function renderKrant(){
       if(hideChecked && isDone){ hiddenCount++; return; }
       shown++;
       const ps = prodStyle(a.prod);
-      const row=document.createElement('div');
-      row.className='row';
-      row.innerHTML='<div class="addr">'+
-        '<div class="check '+(isDone?'done':'')+'">'+
-        '<svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
-        '</div>'+
-        '<div class="ainfo"><div class="anum">'+a.nr+
-        (a.naam?' <span class="aname">'+a.naam+'</span>':'')+
-        (a.stop?' <span class="flag stop">STOP</span>':'')+
-        (a.start?' <span class="flag start">NIEUW</span>':'')+
-        (a.schema?' <span class="flag schema" title="Heeft eigen bezorg-schema">📅</span>':'')+
-        '</div></div>'+
-        '<span class="prod" style="background:'+ps.bg+';color:'+ps.fg+'">'+a.prod+'</span>'+
-        '</div>';
-      row.querySelector('.addr').onclick=()=>{
+      const tegel = document.createElement('button');
+      tegel.type = 'button';
+      tegel.className = 'nj-bus nj-adres'+(isDone ? ' on' : '');
+      tegel.innerHTML = (isDone ? '<em>'+njIco('check', 12, 3.6)+'</em>' : '')+
+        ((a.stop||a.start||a.schema) ? '<i class="nj-vlag">'+(a.stop?'<span class="stop">STOP</span>':'')+(a.start?'<span class="nieuw">NIEUW</span>':'')+(a.schema?'<span class="schema" title="Eigen bezorg-schema">📅</span>':'')+'</i>' : '')+
+        '<b>'+a.nr+'</b>'+
+        (a.naam ? '<small>'+a.naam+'</small>' : '')+
+        '<span class="nj-kranten"><span class="prod" style="background:'+ps.bg+';color:'+ps.fg+'">'+a.prod+'</span></span>';
+      tegel.onclick=()=>{
         if(done[k]) delete done[k]; else done[k]=Date.now();
         save();
-        if(hideChecked && done[k]){
-          row.style.transition='.22s ease';
-          row.style.opacity='0';
-          row.style.transform='translateX(40px)';
-          row.style.maxHeight=row.offsetHeight+'px';
-          setTimeout(()=>{ render(); },200);
-        } else { render(); }
+        if(hideChecked && done[k]){ tegel.classList.add('weg'); setTimeout(()=>{ render(); }, 180); }
+        else render();
         updateHeaderProgress();
       };
-      main.appendChild(row);
+      kGrid.appendChild(tegel);
     });
+    if(shown>0) main.appendChild(kGrid);
     if(shown===0){
       main.innerHTML='<div class="empty"><div class="big">✅</div><h2>Klaar!</h2><p>Alle '+view.krant+' in '+s.naam+' is bezorgd.</p></div>';
     } else if(hiddenCount>0){
@@ -4375,6 +4653,7 @@ function renderKrant(){
       note.textContent=hiddenCount+' afgevinkt (verborgen)';
       main.appendChild(note);
     }
+    njVolgendeStraatKnop(main, njVolgendeStraatIn((wi,ri,si)=>countKrantInStraat(view.krant, wi, ri, si)));
   }
   updateHeaderProgress();
 }
@@ -5353,7 +5632,7 @@ function renderKerst(){
     wgToggle.querySelectorAll('button').forEach(btn=>{
       btn.onclick = ()=>{ kerstWeergave = btn.dataset.wg; saveKerstWeergave(); render(); };
     });
-    main.appendChild(wgToggle);
+    // (toggle Veld / Per straat niet meer tonen)
 
     let shown=0;
     if(kerstWeergave === 'veld'){
@@ -5922,7 +6201,7 @@ function renderHome(){
   kVolg.type = 'button';
   kVolg.className = 'nj-knop-rand';
   kVolg.innerHTML = njIco('volgorde', 18)+'<span>Volgorde</span>';
-  kVolg.onclick = ()=>document.getElementById('reorderBtn').click();
+  kVolg.onclick = ()=>{ view = {mode:'mijnvolgorde'}; render(); };
   duo.appendChild(kVolg);
   const kProm = document.createElement('button');
   kProm.type = 'button';
@@ -11642,7 +11921,7 @@ render = function(){
   navTerug = false;
   return _renderOrig.apply(this, arguments);
 };
-const ENKEL_SCHERM = ['kaart','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km'];
+const ENKEL_SCHERM = ['mijnvolgorde','kaart','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km'];
 document.getElementById('back').onclick=()=>{
   const goHome = njTerugNaarTab; // terug naar de tab (Vandaag/Bezorgen/Geld/Bijhouden) waar je vandaan kwam
   if(view.mode==='home' || njIsHub(view.mode)) return; // tab-pagina's hebben geen terug
@@ -11925,7 +12204,7 @@ document.getElementById('pdfDoelBtn').onclick = ()=>{
 };
 document.getElementById('reorderBtn').onclick = ()=>{
   closeSheet();
-  setTimeout(()=>{ tekenReorder(); reorderScreen.classList.add('show'); }, 200);
+  view = {mode:'mijnvolgorde'}; render();
 };
 document.getElementById('reorderDone').onclick = ()=>{
   reorderScreen.classList.remove('show');
