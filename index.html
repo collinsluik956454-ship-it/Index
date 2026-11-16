@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-16.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-16.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1327,6 +1327,59 @@ html[data-thema] .mutbox{background:#FFF8E6;border:1px solid #F3E2A9;border-radi
 html[data-thema] .mutbox .mh{background:transparent;min-height:56px;padding:10px 14px}
 html[data-thema] .mutbox .mh .t{font-size:15px;font-weight:700;color:#3D2E00}
 html[data-thema] .mutbox .ml{background:#fff;border-top:1px solid #F3E2A9}
+
+/* ----- Segmenten: lijst, kaart met vlakken, bijwerken vanuit de looplijst ----- */
+.nj-zoek{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 12px;border:1px solid #D5DDE8;border-radius:12px;background:#fff;color:#5A6A7E;cursor:text}
+.nj-zoek input{flex:1;border:none;outline:none;font-family:inherit;font-size:15px;background:transparent;color:#0E1A2B;min-width:0}
+.nj-seg-schakel{display:grid;grid-template-columns:1fr 1fr;background:#E6EBF2;border-radius:12px;padding:3px;gap:3px}
+html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
+.nj-seg-schakel button{min-height:40px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:14px;font-weight:700;color:var(--nj-hdr-muted);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.nj-seg-schakel button.aan{background:#fff;color:#0E1A2B;box-shadow:0 1px 2px rgba(14,26,43,.12)}
+.nj-label-rij{display:flex;justify-content:space-between;padding-right:4px}
+.nj-label-rij span:last-child{letter-spacing:0;text-transform:none;font-weight:700}
+.nj-seg-chip{min-width:46px;height:34px;padding:0 6px;box-sizing:border-box;border-radius:10px;color:#fff;font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.nj-seg-chip.groot{min-width:54px;height:44px;border-radius:12px;font-size:16px}
+.nj-seg-chip.mist{background:#fff;color:#B42318;border:2px dashed #B42318}
+.nj-1regel{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nj-draai{transition:transform .15s}
+.nj-seg-rij.open .nj-draai{transform:rotate(180deg)}
+.nj-seg-body{padding:8px 14px 14px;background:#F7F9FB;border-bottom:1px solid #EDF1F5;display:flex;flex-direction:column;gap:10px}
+.nj-seg-straat{display:flex;flex-direction:column;gap:6px}
+.nj-seg-straat b{font-size:14px;color:#0E1A2B}
+.nj-seg-nrs{display:flex;flex-wrap:wrap;gap:6px}
+.nj-seg-nr{min-width:44px;height:40px;padding:0 8px;border-radius:10px;border:1.5px solid #D5DDE8;background:#fff;color:#0E1A2B;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.nj-seg-nr.af{background:#15803D;border-color:#15803D;color:#fff}
+.nj-seg-nr.gekleurd{border-width:2px}
+.nj-seg-nr.nieuw{border-style:dashed;border-color:#B45309}
+.nj-seg-nr.gekozen{outline:3px solid #0B63CE;outline-offset:1px}
+.nj-seg-kaart{height:52vh;min-height:300px;border-radius:16px;overflow:hidden;border:1px solid #E2E7EE;background:#E9EDE4;position:relative;z-index:0}
+.nj-seg-leeg{height:100%;display:flex;align-items:center;justify-content:center;color:#5A6A7E;font-size:14px;padding:20px;text-align:center}
+.nj-seg-geo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--nj-hdr-muted)}
+.nj-seg-geo span{flex:1;min-width:160px}
+.nj-seg-geo .nj-knop-rand{height:42px}
+.nj-seg-detail{display:flex;flex-direction:column;gap:10px}
+.nj-seg-detail-kop{display:flex;align-items:center;gap:12px}
+.nj-ib{width:40px;height:40px;border-radius:12px;border:none;background:#E6EBF2;color:#0E1A2B;font-size:16px;font-weight:800;cursor:pointer;flex:0 0 auto}
+.nj-seg-kies{display:inline-flex;align-items:center;gap:6px}
+.nj-seg-kies i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.nj-seg-label{background:none !important;border:none !important}
+.nj-seg-label span{display:inline-flex;align-items:center;justify-content:center;width:46px;height:24px;border-radius:12px;background:#fff;border:2.5px solid #1F2937;font:800 12px Inter,system-ui,sans-serif;color:#0E1A2B;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.nj-seg-rijkop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.nj-seg-rijkop b{font-size:15px}
+.nj-teller{font-size:12px;font-weight:800;color:#B45309;background:#FFF1E0;padding:3px 9px;border-radius:99px}
+.nj-teller.nul{color:#15803D;background:#E7F6EC}
+.nj-seg-mist{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid #EDF1F5}
+.nj-seg-mist-adr{font-size:15px;font-weight:700}
+.nj-seg-mist-adr span{font-weight:600;color:#5A6A7E}
+.nj-seg-select{min-height:38px;border:1px solid #D5DDE8;border-radius:99px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;padding:0 10px;color:#0E1A2B}
+.nj-seg-select.breed{width:100%;border-radius:12px;min-height:46px;font-size:15px}
+.nj-seg-legenda{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;font-weight:700;color:#5A6A7E}
+.nj-seg-legenda span{display:flex;align-items:center;gap:5px}
+.nj-seg-legenda i{width:12px;height:12px;border-radius:3px;display:block}
+.nj-seg-legenda i.nieuw{border:2px dashed #B45309;box-sizing:border-box}
+.nj-seg-verzet{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:#EEF3FA;font-size:14px}
+.nj-seg-kaart1,.nj-seg-kaart2,.nj-seg-kaart3{display:flex;flex-direction:column;gap:10px}
+.nj-seg-kaart1 .nj-chips{gap:5px}
 </style>
 <script>
 // Offline service worker
@@ -1594,7 +1647,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-16.3';
+const APP_VERSION = '2026-11-16.4';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -1972,11 +2025,11 @@ function njEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ r
 
 // Welke schermen horen bij welke tab, en waar staat de tabbalk
 var NJ_HUBS = ['tab_bezorgen','tab_geld','tab_bijhouden'];
-var NJ_MET_TABBAR = ['mijnvolgorde','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km','vergoeding'];
+var NJ_MET_TABBAR = ['segbijwerken','mijnvolgorde','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km','vergoeding'];
 var NJ_TAB_VAN = {
   home:'home',
   tab_bezorgen:'tab_bezorgen', route:'tab_bezorgen', looplijst:'tab_bezorgen', krant:'tab_bezorgen', order:'tab_bezorgen',
-  straten:'tab_bezorgen', kaart:'tab_bezorgen', mijnvolgorde:'tab_bezorgen', segment:'tab_bezorgen', wijkenmenu:'tab_bezorgen',
+  straten:'tab_bezorgen', kaart:'tab_bezorgen', mijnvolgorde:'tab_bezorgen', segbijwerken:'tab_bezorgen', segment:'tab_bezorgen', wijkenmenu:'tab_bezorgen',
   tab_geld:'tab_geld', vergoeding:'tab_geld', vergoedingmenu:'tab_geld', bonus:'tab_geld', promillageperiode:'tab_geld', kerst:'tab_geld',
   tab_bijhouden:'tab_bijhouden', tijd:'tab_bijhouden', km:'tab_bijhouden', klachten:'tab_bijhouden', mutaties:'tab_bijhouden',
   jaararchief:'tab_bijhouden', agendahoofd:'tab_bijhouden'
@@ -1995,6 +2048,7 @@ function njZetChrome(){
   document.body.classList.toggle('nj-kerst-top', m === 'kerst' && view.level === 'wijk');
   document.body.classList.toggle('nj-ll-start', (m === 'looplijst' || m === 'route') && view.level === 'wijk');
   if(m !== 'kerst') kerstPlanOpen = false;
+  if(m !== 'segment') njSegStopKaart();
   var tab = NJ_TAB_VAN[m] || '';
   document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
     var aan = b.getAttribute('data-tab') === tab;
@@ -2034,7 +2088,7 @@ function njModules(){
   M.krant = {ic:'krant', titel:'Per krant', sub:krantSet.size+' krantensoorten', actief:isModeActief('krant'),
     go: ga({mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null})};
   M.kaart = {ic:'kaart', titel:'Wijkenkaart', sub:'Kaart + navigeren', actief:true, go: ga({mode:'kaart',level:null})};
-  M.segment = {ic:'segment', titel:'Segmenten', sub:'Wijkindeling per segment · exporteren', actief:true, go: ga({mode:'segment',level:null})};
+  M.segment = {ic:'segment', titel:'Segmenten', sub:'Lijst, kaart met vlakken en bijwerken', actief:true, go: ga({mode:'segment',level:null})};
 
   // Kerstfooi
   var kaartTotaal = 0, fooiTot = {totaal:0};
@@ -2190,6 +2244,752 @@ document.querySelectorAll('[data-nj-ic]').forEach(function(el){
 document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
   b.onclick = function(){ njGaNaarTab(b.getAttribute('data-tab')); };
 });
+
+// ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
+var NJ_SEG_KLEUREN = {
+  '226':'#e53935','227':'#8e24aa','230':'#1e88e5','231':'#00897b',
+  '232':'#f4511e','236':'#3949ab','244':'#6d4c41','249':'#00acc1',
+  '618':'#43a047','619':'#fb8c00','620':'#d81b60','621':'#5e35b1',
+  '622':'#00838f','623':'#9e9d24','624':'#f06292','716':'#8d6e63',
+  '717':'#26a69a','729':'#ef5350','730':'#7e57c2','731':'#66bb6a'
+};
+var NJ_SEG_EXTRA = ['#2e7d32','#ad1457','#283593','#ef6c00','#00695c','#6a1b9a','#558b2f','#c62828','#0277bd','#4e342e'];
+function njSegKleur(nr){
+  if(NJ_SEG_KLEUREN[nr]) return NJ_SEG_KLEUREN[nr];
+  let h = 0; String(nr).split('').forEach(c=>{ h = (h*31 + c.charCodeAt(0)) % 997; });
+  return NJ_SEG_EXTRA[h % NJ_SEG_EXTRA.length];
+}
+function njTitel(s){ return String(s||'').toLowerCase().replace(/(^|[\s\-.(])([a-zà-ÿ])/g, (m,a,b)=>a+b.toUpperCase()); }
+function njNrNorm(nr){ return String(nr==null?'':nr).replace(/\s+/g,'').toUpperCase(); }
+function njNrBasis(nr){ const m = String(nr==null?'':nr).trim().match(/^(\d+)/); return m ? m[1] : ''; }
+function njSegAantal(nr){ const s = SEGMENT_DATA[nr]; return s ? Object.values(s.straten).reduce((a,l)=>a+l.length,0) : 0; }
+function njSegNummers(){ return Object.keys(SEGMENT_DATA).sort((a,b)=>(parseInt(a,10)||0)-(parseInt(b,10)||0)); }
+// In welke wijk (uit de looplijst) ligt een segment? Via de straten.
+function njSegWijk(nr){
+  const seg = SEGMENT_DATA[nr]; if(!seg) return 'Overig';
+  const straten = Object.keys(seg.straten);
+  for(const w of (typeof DATA_ECHT!=='undefined' ? DATA_ECHT : DATA)){
+    for(const r of w.rondes){ for(const s of r.straten){ if(straten.indexOf(String(s.naam).toUpperCase()) >= 0) return njTitel(w.wijk); } }
+  }
+  return 'Overig';
+}
+function njSegGeoKey(straat, nr){
+  const m = String(nr).trim().match(/^(\d+)\s*([A-Za-z]{0,2})?/);
+  const nrClean = m ? (m[1] + (m[2] ? m[2].toUpperCase() : '')).trim() : String(nr).replace(/\s+/g,'').slice(0,8);
+  return (njTitel(straat)+' '+nrClean).toLowerCase().trim();
+}
+// Alle adressen van alle segmenten met (indien bekend) hun plek op de kaart
+function njSegPunten(){
+  const punten = [], zonder = [];
+  njSegNummers().forEach(nr=>{
+    Object.entries(SEGMENT_DATA[nr].straten).forEach(([straat, nrs])=>{
+      nrs.forEach(n=>{
+        const co = geocache[njSegGeoKey(straat, n)];
+        if(co) punten.push({seg:nr, straat:straat, nr:n, lat:co.lat, lng:co.lng});
+        else zonder.push({seg:nr, straat:straat, nr:n});
+      });
+    });
+  });
+  return {punten:punten, zonder:zonder};
+}
+
+// Vlakken berekenen: elk stukje grond (10 m) krijgt het segment van het dichtstbijzijnde adres
+// (tot 55 m van een adres). De grenzen tussen segmenten liggen dan precies tussen de huizen in.
+var njSegVlakCache = {sleutel:'', vlakken:null};
+function njSegVlakken(punten){
+  const sleutel = punten.length+':'+punten.map(p=>p.seg+p.lat.toFixed(5)+p.lng.toFixed(5)).join('').length+':'+(punten[0]?punten[0].lat:0)+':'+(punten.length?punten[punten.length-1].lng:0);
+  if(njSegVlakCache.sleutel === sleutel && njSegVlakCache.vlakken) return njSegVlakCache.vlakken;
+  const uit = {};
+  if(punten.length < 2){ njSegVlakCache = {sleutel:sleutel, vlakken:uit}; return uit; }
+  const lat0 = punten.reduce((a,p)=>a+p.lat,0)/punten.length, lng0 = punten.reduce((a,p)=>a+p.lng,0)/punten.length;
+  const mLat = 111320, mLng = 111320*Math.cos(lat0*Math.PI/180);
+  const C = 10, MAXD = 55, B = 60;
+  const segLijst = [], segIdx = {};
+  const pts = punten.map(p=>{
+    if(segIdx[p.seg] === undefined){ segIdx[p.seg] = segLijst.length; segLijst.push(p.seg); }
+    return {k:segIdx[p.seg], x:(p.lng-lng0)*mLng, y:(p.lat-lat0)*mLat};
+  });
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  pts.forEach(p=>{ if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; });
+  minX -= MAXD+2*C; minY -= MAXD+2*C; maxX += MAXD+2*C; maxY += MAXD+2*C;
+  const W = Math.ceil((maxX-minX)/C), H = Math.ceil((maxY-minY)/C);
+  if(W*H > 2500000) return uit;   // veiligheidsgrens
+  const emmers = {};
+  pts.forEach(p=>{ const kx = Math.floor((p.x-minX)/B), ky = Math.floor((p.y-minY)/B); const s = kx+','+ky; (emmers[s] = emmers[s] || []).push(p); });
+  const grid = new Int16Array(W*H).fill(-1);
+  const MAX2 = MAXD*MAXD;
+  for(let j=0;j<H;j++){
+    const cy = minY + (j+0.5)*C, by = Math.floor((cy-minY)/B);
+    for(let i=0;i<W;i++){
+      const cx = minX + (i+0.5)*C, bx = Math.floor((cx-minX)/B);
+      let best = -1, bd = MAX2;
+      for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+        const e = emmers[(bx+dx)+','+(by+dy)]; if(!e) continue;
+        for(let q=0;q<e.length;q++){ const p = e[q]; const d = (p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy); if(d < bd){ bd = d; best = p.k; } }
+      }
+      grid[j*W+i] = best;
+    }
+  }
+  const g = (i,j)=> (i<0||j<0||i>=W||j>=H) ? -1 : grid[j*W+i];
+  // Afstand tot de rand (voor een mooie plek voor het nummer)
+  const afst = new Int16Array(W*H).fill(0);
+  const rij = [];
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+    const k = grid[j*W+i]; if(k < 0) continue;
+    if(g(i-1,j)!==k || g(i+1,j)!==k || g(i,j-1)!==k || g(i,j+1)!==k){ afst[j*W+i] = 1; rij.push(j*W+i); }
+  }
+  for(let q=0;q<rij.length;q++){
+    const c = rij[q], i = c % W, j = (c - i)/W, k = grid[c], d = afst[c];
+    [[i-1,j],[i+1,j],[i,j-1],[i,j+1]].forEach(([a,b])=>{ if(a<0||b<0||a>=W||b>=H) return; const n = b*W+a; if(grid[n]===k && afst[n]===0){ afst[n] = d+1; rij.push(n); } });
+  }
+  const naarLL = (x,y)=>[lat0 + (minY + y*C)/mLat, lng0 + (minX + x*C)/mLng];
+  segLijst.forEach((seg, k)=>{
+    // randen met het segment aan de linkerkant
+    const vanaf = {};
+    let beste = -1, besteD = 0;
+    const voeg = (x1,y1,x2,y2)=>{ const s = x1+','+y1; (vanaf[s] = vanaf[s] || []).push([x1,y1,x2,y2]); };
+    for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+      if(grid[j*W+i] !== k) continue;
+      if(afst[j*W+i] > besteD){ besteD = afst[j*W+i]; beste = j*W+i; }
+      if(g(i,j-1)!==k) voeg(i,j,i+1,j);
+      if(g(i+1,j)!==k) voeg(i+1,j,i+1,j+1);
+      if(g(i,j+1)!==k) voeg(i+1,j+1,i,j+1);
+      if(g(i-1,j)!==k) voeg(i,j+1,i,j);
+    }
+    const ringen = [];
+    Object.keys(vanaf).forEach(start=>{
+      while(vanaf[start] && vanaf[start].length){
+        let e = vanaf[start].pop();
+        const ring = [[e[0],e[1]]];
+        let veilig = 0;
+        while(veilig++ < 200000){
+          ring.push([e[2],e[3]]);
+          const s2 = e[2]+','+e[3];
+          const opties = vanaf[s2];
+          if(!opties || !opties.length) break;
+          // bij een kruispunt: linksaf, zodat aanrakende stukjes los blijven
+          let kies = 0;
+          if(opties.length > 1){
+            const dx = e[2]-e[0], dy = e[3]-e[1];
+            let bestS = -9;
+            opties.forEach((o,ix)=>{ const ox = o[2]-o[0], oy = o[3]-o[1]; const kr = dx*oy - dy*ox; const sc = kr > 0 ? 2 : (kr === 0 ? 1 : 0); if(sc > bestS){ bestS = sc; kies = ix; } });
+          }
+          e = opties.splice(kies,1)[0];
+        }
+        if(ring.length < 5) continue;
+        // rechte stukken samenvoegen
+        const vereenv = [];
+        for(let q=0;q<ring.length-1;q++){
+          const a = ring[(q-1+ring.length-1)%(ring.length-1)], b = ring[q], c = ring[q+1];
+          if((b[0]-a[0])*(c[1]-b[1]) - (b[1]-a[1])*(c[0]-b[0]) !== 0) vereenv.push(b);
+        }
+        if(vereenv.length < 3) continue;
+        // afronden (Chaikin, 2x)
+        let r = vereenv;
+        for(let it=0; it<2; it++){
+          const nr = [];
+          for(let q=0;q<r.length;q++){ const a = r[q], b = r[(q+1)%r.length]; nr.push([0.75*a[0]+0.25*b[0], 0.75*a[1]+0.25*b[1]]); nr.push([0.25*a[0]+0.75*b[0], 0.25*a[1]+0.75*b[1]]); }
+          r = nr;
+        }
+        ringen.push(r.map(([x,y])=>naarLL(x,y)));
+      }
+    });
+    if(!ringen.length) return;
+    let label = null;
+    if(beste >= 0){ const i = beste % W, j = (beste - i)/W; label = naarLL(i+0.5, j+0.5); }
+    uit[seg] = {ringen:ringen, label:label};
+  });
+  njSegVlakCache = {sleutel:sleutel, vlakken:uit};
+  return uit;
+}
+
+// Export voor Google Maps (Mijn kaarten / Google Earth): .kml met alle segment-vlakken
+function njSegKml(vlakken){
+  const kml = c=>{ const h = c.replace('#',''); return h.slice(4,6)+h.slice(2,4)+h.slice(0,2); };
+  const opp = r=>{ let s=0; for(let i=0;i<r.length;i++){ const a=r[i], b=r[(i+1)%r.length]; s += a[1]*b[0]-b[1]*a[0]; } return s/2; };
+  const binnen = (pt, r)=>{ let c=false; for(let i=0,j=r.length-1;i<r.length;j=i++){ if(((r[i][0]>pt[0])!==(r[j][0]>pt[0])) && (pt[1] < (r[j][1]-r[i][1])*(pt[0]-r[i][0])/(r[j][0]-r[i][0])+r[i][1])) c=!c; } return c; };
+  const coords = r=>r.concat([r[0]]).map(p=>p[1].toFixed(6)+','+p[0].toFixed(6)+',0').join(' ');
+  let s = '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Segmenten Oldenzaal</name>\n';
+  Object.keys(vlakken).forEach(nr=>{
+    const kl = kml(njSegKleur(nr));
+    s += '<Style id="s'+nr+'"><LineStyle><color>ff2f2a1f</color><width>2</width></LineStyle><PolyStyle><color>80'+kl+'</color></PolyStyle></Style>\n';
+  });
+  Object.entries(vlakken).forEach(([nr, v])=>{
+    const buiten = v.ringen.filter(r=>opp(r) > 0), gaten = v.ringen.filter(r=>opp(r) <= 0);
+    const seg = SEGMENT_DATA[nr];
+    const omschr = seg ? Object.entries(seg.straten).map(([st,nrs])=>njTitel(st)+': '+nrs.join(', ')).join('\n') : '';
+    s += '<Placemark><name>'+nr+'</name><description><![CDATA['+omschr+']]></description><styleUrl>#s'+nr+'</styleUrl><MultiGeometry>';
+    buiten.forEach(b=>{
+      s += '<Polygon><outerBoundaryIs><LinearRing><coordinates>'+coords(b)+'</coordinates></LinearRing></outerBoundaryIs>';
+      gaten.filter(h=>binnen(h[0], b)).forEach(h=>{ s += '<innerBoundaryIs><LinearRing><coordinates>'+coords(h)+'</coordinates></LinearRing></innerBoundaryIs>'; });
+      s += '</Polygon>';
+    });
+    s += '</MultiGeometry></Placemark>\n';
+  });
+  s += '</Document></kml>';
+  return s;
+}
+function njSegDownloadKml(){
+  const v = njSegVlakken(njSegPunten().punten);
+  if(!Object.keys(v).length){ toast('Nog geen vlakken: zoek eerst de adressen op', true); return; }
+  const blob = new Blob([njSegKml(v)], {type:'application/vnd.google-earth.kml+xml'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Segmenten_Oldenzaal.kml';
+  document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(), 500);
+  toast('KML gemaakt: open hem in Google My Maps (Importeren)');
+}
+
+// Ontbrekende adressen opzoeken (OpenStreetMap, 1 per seconde), met voortgang
+var njSegGeoBezig = false;
+async function njSegZoekOp(bijVoortgang){
+  if(njSegGeoBezig) return;
+  njSegGeoBezig = true;
+  try{
+    const lijst = njSegPunten().zonder;
+    let gedaan = 0, gevonden = 0;
+    for(const z of lijst){
+      if(!njSegGeoBezig || view.mode !== 'segment') break;
+      const co = await geocodeAdres(njTitel(z.straat), z.nr);
+      gedaan++; if(co) gevonden++;
+      if(bijVoortgang) bijVoortgang(gedaan, lijst.length, gevonden);
+      await new Promise(r=>setTimeout(r, 1100));
+    }
+  } finally { njSegGeoBezig = false; }
+}
+
+var njSegWeergave = 'lijst', njSegOpen = null, njSegGekozen = null, njSegWijkFilter = 'Alle', njSegAdressenTonen = false, njSegMap = null;
+function njSegStopKaart(){ if(njSegMap){ try{ njSegMap.remove(); }catch(e){} njSegMap = null; } }
+
+function njSegNummerKnoppen(nr, container){
+  const seg = SEGMENT_DATA[nr]; if(!seg) return;
+  Object.entries(seg.straten).forEach(([straat, nrs])=>{
+    const blok = document.createElement('div');
+    blok.className = 'nj-seg-straat';
+    blok.innerHTML = '<b>'+njEsc(njTitel(straat))+'</b>';
+    const rij = document.createElement('div');
+    rij.className = 'nj-seg-nrs';
+    nrs.forEach(n=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nj-seg-nr'+(isSegAdresGedaan(nr, straat, n) ? ' af' : '');
+      b.textContent = n;
+      b.onclick = ()=>{ toggleSegAdres(nr, straat, n); b.classList.toggle('af', isSegAdresGedaan(nr, straat, n)); };
+      rij.appendChild(b);
+    });
+    blok.appendChild(rij);
+    container.appendChild(blok);
+  });
+}
+
+function renderSegment(){
+  const main = document.getElementById('main');
+  const back = document.getElementById('back');
+  back.classList.remove('hidden');
+  back.innerHTML = njIco('terug', 22, 2.4);
+  document.getElementById('crumb').textContent = 'Bezorgen';
+  document.getElementById('title').textContent = 'Segmenten';
+  njSegStopKaart();
+  main.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'nj-pagina nj-seg-pagina';
+  main.appendChild(wrap);
+
+  // Zoeken + schakelaar Lijst / Kaart
+  const zoekBox = document.createElement('label');
+  zoekBox.className = 'nj-zoek';
+  zoekBox.innerHTML = njIco('zoek', 18)+'<input type="search" placeholder="Zoek segment, straat of huisnummer" aria-label="Zoeken">';
+  const zoek = zoekBox.querySelector('input');
+  const schakel = document.createElement('div');
+  schakel.className = 'nj-seg-schakel';
+  schakel.innerHTML = '<button type="button" data-w="lijst">'+njIco('lijst', 16)+'Lijst</button><button type="button" data-w="kaart">'+njIco('kaart', 16)+'Kaart</button>';
+  schakel.querySelectorAll('button').forEach(b=>{
+    b.classList.toggle('aan', b.getAttribute('data-w') === njSegWeergave);
+    b.onclick = ()=>{ njSegWeergave = b.getAttribute('data-w'); renderSegment(); };
+  });
+  wrap.appendChild(schakel);
+
+  // Bijwerken vanuit de looplijst (met teller)
+  const ontbrekend = njSegOntbrekend();
+  const bijw = document.createElement('button');
+  bijw.type = 'button';
+  bijw.className = 'nj-kaart nj-plan-knop nj-seg-bijw';
+  bijw.innerHTML = '<span class="nj-ico">'+njIco('ververs', 20)+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-rij-titel">Bijwerken vanuit de looplijst</span>'+
+    '<span class="nj-rij-sub">'+(ontbrekend.length ? '<span class="nj-rood">'+ontbrekend.length+' adres'+(ontbrekend.length===1?'':'sen')+' zonder segment</span>' : 'Alles uit de looplijst heeft een segment')+'</span></span>'+
+    '<span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
+  bijw.onclick = ()=>{ view = {mode:'segbijwerken'}; render(); };
+
+  if(njSegWeergave === 'kaart'){ wrap.appendChild(bijw); njSegKaartBouwen(wrap); return; }
+
+  wrap.insertBefore(zoekBox, schakel);
+  wrap.appendChild(bijw);
+  const lijstBox = document.createElement('div');
+  lijstBox.className = 'nj-seg-lijsten';
+  wrap.appendChild(lijstBox);
+
+  // Acties (Wijken-PDF inladen, exporteren)
+  const acties = document.createElement('section');
+  acties.className = 'nj-sectie';
+  acties.innerHTML = '<h2 class="nj-label">Inladen &amp; exporteren</h2>';
+  const actLijst = document.createElement('div');
+  actLijst.className = 'nj-lijst';
+  [
+    {ic:'inladen', titel:'Wijken-PDF inladen', sub:'Straten en nummers per segment bijwerken', go:()=>{ const inp = document.createElement('input'); inp.type='file'; inp.accept='.pdf,application/pdf'; inp.onchange = e=>{ const f = e.target.files[0]; if(f) importeerWijkenPdf(f); }; inp.click(); }},
+    {ic:'kaart', titel:'Naar Google Maps (.kml)', sub:'Vlakken openen in Google My Maps of Google Earth', go:njSegDownloadKml},
+    {ic:'uitvoer', titel:'Exporteren als CSV', sub:'Alle segmenten, straten en nummers', go:()=>exportSegmentCSV()},
+    {ic:'pdf', titel:'Exporteren als PDF', sub:'Wijkindeling per segment', go:()=>exportSegmentPDF()}
+  ].forEach(it=>{ it.actief = true; actLijst.appendChild(njRij(it)); });
+  acties.appendChild(actLijst);
+  wrap.appendChild(acties);
+
+  function teken(filter){
+    lijstBox.innerHTML = '';
+    const fl = (filter||'').toLowerCase().trim();
+    const perWijk = {};
+    njSegNummers().forEach(nr=>{
+      const seg = SEGMENT_DATA[nr];
+      const straten = Object.keys(seg.straten);
+      const treffer = !fl || nr.indexOf(fl) >= 0 || straten.some(st=>st.toLowerCase().indexOf(fl) >= 0 || (seg.straten[st]||[]).some(n=>(st.toLowerCase()+' '+String(n).toLowerCase()).indexOf(fl) >= 0));
+      if(!treffer) return;
+      const wk = njSegWijk(nr);
+      (perWijk[wk] = perWijk[wk] || []).push(nr);
+    });
+    const wijken = Object.keys(perWijk);
+    if(!wijken.length){ lijstBox.innerHTML = '<div class="nj-kaart" style="text-align:center;color:#5A6A7E">Niets gevonden</div>'; return; }
+    wijken.forEach(wk=>{
+      const nrs = perWijk[wk];
+      const sec = document.createElement('section');
+      sec.className = 'nj-sectie';
+      const tot = nrs.reduce((a,nr)=>a+njSegAantal(nr),0);
+      sec.innerHTML = '<h2 class="nj-label nj-label-rij"><span>'+njEsc(wk)+'</span><span>'+nrs.length+' segment'+(nrs.length===1?'':'en')+' · '+tot+' adr.</span></h2>';
+      const box = document.createElement('div');
+      box.className = 'nj-lijst';
+      nrs.forEach(nr=>{
+        const seg = SEGMENT_DATA[nr];
+        let totaal = 0, gedaan = 0;
+        Object.entries(seg.straten).forEach(([s,ns])=>ns.forEach(n=>{ totaal++; if(isSegAdresGedaan(nr,s,n)) gedaan++; }));
+        const open = njSegOpen === nr || (!!fl && nrs.length === 1);
+        const r = document.createElement('button');
+        r.type = 'button';
+        r.className = 'nj-rij nj-seg-rij'+(open ? ' open' : '');
+        r.innerHTML = '<span class="nj-seg-chip" style="background:'+njSegKleur(nr)+'">'+nr+'</span>'+
+          '<span class="nj-rij-tekst"><span class="nj-rij-titel nj-1regel">'+njEsc(Object.keys(seg.straten).map(njTitel).join(', '))+'</span>'+
+          '<span class="nj-rij-sub">'+totaal+' adressen · '+Object.keys(seg.straten).length+' stra'+(Object.keys(seg.straten).length===1?'at':'ten')+(gedaan ? ' · <b style="color:#15803D">'+gedaan+' afgevinkt</b>' : '')+'</span></span>'+
+          '<span class="nj-chev nj-draai">'+njIco('neer', 18, 2.2)+'</span>';
+        r.onclick = ()=>{ njSegOpen = (njSegOpen === nr) ? null : nr; teken(zoek.value); };
+        box.appendChild(r);
+        if(open){
+          const body = document.createElement('div');
+          body.className = 'nj-seg-body';
+          njSegNummerKnoppen(nr, body);
+          const opKaart = document.createElement('button');
+          opKaart.type = 'button';
+          opKaart.className = 'nj-knop-rand';
+          opKaart.innerHTML = njIco('kaart', 18)+'<span>Toon op de kaart</span>';
+          opKaart.onclick = ()=>{ njSegGekozen = nr; njSegWeergave = 'kaart'; renderSegment(); };
+          body.appendChild(opKaart);
+          box.appendChild(body);
+        }
+      });
+      sec.appendChild(box);
+      lijstBox.appendChild(sec);
+    });
+  }
+  teken('');
+  zoek.addEventListener('input', ()=>{ njSegOpen = null; teken(zoek.value); });
+}
+
+function njSegKaartBouwen(wrap){
+  // Wijk-filter
+  const wijken = ['Alle'];
+  njSegNummers().forEach(nr=>{ const w = njSegWijk(nr); if(wijken.indexOf(w) < 0) wijken.push(w); });
+  if(wijken.indexOf(njSegWijkFilter) < 0) njSegWijkFilter = 'Alle';
+  const filt = document.createElement('div');
+  filt.className = 'nj-chips nj-seg-filter';
+  wijken.forEach(w=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nj-chip'+(w === njSegWijkFilter ? ' aan' : '');
+    b.textContent = w.replace(/^Oldenzaal[\s-]*/i, '') || w;
+    b.onclick = ()=>{ njSegWijkFilter = w; njSegGekozen = null; renderSegment(); };
+    filt.appendChild(b);
+  });
+  const adrKnop = document.createElement('button');
+  adrKnop.type = 'button';
+  adrKnop.className = 'nj-chip'+(njSegAdressenTonen ? ' aan' : '');
+  adrKnop.textContent = 'Adressen';
+  adrKnop.onclick = ()=>{ njSegAdressenTonen = !njSegAdressenTonen; renderSegment(); };
+  filt.appendChild(adrKnop);
+  wrap.appendChild(filt);
+
+  const kaartDiv = document.createElement('div');
+  kaartDiv.className = 'nj-seg-kaart';
+  kaartDiv.id = 'njSegKaart';
+  wrap.appendChild(kaartDiv);
+  const info = document.createElement('div');
+  info.className = 'nj-seg-info';
+  wrap.appendChild(info);
+  const detail = document.createElement('section');
+  detail.className = 'nj-kaart nj-seg-detail';
+  wrap.appendChild(detail);
+
+  const {punten, zonder} = njSegPunten();
+  const zichtbaar = nr=> njSegWijkFilter === 'Alle' || njSegWijk(nr) === njSegWijkFilter;
+
+  function infoTekst(extra){
+    info.innerHTML = '';
+    if(zonder.length){
+      const t = document.createElement('div');
+      t.className = 'nj-seg-geo';
+      t.innerHTML = '<span id="njSegGeoTekst">'+(extra || (punten.length+' van '+(punten.length+zonder.length)+' adressen staan op de kaart'))+'</span>';
+      if(!njSegGeoBezig){
+        const k = document.createElement('button');
+        k.type = 'button';
+        k.className = 'nj-knop-rand';
+        k.innerHTML = njIco('zoek', 16)+'<span>Adressen opzoeken</span>';
+        k.onclick = ()=>{
+          k.disabled = true;
+          njSegZoekOp((d, t2, gev)=>{
+            const sp = document.getElementById('njSegGeoTekst');
+            if(sp) sp.textContent = 'Adressen opzoeken… '+d+' van '+t2+' ('+gev+' gevonden)';
+            if(d % 100 === 0 || d === t2){ if(view.mode === 'segment' && njSegWeergave === 'kaart'){ const mn = document.getElementById('main'); const sc = mn ? mn.scrollTop : 0; renderSegment(); if(mn) mn.scrollTop = sc; } }
+          });
+        };
+        t.appendChild(k);
+      }
+      info.appendChild(t);
+    }
+  }
+  infoTekst(njSegGeoBezig ? 'Adressen opzoeken…' : '');
+
+  function toonDetail(nr){
+    detail.innerHTML = '';
+    if(!nr){
+      detail.innerHTML = '<span class="nj-stat-sub">Tik op een vlak of kies een segment</span>';
+      const chips = document.createElement('div');
+      chips.className = 'nj-chips';
+      njSegNummers().filter(zichtbaar).forEach(n=>{
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'nj-chip nj-seg-kies';
+        b.innerHTML = '<i style="background:'+njSegKleur(n)+'"></i>'+n;
+        b.onclick = ()=>kies(n, true);
+        chips.appendChild(b);
+      });
+      detail.appendChild(chips);
+      return;
+    }
+    const seg = SEGMENT_DATA[nr];
+    const kop = document.createElement('div');
+    kop.className = 'nj-seg-detail-kop';
+    kop.innerHTML = '<span class="nj-seg-chip groot" style="background:'+njSegKleur(nr)+'">'+nr+'</span>'+
+      '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(njSegWijk(nr))+'</span><span class="nj-rij-sub">'+njSegAantal(nr)+' adressen · '+Object.keys(seg.straten).length+' straten</span></span>';
+    const sluit = document.createElement('button');
+    sluit.type = 'button';
+    sluit.className = 'nj-ib';
+    sluit.setAttribute('aria-label', 'Sluiten');
+    sluit.innerHTML = '✕';
+    sluit.onclick = ()=>kies(null);
+    kop.appendChild(sluit);
+    detail.appendChild(kop);
+    njSegNummerKnoppen(nr, detail);
+    const knoppen = document.createElement('div');
+    knoppen.className = 'nj-duo nj-duo-knoppen';
+    const nav = document.createElement('button');
+    nav.type = 'button';
+    nav.className = 'nj-knop-rand';
+    nav.innerHTML = njIco('kaart', 18)+'<span>Navigeer</span>';
+    nav.onclick = ()=>{
+      const v = vlakken[nr];
+      const p = v && v.label ? v.label : null;
+      const eerste = Object.entries(seg.straten)[0];
+      const url = p ? 'https://www.google.com/maps/dir/?api=1&destination='+p[0].toFixed(6)+','+p[1].toFixed(6)
+        : kaartMapsUrl(njTitel(eerste[0]), eerste[1][0]);
+      window.open(url, '_blank');
+    };
+    const kml = document.createElement('button');
+    kml.type = 'button';
+    kml.className = 'nj-knop-rand';
+    kml.innerHTML = njIco('uitvoer', 18)+'<span>Google Maps (.kml)</span>';
+    kml.onclick = njSegDownloadKml;
+    knoppen.appendChild(nav); knoppen.appendChild(kml);
+    detail.appendChild(knoppen);
+  }
+
+  let vlakken = {};
+  const lagen = {};
+  function kies(nr, zoom){
+    njSegGekozen = nr;
+    Object.entries(lagen).forEach(([n, l])=>{
+      const aan = !nr || n === nr;
+      l.setStyle({fillOpacity: !nr ? 0.38 : (n === nr ? 0.6 : 0.12), weight: n === nr ? 3.5 : 1.5, opacity: aan ? 1 : 0.35});
+      if(n === nr) l.bringToFront();
+    });
+    if(nr && zoom && lagen[nr] && njSegMap){ try{ njSegMap.fitBounds(lagen[nr].getBounds(), {padding:[30,30], maxZoom:17}); }catch(e){} }
+    toonDetail(nr);
+  }
+
+  if(typeof L === 'undefined'){
+    kaartDiv.innerHTML = '<div class="nj-seg-leeg">De kaart kon niet laden. Is er internet?</div>';
+    toonDetail(null);
+    return;
+  }
+  setTimeout(()=>{
+    if(!document.getElementById('njSegKaart')) return;
+    njSegMap = L.map('njSegKaart', {zoomControl:true, attributionControl:false}).setView([52.3140, 6.9200], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(njSegMap);
+    vlakken = njSegVlakken(punten);
+    const groep = [];
+    Object.entries(vlakken).forEach(([nr, v])=>{
+      if(!zichtbaar(nr)) return;
+      const laag = L.polygon(v.ringen, {color:'#1F2937', weight:1.5, fillColor:njSegKleur(nr), fillOpacity:0.38, smoothFactor:1});
+      laag.on('click', ()=>kies(nr, false));
+      laag.addTo(njSegMap);
+      lagen[nr] = laag;
+      groep.push(laag);
+      if(v.label){
+        const lbl = L.marker(v.label, {icon: L.divIcon({className:'nj-seg-label', html:'<span style="border-color:'+njSegKleur(nr)+'">'+nr+'</span>', iconSize:[46,24], iconAnchor:[23,12]})});
+        lbl.on('click', ()=>kies(nr, true));
+        lbl.addTo(njSegMap);
+      }
+    });
+    if(njSegAdressenTonen){
+      punten.forEach(p=>{ if(zichtbaar(p.seg)) L.circleMarker([p.lat, p.lng], {radius:3, color:'#1F2937', weight:1, fillColor:'#FFFFFF', fillOpacity:1}).bindTooltip(njTitel(p.straat)+' '+p.nr).addTo(njSegMap); });
+    }
+    if(groep.length){ try{ njSegMap.fitBounds(L.featureGroup(groep).getBounds(), {padding:[16,16]}); }catch(e){} }
+    else if(!punten.length){ infoTekst('Nog geen adressen op de kaart. Tik op "Adressen opzoeken".'); }
+    setTimeout(()=>{ try{ njSegMap && njSegMap.invalidateSize(); }catch(e){} }, 250);
+    if(njSegGekozen && lagen[njSegGekozen]) kies(njSegGekozen, true); else kies(null);
+  }, 30);
+}
+
+// ----- Bijwerken vanuit de looplijst -----
+function njStraatSleutel(s){ return String(s||'').toUpperCase().replace(/\./g,' ').replace(/^\s*ST\s+/,'').replace(/\s+/g,' ').trim(); }
+function njLev1(a, b){ if(Math.abs(a.length-b.length) > 1) return false; let i=0, j=0, f=0; while(i<a.length && j<b.length){ if(a[i]===b[j]){ i++; j++; continue; } if(++f > 1) return false; if(a.length > b.length) i++; else if(b.length > a.length) j++; else { i++; j++; } } return f + (a.length-i) + (b.length-j) <= 1; }
+function njSegStraatVan(nr, sleutel){ const seg = SEGMENT_DATA[nr]; if(!seg) return null; if(seg.straten[sleutel]) return sleutel; const ks = Object.keys(seg.straten); for(const k of ks){ if(njStraatSleutel(k) === sleutel) return k; } if(sleutel.length >= 8){ for(const k of ks){ const kk = njStraatSleutel(k); if(kk.length >= 8 && njLev1(kk, sleutel)) return k; } } return null; }
+function njSegZoekNummer(straatUp, nrNorm, basis){
+  for(const nr of njSegNummers()){
+    const k = njSegStraatVan(nr, straatUp); if(!k) continue;
+    if(SEGMENT_DATA[nr].straten[k].some(x=>njNrNorm(x) === nrNorm)) return nr;
+  }
+  for(const nr of njSegNummers()){
+    const k = njSegStraatVan(nr, straatUp); if(!k) continue;
+    if(basis && SEGMENT_DATA[nr].straten[k].some(x=>njNrBasis(x) === basis)) return nr;
+  }
+  return null;
+}
+function njSegOntbrekend(){
+  const uit = [], gezien = {};
+  (typeof DATA_ECHT!=='undefined' ? DATA_ECHT : DATA).forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>{
+    const st = njStraatSleutel(s.naam), nn = njNrNorm(a.nr), basis = njNrBasis(a.nr);
+    if(njSegZoekNummer(st, nn, basis)) return;
+    const sl = st+'|'+(basis || nn);
+    if(gezien[sl]){ gezien[sl].aantal++; if(gezien[sl].prods.indexOf(a.prod) < 0) gezien[sl].prods.push(a.prod); return; }
+    gezien[sl] = {straat:st, naam:s.naam, nr:(basis || String(a.nr).trim()), nrNorm:(basis || nn), prods:[a.prod], wijk:w.wijk, aantal:1};
+    uit.push(gezien[sl]);
+  }))));
+  return uit;
+}
+function njSegKandidaten(straatUp){
+  return njSegNummers().filter(nr=>njSegStraatVan(nr, straatUp));
+}
+function njSegVoorstel(item){
+  const kand = njSegKandidaten(item.straat);
+  const b = parseInt(njNrBasis(item.nr), 10);
+  let best = null, bd = Infinity, buren = [];
+  kand.forEach(nr=>{
+    SEGMENT_DATA[nr].straten[njSegStraatVan(nr, item.straat)].forEach(x=>{
+      const v = parseInt(njNrBasis(x), 10); if(isNaN(v) || isNaN(b)) return;
+      const d = Math.abs(v - b) + ((v % 2) !== (b % 2) ? 1000 : 0);
+      if(d < bd){ bd = d; best = nr; buren = [x]; } else if(d === bd && nr === best){ buren.push(x); }
+    });
+  });
+  if(!best && kand.length) best = kand[0];
+  return {seg:best, buren:buren, kandidaten:kand};
+}
+function njSegBewaar(nrs){
+  let opgeslagen = {};
+  try{ opgeslagen = JSON.parse(localStorage.getItem(STORAGE_SEG_WIJKEN)) || {}; }catch(e){}
+  nrs.forEach(nr=>{ if(SEGMENT_DATA[nr]) opgeslagen[nr] = SEGMENT_DATA[nr]; });
+  try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(opgeslagen)); }catch(e){}
+  njSegVlakCache = {sleutel:'', vlakken:null};
+}
+function njSegZet(straatUp, nrTekst, naarSeg){
+  const nn = njNrNorm(nrTekst), gewijzigd = [];
+  let naamElders = null;
+  njSegNummers().forEach(nr=>{
+    const k = njSegStraatVan(nr, straatUp); if(!k) return;
+    naamElders = naamElders || k;
+    const l = SEGMENT_DATA[nr].straten[k];
+    const i = l.findIndex(x=>njNrNorm(x) === nn);
+    if(i >= 0 && nr !== naarSeg){ l.splice(i, 1); if(!l.length) delete SEGMENT_DATA[nr].straten[k]; gewijzigd.push(nr); }
+  });
+  const doel = SEGMENT_DATA[naarSeg];
+  if(doel){
+    const dk = njSegStraatVan(naarSeg, straatUp) || naamElders || straatUp;
+    doel.straten[dk] = doel.straten[dk] || [];
+    if(!doel.straten[dk].some(x=>njNrNorm(x) === nn)){ doel.straten[dk].push(nn); gewijzigd.push(naarSeg); }
+  }
+  njSegBewaar(gewijzigd);
+}
+var njSegKeuze = {}, njSegStraat = null, njSegNrOpen = null;
+function renderSegBijwerken(){
+  const main = document.getElementById('main');
+  const back = document.getElementById('back');
+  back.classList.remove('hidden');
+  back.innerHTML = njIco('terug', 22, 2.4);
+  document.getElementById('crumb').textContent = 'Segmenten';
+  document.getElementById('title').textContent = 'Bijwerken uit looplijst';
+  main.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'nj-pagina';
+  main.appendChild(wrap);
+
+  // 1. Segmenten uit de kop van de looplijst
+  const bw = meta.bezorgwijken || {};
+  const kaart1 = document.createElement('section');
+  kaart1.className = 'nj-kaart nj-seg-kaart1';
+  const inApp = njSegNummers();
+  let html = '', alle = 0, missen = 0;
+  Object.entries(bw).forEach(([wijk, lijst])=>{
+    html += '<span class="nj-ll-kop">'+njEsc(njTitel(wijk))+'</span><div class="nj-chips">';
+    lijst.forEach(p=>{ alle++; const ok = inApp.indexOf(p.kort) >= 0; if(!ok) missen++;
+      html += '<span class="nj-seg-chip'+(ok?'':' mist')+'" style="'+(ok?'background:'+njSegKleur(p.kort):'')+'">'+p.kort+'</span>'; });
+    html += '</div>';
+  });
+  kaart1.innerHTML = '<div class="nj-volg-status-kop"><span class="nj-ico '+(missen?'':'groen')+'">'+njIco(missen?'klacht':'check', 20, 2.4)+'</span>'+
+    '<div><b>Looplijst '+njEsc(meta.date||'')+'</b><span>'+(alle ? (missen ? missen+' van '+alle+' segmenten uit de kop ontbreken in de app (laad de Wijken-PDF in)' : 'Alle '+alle+' segmenten uit de kop staan in de app') : 'Laad een looplijst-PDF in om de segmenten in de kop te vergelijken')+'</span></div></div>'+html;
+  wrap.appendChild(kaart1);
+
+  // 2. Adressen zonder segment
+  const ontbrekend = njSegOntbrekend();
+  const kaart2 = document.createElement('section');
+  kaart2.className = 'nj-kaart nj-seg-kaart2';
+  kaart2.innerHTML = '<div class="nj-seg-rijkop"><b>Adressen zonder segment</b><span class="nj-teller'+(ontbrekend.length?'':' nul')+'">'+ontbrekend.length+'</span></div>';
+  if(!ontbrekend.length){
+    kaart2.innerHTML += '<span class="nj-stat-sub">Alle adressen uit de looplijst hebben een segment.</span>';
+  }
+  ontbrekend.forEach(it=>{
+    const sl = it.straat+'|'+it.nrNorm;
+    const vs = njSegVoorstel(it);
+    if(njSegKeuze[sl] === undefined) njSegKeuze[sl] = vs.seg;
+    const r = document.createElement('div');
+    r.className = 'nj-seg-mist';
+    r.innerHTML = '<span class="nj-seg-mist-adr">'+njEsc(it.naam)+' '+njEsc(it.nr)+' <span>· '+(it.aantal > 1 ? it.aantal+' adressen · ' : '')+njEsc(it.prods.join(', '))+'</span></span>'+
+      '<span class="nj-stat-sub">'+(vs.seg ? 'Voorstel: '+vs.seg+(vs.buren.length ? ' (buur '+njEsc(vs.buren.slice(0,2).join(' en '))+' zit daar)' : '') : 'Deze straat staat nog in geen enkel segment')+'</span>';
+    const keuzes = document.createElement('div');
+    keuzes.className = 'nj-chips';
+    const opties = vs.kandidaten.slice(0, 4);
+    if(njSegKeuze[sl] && opties.indexOf(njSegKeuze[sl]) < 0) opties.push(njSegKeuze[sl]);
+    opties.forEach(nr=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nj-chip nj-seg-kies'+(njSegKeuze[sl] === nr ? ' aan' : '');
+      b.innerHTML = '<i style="background:'+njSegKleur(nr)+'"></i>'+nr+(njSegKeuze[sl] === nr ? ' ✓' : '');
+      b.onclick = ()=>{ njSegKeuze[sl] = nr; renderSegBijwerken(); };
+      keuzes.appendChild(b);
+    });
+    const ander = document.createElement('select');
+    ander.className = 'nj-seg-select';
+    ander.setAttribute('aria-label', 'Ander segment kiezen');
+    ander.innerHTML = '<option value="">Ander…</option>'+njSegNummers().map(nr=>'<option value="'+nr+'">'+nr+' · '+njEsc(njSegWijk(nr))+'</option>').join('');
+    ander.onchange = ()=>{ if(ander.value){ njSegKeuze[sl] = ander.value; renderSegBijwerken(); } };
+    keuzes.appendChild(ander);
+    r.appendChild(keuzes);
+    kaart2.appendChild(r);
+  });
+  if(ontbrekend.length){
+    const ops = document.createElement('button');
+    ops.type = 'button';
+    ops.className = 'nj-knop-primair';
+    const teBewaren = ontbrekend.filter(it=>njSegKeuze[it.straat+'|'+it.nrNorm]).length;
+    ops.textContent = teBewaren ? 'Opslaan ('+teBewaren+')' : 'Kies eerst een segment';
+    ops.disabled = !teBewaren;
+    if(!teBewaren) ops.style.opacity = '.5';
+    ops.onclick = ()=>{
+      let n = 0;
+      ontbrekend.forEach(it=>{ const s = njSegKeuze[it.straat+'|'+it.nrNorm]; if(s){ njSegZet(it.straat, it.nrNorm, s); n++; } });
+      njSegKeuze = {};
+      toast(n+' adres'+(n===1?'':'sen')+' aan een segment toegevoegd');
+      renderSegBijwerken();
+    };
+    kaart2.appendChild(ops);
+  }
+  wrap.appendChild(kaart2);
+
+  // 3. Per straat aanpassen
+  const straten = [], mooi = {};
+  (typeof DATA_ECHT!=='undefined' ? DATA_ECHT : DATA).forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>{ const u = njStraatSleutel(s.naam); if(!mooi[u]) mooi[u] = s.naam; if(straten.indexOf(u) < 0) straten.push(u); })));
+  njSegNummers().forEach(nr=>Object.keys(SEGMENT_DATA[nr].straten).forEach(k=>{ const u = njStraatSleutel(k); if(!mooi[u]) mooi[u] = njTitel(k); if(straten.indexOf(u) < 0) straten.push(u); }));
+  straten.sort();
+  if(!njSegStraat || straten.indexOf(njSegStraat) < 0){
+    njSegStraat = (ontbrekend[0] && ontbrekend[0].straat) || straten.find(u=>njSegKandidaten(u).length > 1) || straten[0];
+  }
+  const kaart3 = document.createElement('section');
+  kaart3.className = 'nj-kaart nj-seg-kaart3';
+  kaart3.innerHTML = '<div class="nj-seg-rijkop"><b>Per straat aanpassen</b><span class="nj-stat-sub">tik = ander segment</span></div>';
+  const sel = document.createElement('select');
+  sel.className = 'nj-seg-select breed';
+  sel.setAttribute('aria-label', 'Straat kiezen');
+  sel.innerHTML = straten.map(u=>'<option value="'+njEsc(u)+'"'+(u===njSegStraat?' selected':'')+'>'+njEsc(mooi[u] || njTitel(u))+'</option>').join('');
+  sel.onchange = ()=>{ njSegStraat = sel.value; njSegNrOpen = null; renderSegBijwerken(); };
+  kaart3.appendChild(sel);
+  // nummers van deze straat: uit de segmenten + uit de looplijst
+  const nummers = {};
+  njSegNummers().forEach(nr=>{ const k = njSegStraatVan(nr, njSegStraat); if(!k) return; SEGMENT_DATA[nr].straten[k].forEach(x=>{ nummers[njNrNorm(x)] = {tekst:x, seg:nr}; }); });
+  (typeof DATA_ECHT!=='undefined' ? DATA_ECHT : DATA).forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>{ if(njStraatSleutel(s.naam) !== njSegStraat) return; s.adressen.forEach(a=>{ const nn = njNrNorm(a.nr); if(!nummers[nn]){ const viaBasis = njSegZoekNummer(njSegStraat, nn, njNrBasis(a.nr)); nummers[nn] = {tekst:String(a.nr).trim(), seg: viaBasis, viaBasis: !!viaBasis}; } }); })));
+  const sorteer = Object.keys(nummers).sort((a,b)=>{ const x = parseInt(njNrBasis(a),10)||0, y = parseInt(njNrBasis(b),10)||0; return x!==y ? x-y : (a<b?-1:1); });
+  const gridN = document.createElement('div');
+  gridN.className = 'nj-seg-nrs';
+  const gebruikt = [];
+  sorteer.forEach(nn=>{
+    const info = nummers[nn];
+    if(info.seg && gebruikt.indexOf(info.seg) < 0) gebruikt.push(info.seg);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nj-seg-nr gekleurd'+(info.seg && !info.viaBasis ? '' : ' nieuw')+(njSegNrOpen === nn ? ' gekozen' : '');
+    if(info.seg) b.style.cssText = 'background:'+njSegKleur(info.seg)+'26;border-color:'+njSegKleur(info.seg);
+    b.textContent = info.tekst;
+    b.onclick = ()=>{ njSegNrOpen = (njSegNrOpen === nn) ? null : nn; renderSegBijwerken(); };
+    gridN.appendChild(b);
+  });
+  kaart3.appendChild(gridN);
+  if(gebruikt.length){
+    const leg = document.createElement('div');
+    leg.className = 'nj-seg-legenda';
+    leg.innerHTML = gebruikt.map(nr=>'<span><i style="background:'+njSegKleur(nr)+'"></i>'+nr+'</span>').join('')+'<span><i class="nieuw"></i>geen segment</span>';
+    kaart3.appendChild(leg);
+  }
+  if(njSegNrOpen && nummers[njSegNrOpen]){
+    const info = nummers[njSegNrOpen];
+    const kies = document.createElement('div');
+    kies.className = 'nj-seg-verzet';
+    kies.innerHTML = '<span><b>'+njEsc(mooi[njSegStraat] || njTitel(njSegStraat))+' '+njEsc(info.tekst)+'</b> naar segment:</span>';
+    const rijK = document.createElement('div');
+    rijK.className = 'nj-chips';
+    const kand = njSegKandidaten(njSegStraat);
+    kand.forEach(nr=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nj-chip nj-seg-kies'+(info.seg === nr && !info.viaBasis ? ' aan' : '');
+      b.innerHTML = '<i style="background:'+njSegKleur(nr)+'"></i>'+nr;
+      b.onclick = ()=>{ njSegZet(njSegStraat, info.tekst, nr); njSegNrOpen = null; toast(njTitel(njSegStraat)+' '+info.tekst+' staat nu in segment '+nr); renderSegBijwerken(); };
+      rijK.appendChild(b);
+    });
+    const ander = document.createElement('select');
+    ander.className = 'nj-seg-select';
+    ander.setAttribute('aria-label', 'Ander segment kiezen');
+    ander.innerHTML = '<option value="">Ander…</option>'+njSegNummers().map(nr=>'<option value="'+nr+'">'+nr+' · '+njEsc(njSegWijk(nr))+'</option>').join('');
+    ander.onchange = ()=>{ if(ander.value){ njSegZet(njSegStraat, info.tekst, ander.value); njSegNrOpen = null; toast(njTitel(njSegStraat)+' '+info.tekst+' staat nu in segment '+ander.value); renderSegBijwerken(); } };
+    rijK.appendChild(ander);
+    kies.appendChild(rijK);
+    kaart3.appendChild(kies);
+  }
+  wrap.appendChild(kaart3);
+  updateHeaderProgress();
+}
+
 /* ===================== einde NIEUW JASJE (logica) ===================== */
 
 const DEFAULT_DATA = [{"wijk": "Oldenzaal Oost", "rondes": [{"ronde": "Centrum", "straten": [{"naam": "Tulpstraat", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}]}, {"naam": "Nagelstraat", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "38", "prod": "NRC", "schema": true}, {"nr": "42", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}]}, {"naam": "Noordwal", "adressen": [{"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "98", "prod": "TT OL"}]}, {"naam": "Deurningerstraat", "adressen": [{"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "26 B", "prod": "TEL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "26 B", "prod": "TT OL"}, {"nr": "34 01", "prod": "TT OL"}, {"nr": "34 02", "prod": "NRC", "schema": true}, {"nr": "34 2", "prod": "TT OL"}, {"nr": "34 21", "prod": "TT OL"}, {"nr": "34 AP11", "prod": "TT OL"}, {"nr": "34 AP12", "prod": "TT OL"}, {"nr": "34 APP 2", "prod": "VK", "schema": true}]}, {"naam": "Kortestraat", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Steenstraat", "adressen": [{"nr": "29", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TEL", "naam": "Hesselink…", "schema": true}, {"nr": "41", "prod": "TT OL", "naam": "Hesselink"}, {"nr": "45", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "NRC", "naam": "Beerlage", "schema": true}, {"nr": "49", "prod": "TT OL", "naam": "Platvoet", "start": true}]}, {"naam": "Prins Hendrikstraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TEL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "71", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TT OL"}]}, {"naam": "Pastoriestraat", "adressen": [{"nr": "39", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL", "schema": true}, {"nr": "81", "prod": "TT OL"}, {"nr": "83", "prod": "TT OL"}, {"nr": "87", "prod": "TT OL"}, {"nr": "91", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL", "schema": true}]}, {"naam": "Beatrixstraat", "adressen": [{"nr": "163", "prod": "TT OL"}]}, {"naam": "Wilhelminastraat", "adressen": [{"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TEL"}, {"nr": "44", "prod": "TEL"}, {"nr": "50", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TEL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}, {"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "naam": "Wulfften …"}, {"nr": "10", "prod": "VK", "naam": "Palthe", "schema": true}, {"nr": "14", "prod": "TT OL"}, {"nr": "14 C", "prod": "TT OL"}, {"nr": "14 D", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}]}, {"naam": "Gasthuisstraat", "adressen": [{"nr": "2 b", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL", "schema": true}, {"nr": "14 F", "prod": "TT OL", "naam": "Backhuijs", "schema": true}, {"nr": "14 F", "prod": "VK", "naam": "Backhuys"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}, {"nr": "78", "prod": "TT OL"}]}, {"naam": "Ganzenmarkt", "adressen": [{"nr": "8", "prod": "NRC"}, {"nr": "10", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TEL", "naam": "Krakers"}, {"nr": "38", "prod": "TT OL", "naam": "Krakers-v…"}, {"nr": "40", "prod": "TT OL"}, {"nr": "27", "prod": "TEL", "naam": "Breuken -…", "schema": true}, {"nr": "27", "prod": "TT OL", "naam": "Hoogen"}, {"nr": "31", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Schoolstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TR", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "15", "prod": "VK", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "VK", "schema": true}, {"nr": "47", "prod": "TT OL"}, {"nr": "59", "prod": "TT OL"}, {"nr": "61", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}]}, {"naam": "Kloosterstraat", "adressen": [{"nr": "24", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "30", "prod": "NRC"}, {"nr": "42", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "102", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}]}, {"naam": "Zuidwal", "adressen": [{"nr": "80", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}]}, {"naam": "Boterstraat", "adressen": [{"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "35", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}]}, {"naam": "St. Plechelmusplein", "adressen": [{"nr": "9 A", "prod": "TT OL", "schema": true}, {"nr": "9 b", "prod": "TT OL"}, {"nr": "9 C", "prod": "TEL"}, {"nr": "9 C", "prod": "TT OL"}, {"nr": "9 D", "prod": "TEL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}]}]}, {"ronde": "Vierkant (Titus)", "straten": [{"naam": "Berkstraat", "adressen": [{"nr": "9", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL", "schema": true}]}, {"naam": "Titus Brandsmastraat", "adressen": [{"nr": "5", "prod": "TT OL"}, {"nr": "5", "prod": "VK", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "33", "prod": "TT OL", "schema": true}, {"nr": "39", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL"}, {"nr": "49", "prod": "HFD", "naam": "L.H. van …"}, {"nr": "49", "prod": "TEL", "naam": "Woning"}, {"nr": "49", "prod": "TT OL", "naam": "Woning"}, {"nr": "49", "prod": "VK", "naam": "Woning", "schema": true}]}, {"naam": "Inslagstraat", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "NRC", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}]}, {"naam": "Lyceumstraat", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "TT OL", "naam": "Twents Ca…"}, {"nr": "36", "prod": "VK", "naam": "Twents Ca…"}, {"nr": "46", "prod": "TT OL"}, {"nr": "52", "prod": "TT OL"}, {"nr": "54", "prod": "TT OL"}]}, {"naam": "Carmelstraat", "adressen": [{"nr": "31", "prod": "TT OL", "naam": "Boerrigter"}, {"nr": "31", "prod": "TT OL", "naam": "Assink"}, {"nr": "31", "prod": "TT OL", "naam": "Faas-Steur"}, {"nr": "31", "prod": "TT OL", "naam": "Aa"}, {"nr": "31 01", "prod": "TT OL"}, {"nr": "31 -6", "prod": "TT OL"}, {"nr": "31 K5", "prod": "TT OL"}, {"nr": "31 K9", "prod": "TT OL"}, {"nr": "31 k12", "prod": "TT OL"}, {"nr": "31 St.7", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Spoorstraat", "adressen": [{"nr": "12", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}]}, {"naam": "Beukersmolen", "adressen": [{"nr": "26", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "5", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "37", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "79", "prod": "TEL"}, {"nr": "79", "prod": "TT OL", "schema": true}]}, {"naam": "Beukplein", "adressen": [{"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}]}, {"naam": "Sparstraat", "adressen": [{"nr": "124", "prod": "TT OL"}, {"nr": "128", "prod": "TT OL"}, {"nr": "56", "prod": "TT OL"}, {"nr": "78", "prod": "VK", "schema": true}, {"nr": "80", "prod": "TT OL"}, {"nr": "84", "prod": "TT OL", "schema": true}, {"nr": "40", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "48", "prod": "TT OL", "naam": "Hurenkamp"}, {"nr": "48", "prod": "VK", "naam": "hurenkamp", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "55", "prod": "TT OL"}, {"nr": "55", "prod": "VK", "schema": true}, {"nr": "57", "prod": "TT OL", "schema": true}, {"nr": "57", "prod": "VK", "schema": true}, {"nr": "63", "prod": "TT OL"}, {"nr": "65", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL"}, {"nr": "73", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL", "schema": true}, {"nr": "99", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "NRC", "naam": "Holsheimer", "schema": true}, {"nr": "43", "prod": "TT OL", "naam": "Holsheime…"}, {"nr": "49", "prod": "NRC", "schema": true}]}, {"naam": "Eikstraat", "adressen": [{"nr": "7", "prod": "TT OL"}]}, {"naam": "Kastanjestraat", "adressen": [{"nr": "50", "prod": "TT OL"}, {"nr": "68", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "schema": true}, {"nr": "42", "prod": "VK"}, {"nr": "44", "prod": "TT OL"}, {"nr": "46", "prod": "NRC", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "HFD", "schema": true}, {"nr": "37", "prod": "TT OL", "schema": true}, {"nr": "35", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "31", "prod": "VK", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}]}]}]}, {"wijk": "Oldenzaal Mariahof", "rondes": [{"ronde": "Mariahof", "straten": [{"naam": "Beatrixstraat", "adressen": [{"nr": "64", "prod": "NRC", "naam": "Vloedgrav…"}, {"nr": "64", "prod": "TT OL", "naam": "St Mariah…"}, {"nr": "64", "prod": "TT OL", "naam": "Wellink"}, {"nr": "64 0.25", "prod": "TT OL"}, {"nr": "64 103", "prod": "TT OL"}, {"nr": "64 1.06", "prod": "TT OL", "schema": true}, {"nr": "64 2.19", "prod": "TT OL"}, {"nr": "64 027", "prod": "TT OL", "naam": "Linde"}, {"nr": "64 027", "prod": "TT OL", "naam": "Egberts"}, {"nr": "64 109", "prod": "TT OL"}, {"nr": "64 124", "prod": "TT OL"}, {"nr": "64 202", "prod": "TT OL"}, {"nr": "64 A28", "prod": "TT OL"}, {"nr": "64 A122", "prod": "TT OL"}, {"nr": "64 A208", "prod": "TT OL"}, {"nr": "64 K 100", "prod": "TT OL"}, {"nr": "64 K.29", "prod": "TT OL"}, {"nr": "64 K112", "prod": "TT OL"}, {"nr": "64 K121", "prod": "TT OL"}, {"nr": "64 k200", "prod": "TT OL"}, {"nr": "64 K201", "prod": "TT OL"}, {"nr": "64 K211", "prod": "TT OL"}, {"nr": "64 K212", "prod": "TT OL"}, {"nr": "64 K218", "prod": "TT OL"}, {"nr": "64 k223", "prod": "TT OL", "schema": true}]}]}]}, {"wijk": "Oldenzaal-West", "rondes": [{"ronde": "De Essen", "straten": [{"naam": "Brem", "adressen": [{"nr": "49", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "53", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "58", "prod": "TT OL"}, {"nr": "62", "prod": "AD NL", "schema": true}, {"nr": "66", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "34", "prod": "TR"}, {"nr": "36", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "50", "prod": "TT OL"}]}, {"naam": "Honingklaver", "adressen": [{"nr": "4", "prod": "TT OL"}]}, {"naam": "Geelster", "adressen": [{"nr": "4", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TT OL"}, {"nr": "32", "prod": "TT OL", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL"}, {"nr": "46", "prod": "TT OL"}, {"nr": "66", "prod": "TT OL"}, {"nr": "82", "prod": "TT OL"}, {"nr": "90", "prod": "TT OL", "schema": true}, {"nr": "96", "prod": "TT OL"}, {"nr": "104", "prod": "TT OL", "schema": true}, {"nr": "106", "prod": "TT OL"}, {"nr": "108", "prod": "TT OL"}, {"nr": "110", "prod": "TT OL", "schema": true}, {"nr": "1", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "17", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TEL", "schema": true}]}, {"naam": "Look", "adressen": [{"nr": "10", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "27", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TEL", "schema": true}, {"nr": "55", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL", "schema": true}, {"nr": "73", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}, {"nr": "81", "prod": "TT OL", "schema": true}, {"nr": "89", "prod": "TT OL"}, {"nr": "93", "prod": "TT OL"}, {"nr": "99", "prod": "TT OL"}, {"nr": "103", "prod": "TT OL"}, {"nr": "107", "prod": "TT OL"}, {"nr": "113", "prod": "TT OL"}, {"nr": "115", "prod": "TT OL"}, {"nr": "117", "prod": "TT OL"}, {"nr": "119", "prod": "TT OL"}]}, {"naam": "Ootmarsumsedijk", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "NRC", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "43", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL", "schema": true}, {"nr": "65", "prod": "TT OL"}, {"nr": "69", "prod": "TT OL"}, {"nr": "71", "prod": "TT OL"}]}, {"naam": "Weerselosestraat", "adressen": [{"nr": "73", "prod": "TT OL"}, {"nr": "79", "prod": "TT OL"}]}]}, {"ronde": "De Kampjes", "straten": [{"naam": "Saasvelderlaan", "adressen": [{"nr": "97", "prod": "TEL", "naam": "Wildeboer…"}, {"nr": "97", "prod": "TT OL", "naam": "Wildeboer"}]}, {"naam": "Telgenkamp", "adressen": [{"nr": "1", "prod": "TT OL", "schema": true}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TR", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "NRC", "schema": true}, {"nr": "12", "prod": "NRC"}, {"nr": "12", "prod": "VK"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "VK", "schema": true}, {"nr": "22", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "NRC", "schema": true}]}, {"naam": "Wijntjeskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "2", "prod": "VK", "schema": true}, {"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TEL"}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "VK", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "20", "prod": "TEL"}, {"nr": "21", "prod": "NRC", "schema": true}, {"nr": "22", "prod": "VK", "schema": true}, {"nr": "25", "prod": "NRC"}, {"nr": "25", "prod": "TT OL", "schema": true}]}, {"naam": "Waterhamskamp", "adressen": [{"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "naam": "Ter Huurne"}, {"nr": "12", "prod": "VK", "naam": "Huurne"}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL"}]}, {"naam": "Kruijskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "5", "prod": "VK"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "AD NL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "15", "prod": "TT OL"}, {"nr": "17", "prod": "NRC"}, {"nr": "17", "prod": "TT OL", "schema": true}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "schema": true}, {"nr": "23", "prod": "HFD", "schema": true}, {"nr": "24", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "28", "prod": "TT OL"}, {"nr": "32", "prod": "VK"}, {"nr": "33", "prod": "AD NL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "42", "prod": "TT OL", "naam": "Van Dijck"}, {"nr": "42", "prod": "VK", "naam": "dijck", "schema": true}, {"nr": "46", "prod": "TEL"}]}, {"naam": "Nijhuiskamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "3", "prod": "TT OL"}, {"nr": "4", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TEL"}, {"nr": "17", "prod": "VK"}, {"nr": "28", "prod": "TEL"}, {"nr": "28", "prod": "TT OL", "schema": true}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL", "schema": true}, {"nr": "32", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}]}, {"naam": "Wortkamp", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "3", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "naam": "Bosma"}, {"nr": "7", "prod": "VK", "naam": "Borghorst…"}, {"nr": "8", "prod": "TT OL", "schema": true}, {"nr": "8", "prod": "VK"}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TEL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "23", "prod": "TR", "naam": "Marle - A…"}, {"nr": "23", "prod": "TT OL", "naam": "Marle"}, {"nr": "24", "prod": "TEL"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "schema": true}, {"nr": "33", "prod": "TEL"}, {"nr": "39", "prod": "TT OL"}]}, {"naam": "Hulsbekenkamp", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "8", "prod": "NRC", "schema": true}, {"nr": "8", "prod": "TT OL"}, {"nr": "15", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "18", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "22", "prod": "TT OL"}, {"nr": "23", "prod": "NRC", "naam": "Lage Vent…"}, {"nr": "23", "prod": "TT OL", "naam": "Venterink"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "25", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}, {"nr": "34", "prod": "VK"}, {"nr": "36", "prod": "TT OL", "schema": true}, {"nr": "36", "prod": "VK", "schema": true}, {"nr": "38", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL", "schema": true}, {"nr": "43", "prod": "TT OL"}, {"nr": "44", "prod": "TT OL"}, {"nr": "44", "prod": "VK", "schema": true}, {"nr": "50", "prod": "VK"}, {"nr": "56", "prod": "TT OL", "schema": true}]}, {"naam": "Marellenkamp", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "13", "prod": "TR", "schema": true}, {"nr": "13", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "20", "prod": "TT OL"}, {"nr": "21", "prod": "VK"}, {"nr": "22", "prod": "TEL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "24", "prod": "NRC"}, {"nr": "27", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL"}, {"nr": "31", "prod": "TT OL"}]}, {"naam": "Bolkskamp", "adressen": [{"nr": "2", "prod": "TEL"}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL", "schema": true}, {"nr": "7", "prod": "TT OL"}, {"nr": "13", "prod": "TT OL"}, {"nr": "39", "prod": "TT OL"}, {"nr": "41", "prod": "TT OL"}, {"nr": "43", "prod": "HFD", "schema": true}, {"nr": "43", "prod": "NRC", "schema": true}, {"nr": "43", "prod": "TR", "schema": true}, {"nr": "43", "prod": "TT OL", "schema": true}, {"nr": "45", "prod": "VK", "schema": true}, {"nr": "52", "prod": "TT OL"}, {"nr": "60", "prod": "TT OL"}, {"nr": "72", "prod": "TT OL"}, {"nr": "75", "prod": "TT OL"}]}]}, {"ronde": "Sportlaan", "straten": [{"naam": "Sportlaan", "adressen": [{"nr": "1", "prod": "NRC"}, {"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK", "schema": true}, {"nr": "2", "prod": "TT OL"}, {"nr": "5", "prod": "TT OL"}, {"nr": "6", "prod": "TT OL"}, {"nr": "7", "prod": "TT OL"}, {"nr": "10 A", "prod": "HFD", "naam": "Triple M …"}, {"nr": "10 A", "prod": "TT OL", "naam": "Schaepers"}, {"nr": "10 C", "prod": "TT OL"}, {"nr": "14", "prod": "TT OL", "schema": true}, {"nr": "16", "prod": "TEL", "naam": "J. Koende…", "schema": true}, {"nr": "16", "prod": "TT OL", "naam": "Koenders"}, {"nr": "25", "prod": "NRC", "naam": "Droste", "schema": true}, {"nr": "25", "prod": "TT OL", "naam": "Brand"}, {"nr": "26", "prod": "HFD", "naam": "Bruijsten", "schema": true}, {"nr": "26", "prod": "TEL", "naam": "Bruijsten"}, {"nr": "26", "prod": "TT OL", "naam": "Kuiphuis …"}, {"nr": "27", "prod": "HFD", "schema": true}, {"nr": "27", "prod": "VK", "schema": true}, {"nr": "28", "prod": "TEL"}, {"nr": "29", "prod": "TT OL"}, {"nr": "30", "prod": "TT OL", "naam": "Wilbrink", "schema": true}, {"nr": "31", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "naam": "Troost"}, {"nr": "32", "prod": "TT OL", "naam": "Bekhuis"}, {"nr": "33", "prod": "TT OL"}, {"nr": "34", "prod": "TT OL"}, {"nr": "38", "prod": "TT OL"}, {"nr": "39", "prod": "TEL"}, {"nr": "40", "prod": "TT OL"}, {"nr": "44", "prod": "HFD", "naam": "Willemsen", "schema": true}, {"nr": "46", "prod": "TT OL"}, {"nr": "47", "prod": "TT OL", "schema": true}, {"nr": "54", "prod": "TT OL"}]}]}, {"ronde": "Graven Es", "straten": [{"naam": "Alpenlaan", "adressen": [{"nr": "2", "prod": "TT OL"}]}, {"naam": "Kretalaan", "adressen": [{"nr": "19", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "25", "prod": "TT OL"}, {"nr": "35", "prod": "TT OL"}, {"nr": "45", "prod": "TT OL"}, {"nr": "51", "prod": "TT OL"}, {"nr": "55", "prod": "TT OL"}, {"nr": "57", "prod": "TT OL"}, {"nr": "62", "prod": "TT OL"}, {"nr": "63", "prod": "TT OL"}, {"nr": "64", "prod": "TT OL"}, {"nr": "67", "prod": "TT OL", "schema": true}, {"nr": "69", "prod": "TT OL"}, {"nr": "70", "prod": "TT OL"}, {"nr": "74", "prod": "TT OL", "schema": true}, {"nr": "75", "prod": "TT OL"}, {"nr": "76", "prod": "TT OL"}]}, {"naam": "Rhodoslaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "12", "prod": "TT OL"}, {"nr": "9", "prod": "TEL", "schema": true}, {"nr": "9", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL"}, {"nr": "14", "prod": "VK"}, {"nr": "17", "prod": "TT OL"}, {"nr": "19", "prod": "TT OL"}, {"nr": "21", "prod": "TT OL", "naam": "Obdeijn"}, {"nr": "21", "prod": "VK", "naam": "Obdeyn"}, {"nr": "25", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TEL"}, {"nr": "26", "prod": "TT OL"}]}, {"naam": "Parnonlaan", "adressen": [{"nr": "4", "prod": "TT OL"}, {"nr": "10", "prod": "TT OL"}, {"nr": "12", "prod": "TT OL", "schema": true}, {"nr": "18", "prod": "TT OL"}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Corfulaan", "adressen": [{"nr": "1", "prod": "TT OL"}, {"nr": "1", "prod": "VK"}]}, {"naam": "Delagoslaan", "adressen": [{"nr": "22", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL"}, {"nr": "32", "prod": "TEL", "schema": true}, {"nr": "32", "prod": "TT OL"}]}, {"naam": "Samoslaan", "adressen": [{"nr": "3", "prod": "TT OL"}, {"nr": "11", "prod": "TT OL", "schema": true}]}, {"naam": "Kassandralaan", "adressen": [{"nr": "2", "prod": "TT OL", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "21", "prod": "TT OL"}, {"nr": "23", "prod": "TT OL"}, {"nr": "23", "prod": "VK"}, {"nr": "16", "prod": "TT OL"}, {"nr": "16", "prod": "TT OL"}, {"nr": "24", "prod": "TT OL", "schema": true}, {"nr": "26", "prod": "TT OL", "schema": true}]}, {"naam": "Deloslaan", "adressen": [{"nr": "4", "prod": "NRC", "schema": true}, {"nr": "4", "prod": "TR", "schema": true}, {"nr": "4", "prod": "TT OL"}, {"nr": "4", "prod": "VK"}, {"nr": "5", "prod": "TR", "schema": true}, {"nr": "8", "prod": "TT OL"}]}, {"naam": "Koslaan", "adressen": [{"nr": "6", "prod": "TT OL"}, {"nr": "8", "prod": "TT OL"}, {"nr": "9", "prod": "TT OL", "schema": true}, {"nr": "10", "prod": "TT OL", "schema": true}, {"nr": "11", "prod": "TT OL"}]}]}]}];
@@ -3706,6 +4506,7 @@ function render(){
   }
   if(njIsHub(view.mode)) return renderNjHub();
   if(view.mode==='mijnvolgorde') return renderMijnVolgorde();
+  if(view.mode==='segbijwerken') return renderSegBijwerken();
   if(view.mode==='home') return renderHome();
   if(view.mode==='kaart') return renderKaart();
   if(view.mode==='segment') return renderSegment();
@@ -8457,174 +9258,6 @@ function renderPromillagePeriode(){
   main.appendChild(wrap);
 }
 
-function renderSegment(){
-  const main = document.getElementById('main');
-  document.getElementById('back').classList.remove('hidden');
-  document.getElementById('crumb').textContent = 'Segmenten';
-  document.getElementById('title').textContent = 'Wijkindeling';
-  main.innerHTML = '';
-
-  const wrap = document.createElement('div');
-  wrap.className = 'seg-page';
-
-  // Topbalk: zoek + export
-  const topbar = document.createElement('div');
-  topbar.className = 'seg-topbar';
-
-  const zoek = document.createElement('input');
-  zoek.className = 'seg-zoek';
-  zoek.placeholder = '🔍 Zoek segment of straat…';
-  zoek.type = 'search';
-
-  const expBtn = document.createElement('button');
-  expBtn.className = 'seg-export-btn';
-  expBtn.textContent = '⬇ CSV';
-  expBtn.onclick = ()=> exportSegmentCSV();
-
-  const pdfBtn = document.createElement('button');
-  pdfBtn.className = 'seg-export-btn';
-  pdfBtn.style.background = '#1565c0';
-  pdfBtn.textContent = '⬇ PDF';
-  pdfBtn.onclick = ()=> exportSegmentPDF();
-
-  const wijkBtn = document.createElement('button');
-  wijkBtn.className = 'seg-export-btn';
-  wijkBtn.style.background = '#2e7d32';
-  wijkBtn.title = 'Wijkindeling automatisch bijwerken vanuit de Wijken PDF (bijv. Looplijst_Wijken_Compleet.pdf)';
-  wijkBtn.textContent = '📥 Wijken PDF';
-  wijkBtn.onclick = ()=>{
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = '.pdf,application/pdf';
-    inp.onchange = (e)=>{
-      const f = e.target.files[0]; if(!f) return;
-      importeerWijkenPdf(f);
-    };
-    inp.click();
-  };
-
-  topbar.appendChild(zoek);
-  topbar.appendChild(wijkBtn);
-  topbar.appendChild(expBtn);
-  topbar.appendChild(pdfBtn);
-  wrap.appendChild(topbar);
-
-  // Bouw segmenten
-  let openSegment = null; // bijhoudt welk segment open staat
-
-  function bouwSegmenten(filter=''){
-    wrap.querySelectorAll('.seg-grid, .seg-wijk').forEach(el=>el.remove());
-    const fl = filter.toLowerCase();
-
-    // Grid container voor 2-koloms layout
-    const grid = document.createElement('div');
-    grid.className = 'seg-grid';
-
-    Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
-      const nrMatch = !filter || nr.includes(filter) || seg.naam.toLowerCase().includes(fl);
-      const straatMatches = Object.keys(seg.straten).filter(s=>
-        !filter || s.toLowerCase().includes(fl) || nrMatch);
-      if(!nrMatch && straatMatches.length===0) return;
-
-      // Tel voortgang
-      let totaal=0, gedaan=0;
-      Object.entries(seg.straten).forEach(([s,nrs])=>
-        nrs.forEach(n=>{totaal++;if(isSegAdresGedaan(nr,s,n))gedaan++;}));
-      const pct = totaal>0?Math.round(gedaan/totaal*100):0;
-      const isOpen = (openSegment===nr) || !!filter;
-      const SEG_KLEUREN = {
-        '226':'#e53935','227':'#8e24aa','230':'#1e88e5','231':'#00897b',
-        '232':'#f4511e','236':'#3949ab','244':'#6d4c41','249':'#00acc1',
-        '618':'#43a047','619':'#fb8c00','620':'#d81b60','621':'#5e35b1',
-        '622':'#00838f','623':'#c0ca33','624':'#f06292','716':'#8d6e63',
-        '717':'#26a69a','729':'#ef5350','730':'#7e57c2','731':'#66bb6a',
-      };
-      const kleur = SEG_KLEUREN[nr] || '#555';
-
-      // Kaart
-      const card = document.createElement('div');
-      card.className = 'seg-wijk';
-
-      // Header — verticaal: badge bovenaan, info eronder
-      const head = document.createElement('div');
-      head.className = 'seg-wijk-header'+(isOpen?' open':'');
-      head.style.cssText = 'display:flex;flex-direction:column;padding:0;cursor:pointer;user-select:none';
-      head.innerHTML =
-        '<div class="seg-wijk-badge" style="background:'+kleur+'">'+
-          '<span>'+nr+'</span>'+
-        '</div>';
-
-      // Open body: als dit segment open is, voeg body vol-breed toe ná het grid
-      head.onclick = ()=>{
-        openSegment = (openSegment===nr) ? null : nr;
-        bouwSegmenten(zoek.value);
-      };
-
-      card.appendChild(head);
-      grid.appendChild(card);
-    });
-
-    wrap.appendChild(grid);
-
-    // Voeg open bodies toe na het grid (vol-breed)
-    Object.entries(SEGMENT_DATA).forEach(([nr])=>{
-      if(openSegment===nr || !!filter){
-        // Zoek de al gebouwde body terug — hergebruik via opnieuw bouwen
-      }
-    });
-
-    // Open segment body direct na grid
-    if(openSegment || filter){
-      // We rebuilden de body van het open segment hier vol-breed
-      const openNr = openSegment || Object.keys(SEGMENT_DATA)[0];
-      const seg = SEGMENT_DATA[openNr];
-      if(seg){
-        const fl2 = filter.toLowerCase();
-        const straatMatches2 = Object.keys(seg.straten).filter(s=>
-          !filter || s.toLowerCase().includes(fl2) || openNr.includes(filter));
-        const SEG_KLEUREN2 = {
-          '226':'#e53935','227':'#8e24aa','230':'#1e88e5','231':'#00897b',
-          '232':'#f4511e','236':'#3949ab','244':'#6d4c41','249':'#00acc1',
-          '618':'#43a047','619':'#fb8c00','620':'#d81b60','621':'#5e35b1',
-          '622':'#00838f','623':'#c0ca33','624':'#f06292','716':'#8d6e63',
-          '717':'#26a69a','729':'#ef5350','730':'#7e57c2','731':'#66bb6a',
-        };
-        const kleur2 = SEG_KLEUREN2[openNr] || '#555';
-        const openBody = document.createElement('div');
-        openBody.style.cssText = 'background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-top:0;padding:14px 14px 16px';
-
-        const teTonenStraten2 = filter ? straatMatches2 : Object.keys(seg.straten);
-        teTonenStraten2.forEach(straat=>{
-          const nrs = seg.straten[straat];
-          if(!nrs) return;
-          const blok = document.createElement('div');
-          blok.className = 'seg-straat-blok';
-          blok.innerHTML = '<div class="seg-straat-naam">'+straat+'</div>';
-          const nrRij = document.createElement('div');
-          nrRij.className = 'seg-nrs';
-          nrs.forEach(nr2=>{
-            const btn = document.createElement('button');
-            btn.className = 'seg-nr-btn'+(isSegAdresGedaan(openNr,straat,nr2)?' done':'');
-            btn.textContent = nr2;
-            btn.onclick = ()=>{
-              toggleSegAdres(openNr, straat, nr2);
-              openSegment = openNr;
-              bouwSegmenten(zoek.value);
-            };
-            nrRij.appendChild(btn);
-          });
-          blok.appendChild(nrRij);
-          openBody.appendChild(blok);
-        });
-        wrap.appendChild(openBody);
-      }
-    }
-  }
-
-  bouwSegmenten();
-  zoek.addEventListener('input', ()=>{ openSegment=null; bouwSegmenten(zoek.value); });
-  main.appendChild(wrap);
-}
-
 function exportSegmentCSV(){
   let csv = 'Segment,Regio,Straat,Huisnummer,Aangevinkt\n';
   Object.entries(SEGMENT_DATA).forEach(([nr, seg])=>{
@@ -12030,7 +12663,7 @@ render = function(){
   navTerug = false;
   return _renderOrig.apply(this, arguments);
 };
-const ENKEL_SCHERM = ['mijnvolgorde','kaart','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km'];
+const ENKEL_SCHERM = ['segbijwerken','mijnvolgorde','kaart','segment','bonus','promillageperiode','klachten','mutaties','jaararchief','wijkenmenu','agendahoofd','vergoedingmenu','tijd','km'];
 document.getElementById('back').onclick=()=>{
   const goHome = njTerugNaarTab; // terug naar de tab (Vandaag/Bezorgen/Geld/Bijhouden) waar je vandaan kwam
   if(view.mode==='home' || njIsHub(view.mode)) return; // tab-pagina's hebben geen terug
