@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-16.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-16.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1291,6 +1291,7 @@ html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radiu
 .nj-vvoorbeeld{font-size:12.5px;color:#2B3A4F;font-weight:600;line-height:1.5}
 .nj-vrand{display:flex;gap:8px;flex-wrap:wrap}
 .nj-vrand button{min-height:38px;border:1px solid #D5DDE8;border-radius:10px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:12.5px;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:4px;cursor:pointer}
+.nj-volg-tip{background:#FFF8E1;border-color:#F3E2A9;font-size:13.5px;line-height:1.5;color:#3D2E00}
 .nj-vbalk{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 2px;background:var(--nj-bg);box-shadow:0 -1px 0 var(--nj-tab-lijn),0 60px 0 0 var(--nj-bg)}
 .nj-vbalk span{flex:1;font-size:13px;color:var(--nj-hdr-muted)}
 .nj-vbalk .nj-knop-primair{width:auto;padding:0 22px;flex:0 0 auto}
@@ -1561,7 +1562,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-16.1';
+const APP_VERSION = '2026-11-16.2';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -1705,8 +1706,9 @@ function renderMijnVolgorde(){
   const back = document.getElementById('back');
   back.classList.remove('hidden');
   back.innerHTML = njIco('terug', 22, 2.4);
-  document.getElementById('crumb').textContent = 'Bezorgen';
-  document.getElementById('title').textContent = 'Mijn volgorde';
+  const vanKerstPdf = !!view.vanKerstPdf;
+  document.getElementById('crumb').textContent = vanKerstPdf ? 'Kerstkaartjes · PDF' : 'Bezorgen';
+  document.getElementById('title').textContent = vanKerstPdf ? 'Volgorde per ronde' : 'Mijn volgorde';
   if(!njVolgDraft) njVolgDraft = njVolgMaakDraft();
   const d = njVolgDraft;
   const scroll = main.scrollTop;
@@ -1740,6 +1742,12 @@ function renderMijnVolgorde(){
       '<p>Zet hieronder je wijken, rondes en straten met de pijltjes in de volgorde van je looproute, kies per straat de volgorde van de huisnummers en tik op <b>Opslaan</b>. Daarna blijft hij vast.</p>';
   }
   wrap.appendChild(st);
+  if(vanKerstPdf){
+    const tip = document.createElement('div');
+    tip.className = 'nj-kaart nj-volg-tip';
+    tip.innerHTML = '<b>Voor de Kerst-PDF:</b> open een ronde en zet de straten met de pijltjes in jouw volgorde. Na <b>Opslaan en PDF maken</b> staat deze volgorde ook in de app (Looplijst, Kerstkaartjes, Pakken).';
+    wrap.appendChild(tip);
+  }
 
   const sec = document.createElement('section');
   sec.className = 'nj-sectie';
@@ -1815,8 +1823,19 @@ function renderMijnVolgorde(){
   const opsl = document.createElement('button');
   opsl.type = 'button';
   opsl.className = 'nj-knop-primair';
-  opsl.textContent = njVasteVolgorde && !njVolgVuil ? 'Opnieuw opslaan' : 'Opslaan';
-  opsl.onclick = ()=>{ njVolgOpslaan(); toast('Volgorde opgeslagen en vastgezet'); renderMijnVolgorde(); };
+  opsl.textContent = vanKerstPdf ? 'Opslaan en PDF maken' : (njVasteVolgorde && !njVolgVuil ? 'Opnieuw opslaan' : 'Opslaan');
+  opsl.onclick = ()=>{
+    njVolgOpslaan();
+    if(vanKerstPdf){
+      const m = view.pdfModus || 'ronde';
+      toast('Volgorde opgeslagen — ook in de app');
+      view = {mode:'kerst', level:'wijk', wijk:null, ronde:null, straat:null, krant:null};
+      render();
+      setTimeout(()=>toonKerstPdfKeuze(m), 150);
+      return;
+    }
+    toast('Volgorde opgeslagen en vastgezet'); renderMijnVolgorde();
+  };
   balk.appendChild(opsl);
   wrap.appendChild(balk);
 
@@ -4772,8 +4791,8 @@ function toonDagFooiPopup(iso){
 }
 
 // Keuzescherm voor de Kerst-PDF: indeling + soort (gewoon of invul)
-function toonKerstPdfKeuze(){
-  let modus = 'oostwest', soort = '';
+function toonKerstPdfKeuze(startModus){
+  let modus = startModus || 'oostwest', soort = '';
   const bg = document.createElement('div');
   bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   const box = document.createElement('div');
@@ -4784,7 +4803,9 @@ function toonKerstPdfKeuze(){
     ['rondedag','Per ronde per dag','Per ronde met de planning per dag erbij']
   ];
   const kop = t=>'<div style="font-size:11px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">'+t+'</div>';
+  box.style.maxHeight = '92vh'; box.style.overflowY = 'auto';
   box.innerHTML = '<div style="font-size:17px;font-weight:900">📄 Kerst-PDF maken</div>'+kop('Indeling')+'<div id="kp-modus"></div>'+kop('Soort')+'<div id="kp-soort" style="display:flex;gap:8px"></div>'+
+    kop('Volgorde van de straten')+'<div id="kp-volg"></div>'+
     '<div style="display:flex;gap:8px;margin-top:16px"><button id="kp-nee" style="flex:1;padding:13px;border:1px solid #ccc;background:#fff;border-radius:12px;font-weight:800">Annuleren</button>'+
     '<button id="kp-ja" style="flex:2;padding:13px;border:none;background:#2e7d32;color:#fff;border-radius:12px;font-weight:800">⬇ Maken</button></div>';
   const teken = ()=>{
@@ -4806,6 +4827,24 @@ function toonKerstPdfKeuze(){
     });
   };
   teken();
+  // Volgorde per ronde: opent 'Mijn volgorde'; na Opslaan komt dit venster terug en staat de volgorde ook in de app
+  const kpVolg = box.querySelector('#kp-volg');
+  kpVolg.innerHTML = '<div style="font-size:12px;color:#4b5563;margin-bottom:6px">'+(njVasteVolgorde
+      ? '✓ Jouw vaste volgorde wordt gebruikt (opgeslagen '+njDatumTijd(njVasteVolgorde.opgeslagen)+')'
+      : 'Nu: de volgorde die de app van je afvinken heeft geleerd')+'</div>';
+  const kpVolgKnop = document.createElement('button');
+  kpVolgKnop.type = 'button';
+  kpVolgKnop.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:12px;border:2px solid #0B63CE;background:#E8F0FB;color:#0B63CE;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer';
+  kpVolgKnop.innerHTML = njIco('volgorde', 18)+' Volgorde per ronde aanpassen';
+  kpVolgKnop.onclick = ()=>{
+    document.body.removeChild(bg);
+    DATA_ECHT.forEach(w=>{ njVolgOpen['w:'+w.wijk] = true; });   // wijken meteen open, zodat je de rondes ziet
+    njVolgDraft = null;
+    view = {mode:'mijnvolgorde', vanKerstPdf:true, pdfModus: (modus === 'oostwest' ? 'ronde' : modus)};
+    render();
+    const mn = document.getElementById('main'); if(mn) mn.scrollTop = 0;
+  };
+  kpVolg.appendChild(kpVolgKnop);
   bg.appendChild(box); document.body.appendChild(bg);
   box.querySelector('#kp-nee').onclick = ()=>document.body.removeChild(bg);
   box.querySelector('#kp-ja').onclick = ()=>{ document.body.removeChild(bg); exportKerstPdf(modus, soort||undefined); };
@@ -5061,7 +5100,10 @@ function exportKerstPdf(modus, soort){
     } else if(modus === 'rondedag'){
       // Per ronde (Oost + West samen), opgedeeld per dag volgens de planning
       const wdn=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
-      const rondeNamen = (MAPPING.RONDE_VOLGORDE||[]).slice();
+      // Rondes: in de vaste volgorde als die er is, anders de standaardvolgorde
+      const rondeNamen = [];
+      if(njVast()){ wijkVolgordeIdxs().forEach(wi=>rondeIdxsInWijk(wi).forEach(ri=>{ const rn=DATA[wi].rondes[ri].ronde; if(!rondeNamen.includes(rn)) rondeNamen.push(rn); })); }
+      (MAPPING.RONDE_VOLGORDE||[]).forEach(rn=>{ if(!rondeNamen.includes(rn)) rondeNamen.push(rn); });
       DATA.forEach(w=>w.rondes.forEach(r=>{ if(!rondeNamen.includes(r.ronde)) rondeNamen.push(r.ronde); }));
       let eersteRonde = true;
       rondeNamen.forEach(rn=>{
@@ -5070,7 +5112,7 @@ function exportKerstPdf(modus, soort){
         wijkVolgordeIdxs().forEach(wi=>{
           DATA[wi].rondes.forEach((r, ri)=>{
             if(r.ronde !== rn) return;
-            r.straten.forEach((st, si)=>{
+            straatIdxsInRonde(wi, ri).map(si=>[r.straten[si], si]).forEach(([st, si])=>{
               const bb = brievenbussenVoorStraat(wi, ri, si).filter(b=>!doneKerst[kerstKey(st.naam, b.hoofd)]);
               if(bb.length) stukken.push({naam: st.naam, wijk: DATA[wi].wijk, bb: bb.slice().sort(vergelijkHuisnr)});
             });
@@ -5134,7 +5176,7 @@ function exportKerstPdf(modus, soort){
         if(y > marge + 20){ doc.addPage(); y = marge; } // direct na de titel op pagina 1 niet
         schrijfKop(w.wijk, [26,45,90]);
         let eersteRondeInWijk = true;
-        w.rondes.forEach((r, ri)=>{
+        rondeIdxsInWijk(wi).map(ri=>[w.rondes[ri], ri]).forEach(([r, ri])=>{
           const bbInRonde = r.straten.reduce((s2,st,si)=>s2+brievenbussenVoorStraat(wi,ri,si).length,0);
           if(bbInRonde===0) return;
           // Nieuwe ronde start altijd op een verse pagina (behalve als we toch al
@@ -5148,7 +5190,8 @@ function exportKerstPdf(modus, soort){
           schrijfPlanningRegel(r.ronde);
           huidigeWijknummer = undefined; // straat-na-ronde-break mag nooit nog eens breken
           syncFlowNaarY();
-          r.straten.forEach((s, si)=>{
+          straatIdxsInRonde(wi, ri).forEach(si=>{
+            const s = r.straten[si];
             const bb = brievenbussenVoorStraat(wi, ri, si);
             if(bb.length) schrijfStraat(s.naam, bb);
           });
