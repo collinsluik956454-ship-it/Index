@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-16.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-16.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1295,6 +1295,38 @@ html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radiu
 .nj-vbalk{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 2px;background:var(--nj-bg);box-shadow:0 -1px 0 var(--nj-tab-lijn),0 60px 0 0 var(--nj-bg)}
 .nj-vbalk span{flex:1;font-size:13px;color:var(--nj-hdr-muted)}
 .nj-vbalk .nj-knop-primair{width:auto;padding:0 22px;flex:0 0 auto}
+
+/* ----- Looplijst-beginscherm: voortgang + kranten, wijken als grote kaarten ----- */
+html[data-thema] body.nj-ll-start header .progress-wrap{display:none}
+html[data-thema] body.nj-ll-start #dateBanner{display:none !important}
+.nj-ll-top{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.nj-ll-nog{border-top:1px solid #EDF1F5;padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.nj-ll-kop{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5A6A7E}
+.nj-ll-chips{display:flex;flex-wrap:wrap;gap:6px}
+.nj-kchip{display:inline-flex;align-items:baseline;gap:5px;padding:5px 9px;border-radius:9px;font-size:12px;font-weight:800}
+.nj-kchip b{font-size:14px}
+.nj-ll-wijkkop{margin:16px 0 8px 4px}
+.nj-wijkkaart{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding:14px 16px}
+.nj-wijk-top{display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;font-family:inherit;text-align:left;color:inherit;cursor:pointer;width:100%}
+.nj-wijk-naam{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nj-wijk-naam b{font-size:18px;font-weight:800;color:#0E1A2B}
+.nj-wijk-naam span{font-size:12.5px;color:#5A6A7E}
+.nj-wijkkaart.klaar .nj-wijk-naam span{color:#15803D;font-weight:700}
+.nj-ring56{position:relative;width:56px;height:56px;flex:0 0 auto}
+.nj-ring56 b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0E1A2B}
+.nj-kbar{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px}
+.nj-kbar i{display:block;height:100%;min-width:3px}
+.nj-kleg{font-size:11.5px;color:#5A6A7E;line-height:1.4}
+.nj-rchips{display:flex;flex-wrap:wrap;gap:6px}
+.nj-rchip{min-height:40px;border:1px solid #D5DDE8;border-radius:12px;background:#F7F9FB;color:#0E1A2B;font-family:inherit;font-size:13px;font-weight:700;padding:0 12px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.nj-rchip span{font-weight:800;color:#0B63CE}
+.nj-rchip:active{transform:scale(.97)}
+.nj-rchip.klaar{background:#E7F6EC;border-color:#BFE6CB;color:#15803D}
+.nj-rchip.vink{background:#fff;border-style:dashed;color:#5A6A7E}
+html[data-thema] .mutbox{background:#FFF8E6;border:1px solid #F3E2A9;border-radius:16px;box-shadow:none;margin-bottom:0}
+html[data-thema] .mutbox .mh{background:transparent;min-height:56px;padding:10px 14px}
+html[data-thema] .mutbox .mh .t{font-size:15px;font-weight:700;color:#3D2E00}
+html[data-thema] .mutbox .ml{background:#fff;border-top:1px solid #F3E2A9}
 </style>
 <script>
 // Offline service worker
@@ -1562,7 +1594,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-16.2';
+const APP_VERSION = '2026-11-16.3';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -1961,6 +1993,7 @@ function njZetChrome(){
   document.body.classList.toggle('nj-tabs', njMetTabbar(m));
   document.body.classList.toggle('nj-kerst', m === 'kerst');
   document.body.classList.toggle('nj-kerst-top', m === 'kerst' && view.level === 'wijk');
+  document.body.classList.toggle('nj-ll-start', (m === 'looplijst' || m === 'route') && view.level === 'wijk');
   if(m !== 'kerst') kerstPlanOpen = false;
   var tab = NJ_TAB_VAN[m] || '';
   document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
@@ -3860,7 +3893,7 @@ function renderRoute(){
   if(view.level==='wijk'){
     njTopTerug(back);
     crumb.textContent='Looplijst · '+meta.date;
-    title.textContent=meta.bezorger;
+    title.textContent='Wijken';
     const totaal={};
     DATA.forEach((w,wi)=>{ const t=productsForWijk(wi); Object.entries(t).forEach(([k,v])=>totaal[k]=(totaal[k]||0)+v); });
     const order=['TT OL','NRC','TEL','VK','TR','HFD','AD NL'];
@@ -3868,17 +3901,7 @@ function renderRoute(){
       const ia=order.indexOf(a), ib=order.indexOf(b);
       return (ia<0?99:ia)-(ib<0?99:ib);
     }).map(p=>[p,totaal[p]]);
-    if(totSorted.length){
-      const totBox=document.createElement('div');
-      totBox.className='row';
-      totBox.style.padding='12px 14px';
-      totBox.innerHTML='<div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Nog te bezorgen</div>'+
-        '<div class="prodgrid">'+totSorted.map(([p,n])=>{
-          const ps=prodStyle(p);
-          return '<div class="prodbox" style="background:'+ps.bg+'"><div class="big" style="color:'+ps.fg+'">'+n+'</div><div class="lbl" style="color:'+ps.fg+'">'+p+'</div></div>';
-        }).join('')+'</div>';
-      main.appendChild(totBox);
-    } else {
+    if(!totSorted.length){
       const d=document.createElement('div');
       d.className='empty';
       d.innerHTML='<div class="big">🎉</div><h2>Alles bezorgd!</h2><p>Fijne dag verder.</p>';
@@ -3886,6 +3909,19 @@ function renderRoute(){
       updateHeaderProgress();
       return;
     }
+    // ===== Bovenaan: voortgang + nog te bezorgen per krant =====
+    const alles = countAll();
+    const pctAlles = alles.total ? Math.round(alles.done/alles.total*100) : 0;
+    const nogTot = totSorted.reduce((x,[,n])=>x+n, 0);
+    const top = document.createElement('section');
+    top.className = 'nj-kaart nj-ll-top';
+    top.innerHTML = '<div class="nj-hero-kop"><span>Vandaag bezorgd</span><b>'+pctAlles+'%</b></div>'+
+      '<div class="nj-hero-getal"><span class="nj-groot">'+alles.done+'</span><span class="nj-van">van '+alles.total+' adressen</span></div>'+
+      '<div class="nj-balk"><i style="width:'+pctAlles+'%"></i></div>'+
+      '<div class="nj-ll-nog"><span class="nj-ll-kop">Nog te bezorgen · '+nogTot+'</span><div class="nj-ll-chips">'+
+        totSorted.map(([p,n])=>{ const ps=prodStyle(p); return '<span class="nj-kchip" style="background:'+ps.bg+';color:'+ps.fg+'">'+p+' <b>'+n+'</b></span>'; }).join('')+
+      '</div></div>';
+    main.appendChild(top);
     // Mutatie-overzicht (STOP/START van deze week), gegroepeerd per krant
     const muts = meta.mutaties || [];
     if(muts.length){
@@ -3920,54 +3956,82 @@ function renderRoute(){
       mutBox.querySelector('.mh').onclick=()=>{ mutBox.classList.toggle('open'); };
       main.appendChild(mutBox);
     }
+    // ===== Wijken als grote kaarten met krant-balk en rondes =====
+    const wijkKop = document.createElement('h2');
+    wijkKop.className = 'nj-label nj-ll-wijkkop';
+    wijkKop.textContent = 'Wijken';
+    main.appendChild(wijkKop);
+    const KRANT_KLEUR = {'TT OL':'#1f5fae','NRC':'#c0392b','TEL':'#d4910f','VK':'#2e7d32','TR':'#7a3fc0','HFD':'#b02877','AD NL':'#15808f'};
+    const isAfvinkModeWijk = (view.mode === 'looplijst' || view.mode === 'route');
     wijkVolgordeIdxs().forEach(wi=>{
       const w = DATA[wi];
-      const c=countWijk(wi);
-      const complete=c.done>=c.total;
-      const tel=productsForWijk(wi);
-      const row=document.createElement('div');
-      row.className='row';
-      const isAfvinkModeWijk = (view.mode === 'looplijst' || view.mode === 'route');
-      const vinkBtnHTML = isAfvinkModeWijk
-        ? '<button class="straat-vink '+(complete?'done':(c.done>0?'partial':''))+'" title="Hele wijk afvinken"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
-        : '';
-      row.innerHTML='<div class="navrow '+(complete?'complete':'')+'">'+
-        ringSVG(c.done,c.total)+
-        '<div class="txt"><div class="nm">'+w.wijk+'</div>'+
-        '<div class="sub">'+w.rondes.length+' rondes · '+(c.total-c.done)+' van '+c.total+' te gaan</div>'+
-        prodPillsHTML(tel)+
-        '</div>'+
-        vinkBtnHTML+
-        (complete?'<span class="donebadge">klaar</span>':'<span class="chev">›</span>')+
-        '</div>';
-      row.querySelector('.navrow').onclick=(e)=>{
-        if(e.target.closest('.straat-vink')) return;
+      const c = countWijk(wi);
+      const complete = c.total>0 && c.done>=c.total;
+      const tel = productsForWijk(wi);
+      const wpct = c.total ? Math.round(c.done/c.total*100) : 0;
+      const omtrek = 2*Math.PI*24;
+      const kaart = document.createElement('section');
+      kaart.className = 'nj-kaart nj-wijkkaart'+(complete ? ' klaar' : '');
+      const telSorted = Object.keys(tel).filter(p=>tel[p]>0).sort((x,y)=>{
+        const ix=order.indexOf(x), iy=order.indexOf(y);
+        return (ix<0?99:ix)-(iy<0?99:iy);
+      });
+      const telSom = telSorted.reduce((x,p)=>x+tel[p], 0);
+      const ringHTML = '<span class="nj-ring56"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">'+
+        '<circle cx="28" cy="28" r="24" fill="none" stroke="'+(complete?'#15803D':'#E6EBF2')+'" stroke-width="5"/>'+
+        (!complete && c.done>0 ? '<circle cx="28" cy="28" r="24" fill="none" stroke="#0B63CE" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(omtrek*c.done/c.total).toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 28 28)"/>' : '')+
+        '</svg><b>'+(complete ? '<span style="color:#15803D;display:flex">'+njIco('check', 22, 3)+'</span>' : wpct+'%')+'</b></span>';
+      kaart.innerHTML =
+        '<button type="button" class="nj-wijk-top">'+
+          '<span class="nj-wijk-naam"><b>'+njEsc(w.wijk)+'</b><span>'+(complete
+            ? 'Klaar · '+c.total+' adressen'
+            : w.rondes.length+' ronde'+(w.rondes.length===1?'':'s')+' · nog '+(c.total-c.done)+' van '+c.total)+'</span></span>'+
+          ringHTML+
+        '</button>'+
+        (telSom>0
+          ? '<div class="nj-kbar" role="img" aria-label="Nog te bezorgen per krant">'+telSorted.map(p=>'<i style="width:'+(tel[p]/telSom*100).toFixed(1)+'%;background:'+(KRANT_KLEUR[p]||prodStyle(p).fg)+'"></i>').join('')+'</div>'+
+            '<div class="nj-kleg">Nog: '+telSorted.map(p=>p+' '+tel[p]).join(' · ')+'</div>'
+          : '');
+      kaart.querySelector('.nj-wijk-top').onclick = ()=>{
         view={mode:view.mode,level:'ronde',wijk:wi,ronde:null,straat:null};
         render();
       };
-      const vBtn = row.querySelector('.straat-vink');
-      if(vBtn){
-        vBtn.onclick = (e)=>{
-          e.stopPropagation();
-          e.preventDefault();
+      // Rondes als knoppen: met één tik naar de straten van die ronde
+      const chips = document.createElement('div');
+      chips.className = 'nj-rchips';
+      routeRondesVoorWijk(wi).forEach(vr=>{
+        const cr = countRouteRonde(wi, vr.rondeIdxs);
+        const rKlaar = cr.total>0 && cr.done>=cr.total;
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'nj-rchip'+(rKlaar ? ' klaar' : '');
+        chip.innerHTML = njEsc(vr.label)+(rKlaar ? ' ✓' : ' <span>'+(cr.total-cr.done)+'</span>');
+        chip.onclick = ()=>{
+          view={mode:view.mode,level:'straat',wijk:wi,ronde:null,rondeIdxs:vr.rondeIdxs,rondeLabel:vr.label,straat:null,krant:null};
+          render();
+        };
+        chips.appendChild(chip);
+      });
+      // Hele wijk in één keer af-/aanvinken (zoals voorheen het vinkje in de rij)
+      if(isAfvinkModeWijk){
+        const vink = document.createElement('button');
+        vink.type = 'button';
+        vink.className = 'nj-rchip vink';
+        vink.innerHTML = njIco('check', 16, 2.6)+(complete ? ' Vinkjes weghalen' : ' Hele wijk afvinken');
+        vink.onclick = ()=>{
           const allKeys = [];
-          w.rondes.forEach((r,ri)=>{
-            r.straten.forEach((s,si)=>{
-              s.adressen.forEach((_,ai)=>{
-                allKeys.push(keyFor(wi, ri, si, ai));
-              });
-            });
-          });
+          w.rondes.forEach((r,ri)=>{ r.straten.forEach((st,si)=>{ st.adressen.forEach((_,ai)=>{ allKeys.push(keyFor(wi, ri, si, ai)); }); }); });
           const allDone = allKeys.every(k=>doneMap[k]);
+          if(!confirm(allDone ? 'Alle vinkjes in '+w.wijk+' weghalen?' : 'Alle adressen in '+w.wijk+' afvinken?')) return;
           if(allDone){
             allKeys.forEach(k=>delete doneMap[k]);
           } else {
             allKeys.forEach(k=>{ doneMap[k] = Date.now(); });
             if(view.mode === 'looplijst'){
               w.rondes.forEach(r=>{
-                r.straten.forEach(s=>{
-                  const adresKeys = s.adressen.map(a=>({nr:a.nr, prod:a.prod, naam:a.naam||''}));
-                  leerLooplijstVolgorde(wi, r.ronde, s.naam, adresKeys);
+                r.straten.forEach(st=>{
+                  const adresKeys = st.adressen.map(a=>({nr:a.nr, prod:a.prod, naam:a.naam||''}));
+                  leerLooplijstVolgorde(wi, r.ronde, st.naam, adresKeys);
                 });
               });
             }
@@ -3975,8 +4039,10 @@ function renderRoute(){
           saveDoneMap();
           render();
         };
+        chips.appendChild(vink);
       }
-      main.appendChild(row);
+      kaart.appendChild(chips);
+      main.appendChild(kaart);
     });
   }
   else if(view.level==='adresInStraat'){
