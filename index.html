@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-16.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-16.5');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1647,7 +1647,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-16.4';
+const APP_VERSION = '2026-11-16.5';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -2088,7 +2088,7 @@ function njModules(){
   M.krant = {ic:'krant', titel:'Per krant', sub:krantSet.size+' krantensoorten', actief:isModeActief('krant'),
     go: ga({mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null})};
   M.kaart = {ic:'kaart', titel:'Wijkenkaart', sub:'Kaart + navigeren', actief:true, go: ga({mode:'kaart',level:null})};
-  M.segment = {ic:'segment', titel:'Segmenten', sub:'Lijst, kaart met vlakken en bijwerken', actief:true, go: ga({mode:'segment',level:null})};
+  M.segment = {ic:'segment', titel:'Segmenten', sub:(njSegNakijken ? njSegNakijken+' adres'+(njSegNakijken===1?'':'sen')+' nakijken' : 'Lijst, kaart met vlakken en bijwerken'), actief:true, go: ga({mode:'segment',level:null})};
 
   // Kerstfooi
   var kaartTotaal = 0, fooiTot = {totaal:0};
@@ -2511,6 +2511,7 @@ function renderSegment(){
 
   // Bijwerken vanuit de looplijst (met teller)
   const ontbrekend = njSegOntbrekend();
+  njSegTeller(ontbrekend.length);
   const bijw = document.createElement('button');
   bijw.type = 'button';
   bijw.className = 'nj-kaart nj-plan-knop nj-seg-bijw';
@@ -2854,16 +2855,18 @@ function renderSegBijwerken(){
   let html = '', alle = 0, missen = 0;
   Object.entries(bw).forEach(([wijk, lijst])=>{
     html += '<span class="nj-ll-kop">'+njEsc(njTitel(wijk))+'</span><div class="nj-chips">';
-    lijst.forEach(p=>{ alle++; const ok = inApp.indexOf(p.kort) >= 0; if(!ok) missen++;
+    lijst.forEach(p=>{ alle++; const ok = inApp.indexOf(p.kort) >= 0 && Object.keys(SEGMENT_DATA[p.kort].straten).length > 0; if(!ok) missen++;
       html += '<span class="nj-seg-chip'+(ok?'':' mist')+'" style="'+(ok?'background:'+njSegKleur(p.kort):'')+'">'+p.kort+'</span>'; });
     html += '</div>';
   });
   kaart1.innerHTML = '<div class="nj-volg-status-kop"><span class="nj-ico '+(missen?'':'groen')+'">'+njIco(missen?'klacht':'check', 20, 2.4)+'</span>'+
-    '<div><b>Looplijst '+njEsc(meta.date||'')+'</b><span>'+(alle ? (missen ? missen+' van '+alle+' segmenten uit de kop ontbreken in de app (laad de Wijken-PDF in)' : 'Alle '+alle+' segmenten uit de kop staan in de app') : 'Laad een looplijst-PDF in om de segmenten in de kop te vergelijken')+'</span></div></div>'+html;
+    '<div><b>Looplijst '+njEsc(meta.date||'')+'</b><span>'+(alle ? (missen ? missen+' van '+alle+' segmenten uit de kop hebben nog geen adressen in de app (laad de Wijken-PDF in of deel adressen in via Ander…)' : 'Alle '+alle+' segmenten uit de kop staan in de app') : 'Laad een looplijst-PDF in om de segmenten in de kop te vergelijken')+'</span></div></div>'+
+    (function(){ let st = null; try{ st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)); }catch(e){} return (st && st.datum === meta.date) ? '<span class="nj-stat-sub">Bij het inladen automatisch ingedeeld: '+(st.auto||0)+' adres'+(st.auto===1?'':'sen')+'. Twijfelgevallen staan hieronder.</span>' : ''; })()+html;
   wrap.appendChild(kaart1);
 
   // 2. Adressen zonder segment
   const ontbrekend = njSegOntbrekend();
+  njSegTeller(ontbrekend.length);
   const kaart2 = document.createElement('section');
   kaart2.className = 'nj-kaart nj-seg-kaart2';
   kaart2.innerHTML = '<div class="nj-seg-rijkop"><b>Adressen zonder segment</b><span class="nj-teller'+(ontbrekend.length?'':' nul')+'">'+ontbrekend.length+'</span></div>';
@@ -2988,6 +2991,106 @@ function renderSegBijwerken(){
   }
   wrap.appendChild(kaart3);
   updateHeaderProgress();
+}
+
+
+// ----- Automatisch bijwerken zodra er een (nieuwe) looplijst is -----
+// Nieuwe adressen uit de looplijst krijgen vanzelf een segment als dat zeker is:
+// de straat ligt in één segment, of de buren aan weerskanten (zelfde kant van de straat)
+// zitten in hetzelfde segment. Twijfelgevallen blijven staan bij "Bijwerken uit looplijst".
+const STORAGE_SEG_AUTO = 'looplijst_v23_seg_auto';
+var njSegNakijken = null;
+function njSegZeker(it){
+  const kand = njSegKandidaten(it.straat);
+  if(!kand.length) return null;
+  if(kand.length === 1) return kand[0];
+  const b = parseInt(njNrBasis(it.nr), 10);
+  if(isNaN(b)) return null;
+  function buren(zelfdeKant){
+    let lo = null, hi = null;
+    kand.forEach(nr=>{
+      (SEGMENT_DATA[nr].straten[njSegStraatVan(nr, it.straat)] || []).forEach(x=>{
+        const v = parseInt(njNrBasis(x), 10);
+        if(isNaN(v) || v === b) return;
+        if(zelfdeKant && (v % 2) !== (b % 2)) return;
+        if(v < b && (!lo || v > lo.v)) lo = {v:v, seg:nr};
+        if(v > b && (!hi || v < hi.v)) hi = {v:v, seg:nr};
+      });
+    });
+    return {lo:lo, hi:hi};
+  }
+  let r = buren(true);
+  if(!r.lo && !r.hi) r = buren(false);
+  if(r.lo && r.hi) return r.lo.seg === r.hi.seg ? r.lo.seg : null;
+  const een = r.lo || r.hi;
+  return (een && Math.abs(een.v - b) <= 6) ? een.seg : null;
+}
+function njSegTeller(n){
+  njSegNakijken = n;
+  try{ const st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)) || {}; st.nakijken = n; localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify(st)); }catch(e){}
+}
+function njSegAutoBijwerken(){
+  const res = {auto:0, nakijken:0, nieuw:[]};
+  // segmenten die in de kop van de looplijst staan maar nog niet in de app: leeg aanmaken,
+  // zodat je er adressen aan kunt toewijzen
+  Object.values(meta.bezorgwijken || {}).forEach(lijst=>(lijst || []).forEach(p=>{
+    const k = p && String(p.kort || '').trim();
+    if(k && /^\d+$/.test(k) && !SEGMENT_DATA[k]){ SEGMENT_DATA[k] = {naam:'OLDENZAAL '+k, straten:{}}; res.nieuw.push(k); }
+  }));
+  if(res.nieuw.length) njSegBewaar(res.nieuw);
+  njSegOntbrekend().forEach(it=>{
+    const s = njSegZeker(it);
+    if(s){ njSegZet(it.straat, it.nrNorm, s); res.auto++; }
+    else res.nakijken++;
+  });
+  njSegNakijken = res.nakijken;
+  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
+  njSegGeoAchtergrond();
+  return res;
+}
+function njSegMelding(res){
+  const d = [];
+  if(res.auto) d.push(res.auto+' adres'+(res.auto===1?'':'sen')+' ingedeeld');
+  if(res.nieuw.length) d.push(res.nieuw.length+' nieuw segment'+(res.nieuw.length===1?'':'en'));
+  if(res.nakijken) d.push(res.nakijken+' nakijken');
+  return 'Segmenten bijgewerkt: '+(d.length ? d.join(' · ') : 'alles klopt');
+}
+// Bij het opstarten (ook na synchroniseren vanaf een ander toestel): is er een looplijst
+// die nog niet verwerkt is, dan nu bijwerken.
+function njSegAutoCheck(){
+  try{
+    if(!meta || !meta.date || typeof DATA === 'undefined' || !DATA.length) return;
+    let st = null; try{ st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)); }catch(e){}
+    if(st && st.datum === meta.date){ njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null; njSegGeoAchtergrond(); return; }
+    const res = njSegAutoBijwerken();
+    if(res.auto || res.nieuw.length || res.nakijken){
+      toast(njSegMelding(res));
+      if(view.mode === 'segment' || view.mode === 'segbijwerken' || view.mode === 'tab_bezorgen') render();
+    }
+  }catch(e){ console.error(e); }
+}
+// Nieuwe adressen op de achtergrond op de kaart zetten, zodat de vlakken meegroeien.
+// De grote eerste keer (honderden adressen) blijft via de knop "Adressen opzoeken".
+var njSegGeoAchter = false;
+async function njSegGeoAchtergrond(){
+  if(njSegGeoBezig || njSegGeoAchter) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  const zonder = njSegPunten().zonder;
+  if(!zonder.length || zonder.length > 80) return;
+  njSegGeoAchter = true;
+  let nieuw = 0;
+  try{
+    for(const z of zonder){
+      if(njSegGeoBezig) break;
+      const co = await geocodeAdres(njTitel(z.straat), z.nr);
+      if(co) nieuw++;
+      await new Promise(r=>setTimeout(r, 1100));
+    }
+  } catch(e){}
+  finally {
+    njSegGeoAchter = false;
+    if(nieuw){ njSegVlakCache = {sleutel:'', vlakken:null}; if(view.mode === 'segment' && njSegWeergave === 'kaart') renderSegment(); }
+  }
 }
 
 /* ===================== einde NIEUW JASJE (logica) ===================== */
@@ -8161,10 +8264,12 @@ function importeerWijkenPdf(file){
       gevondenSegmenten.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
       // Bewaar zodat het na herladen van de app behouden blijft
       try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); localStorage.setItem(STORAGE_SEG_LAST_UPDATE, new Date().toISOString()); }catch(e){}
+      let segAuto = null; try{ segAuto = njSegAutoBijwerken(); }catch(e){}
 
       const totaalAdressen = gevondenSegmenten.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
       let melding = '✓ '+gevondenSegmenten.length+' segmenten bijgewerkt · '+totaalAdressen+' adressen';
       if(afwijkend.length) melding += ' · let op: '+afwijkend.join(', ')+' wijkt af van PDF-telling';
+      if(segAuto && segAuto.auto) melding += ' · '+segAuto.auto+' looplijst-adres'+(segAuto.auto===1?'':'sen')+' ingedeeld';
       toast(melding, afwijkend.length>0);
       if(typeof renderSegment === 'function') renderSegment();
     } catch(err){
@@ -13639,10 +13744,12 @@ async function verwerkGekozenPdfBestand(file){
         if(!gekozen){ toast('Niets overgenomen'); return; }
         gekozen.forEach(nr=>{ SEGMENT_DATA[nr] = geparsed[nr]; });
         try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(SEGMENT_DATA)); localStorage.setItem(STORAGE_SEG_LAST_UPDATE, new Date().toISOString()); }catch(e){}
+        let segAuto2 = null; try{ segAuto2 = njSegAutoBijwerken(); }catch(e){}
         const totaalAdressen = gekozen.reduce((s,nr)=> s + Object.values(SEGMENT_DATA[nr].straten).reduce((s2,a)=>s2+a.length,0), 0);
         let melding = '✓ Wijkindeling bijgewerkt · '+gekozen.length+' segment'+(gekozen.length===1?'':'en')+' · '+totaalAdressen+' adressen';
         const afw = afwijkend.filter(nr=>gekozen.includes(nr));
         if(afw.length) melding += ' · let op: '+afw.join(', ')+' wijkt af';
+        if(segAuto2 && segAuto2.auto) melding += ' · '+segAuto2.auto+' looplijst-adres'+(segAuto2.auto===1?'':'sen')+' ingedeeld';
         toast(melding, afw.length>0);
       }
       parsing.classList.remove('show');
@@ -14617,6 +14724,8 @@ function finalizeLooplijst(parsed){
   saveRondeOrder(); saveStraatOrder(); saveAdresOrder();
   saveVrijVink(); saveStraatVink();
   pasOpgeslagenVolgordeToe();
+  // Segmenten meteen bijwerken met de adressen uit deze looplijst
+  try{ const segRes = njSegAutoBijwerken(); setTimeout(()=>toast(njSegMelding(segRes)), 900); }catch(e){ console.error(e); }
   // Toon keuze-popup voor welke modi de data krijgen
   // (de vraag "Kerstkaartjes bijwerken?" komt zodra je Kerstkaartjes opent, zie bepaalKerstDataBron)
   toonPdfDoelKeuze(built, parsed);
@@ -14945,6 +15054,7 @@ function toonStraatToewijzing(parsed, onbekende){
 
 syncToggle();
 render();
+setTimeout(njSegAutoCheck, 800);
 
 // Firebase sync uitgeschakeld
 </script>
