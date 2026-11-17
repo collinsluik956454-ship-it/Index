@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-17.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-17.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1405,6 +1405,46 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-doel-invoer input{-moz-appearance:textfield;appearance:textfield}
 .nj-doel-invoer input::-webkit-outer-spin-button,.nj-doel-invoer input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .nj-doel-knoppen button{width:100%;height:48px}
+
+/* ----- Kerstfooi per dag (munten en biljetten) ----- */
+.nj-dagfooi-knop{margin-bottom:12px}
+.nj-dagfooi-knop .nj-ico{background:#FDF1DC;color:#8A5A00}
+.nj-dagfooi-knop.heeft .nj-ico{background:#E8F3EC;color:#166534}
+.nj-dagfooi-bedrag{color:#166534;font-weight:800}
+.nj-dagfooi-actie{flex:0 0 auto;font-size:13px;font-weight:800;color:#fff;background:var(--nj-accent);padding:8px 12px;border-radius:10px}
+.nj-dagfooi-knop.heeft .nj-dagfooi-actie{background:#E6EBF2;color:#0E1A2B}
+.nj-dagfooi-bg{position:fixed;inset:0;z-index:9999;background:rgba(14,26,43,.5);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .15s}
+.nj-dagfooi-bg.open{opacity:1}
+.nj-dagfooi{background:#F4F6F9;color:#0E1A2B;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box;display:flex;flex-direction:column;gap:8px;font-family:Inter,system-ui,sans-serif}
+.nj-dagfooi-grip{width:40px;height:4px;border-radius:2px;background:#CBD3DE;align-self:center}
+.nj-dagfooi-kop{display:flex;align-items:center;gap:10px}
+.nj-dagfooi-kop>div{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;gap:1px}
+.nj-dagfooi-kop span{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5A6A7E}
+.nj-dagfooi-kop b{font-size:16px;font-weight:800}
+.nj-dagfooi-kop .nj-ib{display:flex;align-items:center;justify-content:center;padding:0}
+.nj-dagfooi-kop .nj-ib:disabled{opacity:.3;cursor:default}
+.nj-dagfooi-totaal{text-align:center;font-size:34px;font-weight:800;color:#166534;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.nj-dagfooi-split{text-align:center;font-size:13px;color:#5A6A7E}
+.nj-dagfooi-gem{text-align:center;font-size:13px;font-weight:700;color:#0E1A2B;background:#fff;border:1px solid #E2E7EE;border-radius:12px;padding:8px 10px}
+.nj-dagfooi-kopje{margin:4px 0 -2px 4px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5A6A7E}
+.nj-dagfooi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nj-dagfooi-cel{background:#fff;border:1px solid #E2E7EE;border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.nj-dagfooi-cel.heeft{border-color:#86C59B;background:#F3FAF5}
+.nj-dagfooi-celkop{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.nj-dagfooi-soort{font-size:13px;font-weight:800;padding:3px 9px;border-radius:99px}
+.nj-dagfooi-soort.munt{background:#FDF1DC;color:#8A5A00}
+.nj-dagfooi-soort.biljet{background:#E3F1E8;color:#166534;border-radius:6px}
+.nj-dagfooi-sub{font-size:12px;font-weight:700;color:#166534;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nj-dagfooi-teller{display:grid;grid-template-columns:42px 1fr 42px;gap:6px}
+.nj-dagfooi-teller button{height:42px;border-radius:10px;border:1px solid #D5DDE8;background:#F4F6F9;color:#0E1A2B;font-size:20px;font-weight:800;font-family:inherit;cursor:pointer;padding:0}
+.nj-dagfooi-teller button:active{background:#E6EBF2}
+.nj-dagfooi-teller input{height:42px;min-width:0;width:100%;box-sizing:border-box;border:1.5px solid #D5DDE8;border-radius:10px;text-align:center;font-family:inherit;font-size:18px;font-weight:800;color:#0E1A2B;background:#fff;-moz-appearance:textfield;appearance:textfield;padding:0}
+.nj-dagfooi-teller input::-webkit-outer-spin-button,.nj-dagfooi-teller input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nj-dagfooi-teller input:focus{outline:none;border-color:#0B63CE}
+.nj-dagfooi-knoppen{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:6px}
+.nj-dagfooi-knoppen button{width:100%}
+.nj-dagfooi-knoppen [data-actie="wis"]{color:#B42318}
+.nj-dagfooi-knoppen [data-actie="wis"]:disabled{opacity:.45}
 </style>
 <script>
 // Offline service worker
@@ -1672,7 +1712,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-17.1';
+const APP_VERSION = '2026-11-17.2';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -5754,7 +5794,7 @@ function toonKerstKeuzePopup(){
     '<div style="display:flex;flex-direction:column;gap:10px">'+
       ['afvinken','fooi'].map(modus=>{
         const labels = {
-          afvinken: {ico:'✓', titel:'Afvinken', sub:'Vink af zonder bedrag · fooi later per dag invullen bij "Per dag afgevinkt"'},
+          afvinken: {ico:'✓', titel:'Afvinken', sub:'Vink af zonder bedrag · fooi per dag tellen met munten en biljetten (knop "Fooi van vandaag")'},
           fooi:     {ico:'🪙💵', titel:'Fooi invoeren', sub:'Munten én biljetten per brievenbus invoeren'},
         };
         const l = labels[modus];
@@ -5800,49 +5840,111 @@ function fooiDagTotaal(iso){
 function aantalAfgevinktOpDag(iso){ return Object.values(doneKerst).filter(v=>v===iso).length; }
 function fooiDagGemTekst(iso){ const t=fooiDagTotaal(iso), n=aantalAfgevinktOpDag(iso); return (t>0&&n>0) ? 'Ø '+formatEuro(Math.round(t/n))+' per adres ('+n+' adressen)' : ''; }
 function fooiDagenTotaalAlles(){ return Object.keys(fooiDagen).reduce((t,i)=>t+fooiDagTotaal(i),0); }
+// Fooi per dag: munten en biljetten van één dag tellen (ook als je alleen afvinkt).
+// Wijzigingen worden meteen bewaard.
+function kerstAfvinkModus(){ return (localStorage.getItem('looplijst_v23_kerst_modus') || 'afvinken') !== 'fooi'; }
+function njIsoPlus(iso, d){ const t = new Date(iso+'T12:00:00'); t.setDate(t.getDate()+d); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
 function toonDagFooiPopup(iso){
-  const werk = JSON.parse(JSON.stringify((fooiDagen[iso]||{}).perDenom||{}));
+  iso = iso || vandaagIso();
+  const oud = document.getElementById('njDagFooi'); if(oud) oud.remove();
+  let werk = {};
+  const laad = ()=>{ werk = JSON.parse(JSON.stringify((fooiDagen[iso]||{}).perDenom||{})); };
+  const bewaar = ()=>{ if(Object.keys(werk).length) fooiDagen[iso] = {perDenom:JSON.parse(JSON.stringify(werk))}; else delete fooiDagen[iso]; saveFooiDagen(); };
+  const totaal = ()=>FOOI_TEL_SOORTEN.reduce((t,[c])=>t+c*(werk[c]||0), 0);
   const bg = document.createElement('div');
-  bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  bg.id = 'njDagFooi';
+  bg.className = 'nj-dagfooi-bg';
   const sheet = document.createElement('div');
-  sheet.style.cssText = 'background:#fff;color:#222;border-radius:20px 20px 0 0;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;padding:16px 16px 20px';
+  sheet.className = 'nj-dagfooi';
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-label', 'Fooi per dag');
   bg.appendChild(sheet); document.body.appendChild(bg);
-  const teken = ()=>{
-    const tot = FOOI_TEL_SOORTEN.reduce((t,[c])=>t+c*(werk[c]||0),0);
-    const munt = FOOI_TEL_SOORTEN.filter(([c])=>c<500).reduce((t,[c])=>t+c*(werk[c]||0),0);
-    sheet.innerHTML = '<div style="text-align:center;font-size:16px;font-weight:900">💰 Fooi · '+formatDatumNL(iso)+'</div>'+
-      '<div style="text-align:center;font-size:30px;font-weight:900;color:#2e7d32;margin:6px 0 2px">'+formatEuro(tot)+'</div>'+
-      '<div style="text-align:center;font-size:12.5px;color:#6b7280;margin-bottom:4px">🪙 '+formatEuro(munt)+' &nbsp; 💶 '+formatEuro(tot-munt)+'</div>'+
-      '<div style="text-align:center;font-size:13px;font-weight:800;color:#1a2d5a;margin-bottom:8px">'+(aantalAfgevinktOpDag(iso)>0?(tot>0?'Ø '+formatEuro(Math.round(tot/aantalAfgevinktOpDag(iso)))+' per adres · ':'')+aantalAfgevinktOpDag(iso)+' adressen afgevinkt':'nog geen adressen afgevinkt op deze dag')+'</div><div id="dfRijen"></div>'+
-      '<div style="display:flex;gap:8px;margin-top:14px"><button id="df-wis" style="flex:1;padding:13px;border:1px solid #ccc;background:#fff;border-radius:12px;font-weight:800;color:#c62828">Wissen</button>'+
-      '<button id="df-ja" style="flex:2;padding:13px;border:none;background:#16a34a;color:#fff;border-radius:12px;font-weight:800">✓ Opslaan</button></div>'+
-      '<button id="df-terug" style="width:100%;margin-top:10px;padding:10px;border:none;background:none;color:#3730a3;font-weight:700;font-size:12px;text-decoration:underline">Fooi per adres invullen? Zet dat aan (dit dagbedrag blijft bewaard)</button>';
-    const rijen = sheet.querySelector('#dfRijen');
-    FOOI_TEL_SOORTEN.forEach(([cent,naam])=>{
-      const n = werk[cent]||0; const biljet = cent>=500;
-      const rij = document.createElement('div');
-      rij.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6';
-      const knop = 'width:38px;height:38px;border-radius:10px;border:1.5px solid #cbd5e1;background:#fff;color:#111827;font-size:20px;font-weight:800';
-      rij.innerHTML = '<div style="width:54px;font-weight:900;font-size:14px;color:'+(biljet?'#2e7d32':'#92400e')+'">'+naam+'</div>'+
-        '<button data-d="-1" style="'+knop+'">−</button>'+
-        '<input type="number" inputmode="numeric" min="0" max="999" value="'+n+'" style="width:64px;height:38px;text-align:center;font-size:16px;font-weight:800;border:1.5px solid #94a3b8;border-radius:10px;background:#fff;color:#111827;-webkit-text-fill-color:#111827;color-scheme:light">'+
-        '<button data-d="1" style="'+knop+'">+</button>'+
-        '<div style="flex:1;text-align:right;font-size:12.5px;color:#6b7280;font-weight:700">'+(n?formatEuro(n*cent):'')+'</div>';
-      const inp = rij.querySelector('input');
-      const zet = v=>{ v=Math.max(0,Math.min(999,parseInt(v)||0)); if(v) werk[cent]=v; else delete werk[cent]; teken(); };
-      rij.querySelectorAll('button').forEach(b=>{ b.onclick=()=>zet((parseInt(inp.value)||0)+parseInt(b.dataset.d)); });
-      inp.onchange=()=>zet(inp.value); inp.onfocus=()=>inp.select();
-      rijen.appendChild(rij);
-    });
-    sheet.querySelector('#df-ja').onclick = ()=>{
-      if(Object.keys(werk).length) fooiDagen[iso] = {perDenom:werk}; else delete fooiDagen[iso];
-      saveFooiDagen(); document.body.removeChild(bg); renderKerst();
-    };
-    sheet.querySelector('#df-wis').onclick = ()=>{ Object.keys(werk).forEach(k=>delete werk[k]); teken(); };
-    sheet.querySelector('#df-terug').onclick = ()=>{ localStorage.setItem('looplijst_v23_kerst_modus','fooi'); document.body.removeChild(bg); toast('Fooi per adres staat weer aan'); renderKerst(); };
+  requestAnimationFrame(()=>bg.classList.add('open'));
+  const sluit = ()=>{
+    const t = totaal();
+    bg.remove();
+    if(t > 0) toast('Fooi '+formatDatumNL(iso)+': '+formatEuro(t));
+    if(view.mode === 'kerst') renderKerst();
+    else if(view.mode === 'tab_geld') render();
   };
-  bg.onclick = e=>{ if(e.target===bg) document.body.removeChild(bg); };
-  teken();
+  const ververs = ()=>{
+    const tot = totaal();
+    const munt = FOOI_TEL_SOORTEN.filter(([c])=>c<500).reduce((t,[c])=>t+c*(werk[c]||0), 0);
+    const n = aantalAfgevinktOpDag(iso);
+    sheet.querySelector('.nj-dagfooi-totaal').textContent = formatEuro(tot);
+    sheet.querySelector('.nj-dagfooi-split').textContent = 'Munten '+formatEuro(munt)+' · Biljetten '+formatEuro(tot-munt);
+    sheet.querySelector('.nj-dagfooi-gem').textContent = n
+      ? n+' brievenbus'+(n===1?'':'sen')+' afgevinkt'+(tot ? ' · Ø '+formatEuro(Math.round(tot/n))+' per brievenbus' : '')
+      : 'Nog geen brievenbussen afgevinkt op deze dag';
+    sheet.querySelectorAll('.nj-dagfooi-cel').forEach(cel=>{
+      const c = parseInt(cel.getAttribute('data-cent'), 10), a = werk[c] || 0;
+      cel.classList.toggle('heeft', a > 0);
+      cel.querySelector('.nj-dagfooi-sub').innerHTML = a ? formatEuro(a*c) : '&nbsp;';
+    });
+    sheet.querySelector('[data-actie="wis"]').disabled = !tot;
+  };
+  const teken = ()=>{
+    const vandaag = vandaagIso(), isVandaag = iso === vandaag;
+    sheet.innerHTML =
+      '<div class="nj-dagfooi-grip"></div>'+
+      '<div class="nj-dagfooi-kop">'+
+        '<button type="button" class="nj-ib" data-stap="-1" aria-label="Vorige dag">'+njIco('terug', 18, 2.4)+'</button>'+
+        '<div><span>Fooi per dag</span><b>'+(isVandaag ? 'Vandaag · ' : '')+njEsc(formatDatumNL(iso))+'</b></div>'+
+        '<button type="button" class="nj-ib" data-stap="1" aria-label="Volgende dag"'+(iso >= vandaag ? ' disabled' : '')+'>'+njIco('pijl', 18, 2.4)+'</button>'+
+      '</div>'+
+      '<div class="nj-dagfooi-totaal"></div>'+
+      '<div class="nj-dagfooi-split"></div>'+
+      '<div class="nj-dagfooi-gem"></div>'+
+      '<div class="nj-dagfooi-kopje">Munten</div><div class="nj-dagfooi-grid" data-soort="munt"></div>'+
+      '<div class="nj-dagfooi-kopje">Biljetten</div><div class="nj-dagfooi-grid" data-soort="biljet"></div>'+
+      '<div class="nj-dagfooi-knoppen"><button type="button" class="nj-knop-rand" data-actie="wis">Wissen</button>'+
+      '<button type="button" class="nj-knop-primair" data-actie="klaar">Klaar</button></div>';
+    FOOI_TEL_SOORTEN.forEach(([cent, naam])=>{
+      const a = werk[cent] || 0, biljet = cent >= 500;
+      const cel = document.createElement('div');
+      cel.className = 'nj-dagfooi-cel';
+      cel.setAttribute('data-cent', cent);
+      cel.innerHTML = '<span class="nj-dagfooi-celkop"><span class="nj-dagfooi-soort '+(biljet ? 'biljet' : 'munt')+'">'+naam+'</span><span class="nj-dagfooi-sub"></span></span>'+
+        '<span class="nj-dagfooi-teller"><button type="button" data-d="-1" aria-label="Eén '+naam+' minder">−</button>'+
+        '<input type="number" inputmode="numeric" min="0" max="999" placeholder="0" value="'+(a || '')+'" aria-label="Aantal '+naam+'">'+
+        '<button type="button" data-d="1" aria-label="Eén '+naam+' erbij">+</button></span>';
+      const inp = cel.querySelector('input');
+      const zet = v=>{ v = Math.max(0, Math.min(999, parseInt(v, 10) || 0)); if(v) werk[cent] = v; else delete werk[cent]; bewaar(); ververs(); return v; };
+      inp.oninput = ()=>zet(inp.value);
+      inp.onchange = ()=>{ const v = zet(inp.value); inp.value = v || ''; };
+      inp.onfocus = ()=>{ try{ inp.select(); }catch(e){} };
+      cel.querySelectorAll('button').forEach(b=>{ b.onclick = ()=>{ const v = zet((parseInt(inp.value, 10) || 0) + parseInt(b.dataset.d, 10)); inp.value = v || ''; }; });
+      sheet.querySelector('[data-soort="'+(biljet ? 'biljet' : 'munt')+'"]').appendChild(cel);
+    });
+    sheet.querySelectorAll('[data-stap]').forEach(b=>{ b.onclick = ()=>{ const nieuw = njIsoPlus(iso, parseInt(b.dataset.stap, 10)); if(nieuw > vandaagIso()) return; iso = nieuw; laad(); teken(); }; });
+    sheet.querySelector('[data-actie="klaar"]').onclick = sluit;
+    sheet.querySelector('[data-actie="wis"]').onclick = ()=>{
+      if(!totaal()) return;
+      if(!confirm('Alle munten en biljetten van '+formatDatumNL(iso)+' wissen?')) return;
+      werk = {}; bewaar(); teken();
+    };
+    ververs();
+  };
+  bg.onclick = e=>{ if(e.target === bg) sluit(); };
+  laad(); teken();
+}
+// Knop "Fooi van vandaag" (op het startscherm van Kerstkaartjes, en bij alleen afvinken ook in wijk, ronde en straat)
+function kerstDagFooiKnop(){
+  const iso = vandaagIso(), t = fooiDagTotaal(iso), n = aantalAfgevinktOpDag(iso);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nj-kaart nj-plan-knop nj-dagfooi-knop'+(t ? ' heeft' : '');
+  b.innerHTML = '<span class="nj-ico">'+njIco('munten', 20)+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-rij-titel">Fooi van vandaag</span>'+
+    '<span class="nj-rij-sub">'+(t ? '<b class="nj-dagfooi-bedrag">'+formatEuro(t)+'</b> geteld'+(n ? ' · '+n+' afgevinkt' : '') : 'Munten en biljetten tellen')+'</span></span>'+
+    '<span class="nj-dagfooi-actie">'+(t ? 'Aanpassen' : 'Invullen')+'</span>';
+  b.onclick = ()=>toonDagFooiPopup(iso);
+  return b;
+}
+function kerstFooiBlok(main, totBox, gebiedTotaal){
+  if(!kerstAfvinkModus()){ main.appendChild(totBox); return; }
+  if(gebiedTotaal > 0) main.appendChild(totBox);
+  main.appendChild(kerstDagFooiKnop());
 }
 
 // Keuzescherm voor de Kerst-PDF: indeling + soort (gewoon of invul)
@@ -6337,6 +6439,7 @@ function renderKerst(){
     }
     main.appendChild(totBox);
     kerstDoelKoppel(totBox);
+    main.appendChild(kerstDagFooiKnop());
 
     // ===== Eén knop: Planning, datums & PDF — opent een paneel met datums, planning, per dag en PDF =====
     const _kStart = laadKerstStart(), _kEind = laadKerstEinddatum();
@@ -6682,7 +6785,7 @@ function renderKerst(){
     const totBox = document.createElement('div');
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Fooi in '+w.wijk, fooiInWijk(view.wijk));
-    main.appendChild(totBox);
+    kerstFooiBlok(main, totBox, fooiInWijk(view.wijk).totaal);
     let shown=0;
     rondeIdxsInWijk(view.wijk).forEach(ri=>{
       const r = w.rondes[ri];
@@ -6717,7 +6820,7 @@ function renderKerst(){
     const totBox = document.createElement('div');
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Fooi in '+r.ronde, fooiInRonde(view.wijk,view.ronde));
-    main.appendChild(totBox);
+    kerstFooiBlok(main, totBox, fooiInRonde(view.wijk,view.ronde).totaal);
     const planKaart = maakRondePlanKaart(r.ronde, ()=>render());
     if(planKaart) main.appendChild(planKaart);
 
@@ -6860,7 +6963,7 @@ function renderKerst(){
     const totBox = document.createElement('div');
     totBox.className='fooi-total-box';
     totBox.innerHTML=fooiTotaalBoxHTML('Fooi deze straat', straatTotaal);
-    main.appendChild(totBox);
+    kerstFooiBlok(main, totBox, straatTotaal.totaal);
 
     const bb = brievenbussenVoorStraat(view.wijk,view.ronde,view.straat);
     const fooiModus = (localStorage.getItem('looplijst_v23_kerst_modus') || 'afvinken') === 'fooi';
@@ -6925,6 +7028,7 @@ function renderKerst(){
     }
     if(shown===0){
       main.innerHTML='<div class="empty"><div class="big">🎄</div><h2>Straat klaar!</h2><p>Alle kaarten in '+s.naam+' bezorgd.</p></div>';
+      if(kerstAfvinkModus()) main.appendChild(kerstDagFooiKnop());
     } else if(hideChecked && hiddenCount>0){
       const note=document.createElement('div');
       note.className='hiddennote';
