@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-18.5');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-18.6');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1740,7 +1740,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-18.5';
+const APP_VERSION = '2026-11-18.6';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -3048,7 +3048,7 @@ function renderSegBijwerken(){
     const r = document.createElement('div');
     r.className = 'nj-seg-mist';
     r.innerHTML = '<span class="nj-seg-mist-adr">'+njEsc(it.naam)+' '+njEsc(it.nr)+' <span>· '+(it.aantal > 1 ? it.aantal+' adressen · ' : '')+njEsc(it.prods.join(', '))+'</span></span>'+
-      '<span class="nj-stat-sub">'+(off ? 'Officiële kaart: '+off.seg+(off.marge < 5 ? ' (ligt op de grens, even controleren)' : '') : vs.seg ? 'Voorstel: '+vs.seg+(vs.buren.length ? ' (buur '+njEsc(vs.buren.slice(0,2).join(' en '))+' zit daar)' : '') : (hint ? njEsc(hint.tekst) : 'Deze straat staat nog in geen enkel segment'))+'</span>';
+      '<span class="nj-stat-sub">'+(off ? 'Officiële kaart: '+off.seg+(off.marge < NJ_OFF_MARGE ? ' (dicht bij de grens, even controleren)' : '') : vs.seg ? 'Voorstel: '+vs.seg+(vs.buren.length ? ' (buur '+njEsc(vs.buren.slice(0,2).join(' en '))+' zit daar)' : '') : (hint ? njEsc(hint.tekst) : 'Deze straat staat nog in geen enkel segment'))+'</span>';
     const keuzes = document.createElement('div');
     keuzes.className = 'nj-chips';
     const opties = (vs.kandidaten.length ? vs.kandidaten : (hint ? hint.segs : [])).slice(0, 4);
@@ -3275,7 +3275,7 @@ function njSegAutoBijwerken(){
   });
   njSegLogToevoegen(log);
   njSegNakijken = res.nakijken;
-  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:4, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
+  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:5, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
   njSegNaWerk();
   return res;
 }
@@ -3294,7 +3294,7 @@ function njSegAutoCheck(){
     let st = null; try{ st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)); }catch(e){}
     const offTekst = o=>(o.verplaatst ? o.verplaatst+' verplaatst' : '')+(o.verplaatst && o.goed ? ' · ' : '')+(o.goed ? o.goed+' bevestigd' : '');
     const herteken = ()=>{ if(view.mode === 'segment' || view.mode === 'segbijwerken' || view.mode === 'tab_bezorgen') render(); };
-    if(st && st.datum === meta.date && st.v === 4){
+    if(st && st.datum === meta.date && st.v === 5){
       njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null;
       const off = njSegControleerOfficieel();
       if(off.verplaatst || off.goed){ toast('Officiële segmentkaart: '+offTekst(off)); herteken(); }
@@ -3433,11 +3433,15 @@ function njSegViaRouteOud(it){
   });
   return (besluiten.length && besluiten.every(x=>x && x === besluiten[0])) ? besluiten[0] : null;
 }
+// De foto-kaart is tot op ± 10-15 m nauwkeurig (aan de randen van de foto's); daarom eerst de buren
+// in de straat, en de officiële kaart alleen als het adres ruim (>= 15 m) binnen een vlak ligt.
+const NJ_OFF_MARGE = 15;
 function njSegHerken(it){
-  const co = njSegCoord(it.naam, it.nr);
-  if(co){ const o = njSegOfficieel(co.lat, co.lng); if(o && o.marge >= 5) return {seg:o.seg, hoe:'officieel'}; }
   const s = njSegZeker(it);
-  return s ? {seg:s, hoe:(njSegKandidaten(it.straat).length === 1 ? 'straat' : 'buren')} : null;
+  if(s) return {seg:s, hoe:(njSegKandidaten(it.straat).length === 1 ? 'straat' : 'buren')};
+  const co = njSegCoord(it.naam, it.nr);
+  if(co){ const o = njSegOfficieel(co.lat, co.lng); if(o && o.marge >= NJ_OFF_MARGE) return {seg:o.seg, hoe:'officieel'}; }
+  return null;
 }
 // ----- Logboek: wat heeft de app zelf ingedeeld? (om te controleren) -----
 const STORAGE_SEG_AUTOLOG = 'looplijst_v23_seg_autolog';
@@ -3518,7 +3522,7 @@ async function njSegViaKaart(handmatig){
       const co = await geocodeAdres(njTitel(it.naam), it.nr);
       if(co && !njSegZoekNummer(it.straat, it.nrNorm, it.nrNorm)){
         const o = njSegOfficieel(co.lat, co.lng);
-        if(o && o.marge >= 5){ njSegZet(it.straat, it.nrNorm, o.seg); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:o.seg, hoe:'officieel', datum:meta.date || ''}]); }
+        if(o && o.marge >= NJ_OFF_MARGE){ njSegZet(it.straat, it.nrNorm, o.seg); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:o.seg, hoe:'officieel', datum:meta.date || ''}]); }
         else{
           const s = njSegDichtstbij(co, punten);
           if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', controleren:true, datum:meta.date || ''}]); }
@@ -3787,7 +3791,7 @@ function njSegControleerOfficieel(){
   l.forEach(x=>{
     if(!x.controleren) return;
     const co = njSegCoord(x.naam || x.straat, x.nr); if(!co) return;
-    const o = njSegOfficieel(co.lat, co.lng); if(!o || o.marge < 5) return;
+    const o = njSegOfficieel(co.lat, co.lng); if(!o || o.marge < NJ_OFF_MARGE) return;
     if(o.seg === x.seg){ x.controleren = false; x.hoe = 'officieel'; goed++; }
     else { njSegZet(x.straat, x.nr, o.seg); x.was = x.seg; x.seg = o.seg; x.controleren = false; x.hoe = 'officieel'; verplaatst++; }
   });
