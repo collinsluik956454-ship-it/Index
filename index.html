@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-18.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-18.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1732,7 +1732,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-18.3';
+const APP_VERSION = '2026-11-18.4';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -3032,12 +3032,14 @@ function renderSegBijwerken(){
   ontbrekend.forEach(it=>{
     const sl = it.straat+'|'+it.nrNorm;
     const vs = njSegVoorstel(it);
+    const co = njSegCoord(it.naam, it.nr), off = co ? njSegOfficieel(co.lat, co.lng) : null;
+    if(off){ vs.seg = off.seg; vs.buren = []; if(vs.kandidaten.indexOf(off.seg) < 0) vs.kandidaten = [off.seg].concat(vs.kandidaten); }
     const hint = vs.seg ? null : njRouteHint(it);
     if(njSegKeuze[sl] === undefined) njSegKeuze[sl] = vs.seg;
     const r = document.createElement('div');
     r.className = 'nj-seg-mist';
     r.innerHTML = '<span class="nj-seg-mist-adr">'+njEsc(it.naam)+' '+njEsc(it.nr)+' <span>· '+(it.aantal > 1 ? it.aantal+' adressen · ' : '')+njEsc(it.prods.join(', '))+'</span></span>'+
-      '<span class="nj-stat-sub">'+(vs.seg ? 'Voorstel: '+vs.seg+(vs.buren.length ? ' (buur '+njEsc(vs.buren.slice(0,2).join(' en '))+' zit daar)' : '') : (hint ? njEsc(hint.tekst) : 'Deze straat staat nog in geen enkel segment'))+'</span>';
+      '<span class="nj-stat-sub">'+(off ? 'Officiële kaart: '+off.seg+(off.marge < 5 ? ' (ligt op de grens, even controleren)' : '') : vs.seg ? 'Voorstel: '+vs.seg+(vs.buren.length ? ' (buur '+njEsc(vs.buren.slice(0,2).join(' en '))+' zit daar)' : '') : (hint ? njEsc(hint.tekst) : 'Deze straat staat nog in geen enkel segment'))+'</span>';
     const keuzes = document.createElement('div');
     keuzes.className = 'nj-chips';
     const opties = (vs.kandidaten.length ? vs.kandidaten : (hint ? hint.segs : [])).slice(0, 4);
@@ -3105,7 +3107,7 @@ function renderSegBijwerken(){
         const r = document.createElement('div');
         r.className = 'nj-seg-mist'+(x.controleren ? ' nj-seg-ctrl' : '');
         r.innerHTML = '<span class="nj-seg-mist-adr">'+njEsc(njTitel(x.naam || x.straat))+' '+njEsc(x.nr)+' <span>→ segment '+njEsc(x.seg)+'</span></span>'+
-          '<span class="nj-stat-sub">'+njEsc(NJ_SEG_HOE[x.hoe] || '')+'</span>';
+          '<span class="nj-stat-sub">'+njEsc(NJ_SEG_HOE[x.hoe] || '')+(x.was ? ' · verplaatst van '+njEsc(x.was) : '')+'</span>';
         const rij = document.createElement('div');
         rij.className = 'nj-chips';
         const ok = document.createElement('button');
@@ -3264,7 +3266,7 @@ function njSegAutoBijwerken(){
   });
   njSegLogToevoegen(log);
   njSegNakijken = res.nakijken;
-  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:3, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
+  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:4, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
   njSegNaWerk();
   return res;
 }
@@ -3281,12 +3283,23 @@ function njSegAutoCheck(){
   try{
     if(!meta || !meta.date || typeof DATA === 'undefined' || !DATA.length) return;
     let st = null; try{ st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)); }catch(e){}
-    if(st && st.datum === meta.date && st.v === 3){ njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null; njSegNaWerk(); return; }
-    const ctrl = (st && st.v === 2) ? njSegControleVorigeVersie() : 0;
+    const offTekst = o=>(o.verplaatst ? o.verplaatst+' verplaatst' : '')+(o.verplaatst && o.goed ? ' · ' : '')+(o.goed ? o.goed+' bevestigd' : '');
+    const herteken = ()=>{ if(view.mode === 'segment' || view.mode === 'segbijwerken' || view.mode === 'tab_bezorgen') render(); };
+    if(st && st.datum === meta.date && st.v === 4){
+      njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null;
+      const off = njSegControleerOfficieel();
+      if(off.verplaatst || off.goed){ toast('Officiële segmentkaart: '+offTekst(off)); herteken(); }
+      njSegNaWerk();
+      return;
+    }
+    // vorige versie (route-indelingen) terugzoeken, dan alles naast de officiële kaart leggen, dan opnieuw herkennen
+    if(st && st.v === 2) njSegControleVorigeVersie();
+    const off = njSegControleerOfficieel();
     const res = njSegAutoBijwerken();
-    if(res.auto || res.nieuw.length || res.nakijken || ctrl){
-      toast(njSegMelding(res)+(ctrl ? ' · '+ctrl+' controleren' : ''));
-      if(view.mode === 'segment' || view.mode === 'segbijwerken' || view.mode === 'tab_bezorgen') render();
+    const ctrl = njSegControleren();
+    if(res.auto || res.nieuw.length || res.nakijken || ctrl || off.verplaatst || off.goed){
+      toast(njSegMelding(res)+(off.verplaatst || off.goed ? ' · officiële kaart: '+offTekst(off) : '')+(ctrl ? ' · '+ctrl+' controleren' : ''));
+      herteken();
     }
   }catch(e){ console.error(e); }
 }
@@ -3411,7 +3424,12 @@ function njSegViaRouteOud(it){
   });
   return (besluiten.length && besluiten.every(x=>x && x === besluiten[0])) ? besluiten[0] : null;
 }
-function njSegHerken(it){ const s = njSegZeker(it); return s ? {seg:s, hoe:(njSegKandidaten(it.straat).length === 1 ? 'straat' : 'buren')} : null; }
+function njSegHerken(it){
+  const co = njSegCoord(it.naam, it.nr);
+  if(co){ const o = njSegOfficieel(co.lat, co.lng); if(o && o.marge >= 5) return {seg:o.seg, hoe:'officieel'}; }
+  const s = njSegZeker(it);
+  return s ? {seg:s, hoe:(njSegKandidaten(it.straat).length === 1 ? 'straat' : 'buren')} : null;
+}
 // ----- Logboek: wat heeft de app zelf ingedeeld? (om te controleren) -----
 const STORAGE_SEG_AUTOLOG = 'looplijst_v23_seg_autolog';
 var njSegLogOpen = null;   // null = vanzelf open als er iets te controleren is
@@ -3424,7 +3442,7 @@ function njSegLogToevoegen(items){
 }
 function njSegLogWeg(straat, nr){ njSegLogBewaar(njSegLog().filter(x=>!(x.straat === straat && x.nr === nr))); }
 function njSegControleren(){ return njSegLog().filter(x=>x.controleren).length; }
-const NJ_SEG_HOE = {straat:'enige segment in deze straat', buren:'buren in de straat zitten daar', kaart:'via de kaart (adressen in de buurt): graag even controleren', route:'looproute (vorige versie): graag controleren'};
+const NJ_SEG_HOE = {officieel:'ligt in het vlak op de officiële segmentkaart', straat:'enige segment in deze straat', buren:'buren in de straat zitten daar', kaart:'via de kaart (adressen in de buurt): graag even controleren', route:'looproute (vorige versie): graag controleren'};
 
 // Vorige versie (2026-11-18.1) deelde ook in via de looproute; dat bleek niet altijd goed.
 // Zoek die indelingen terug en zet ze op 'controleren'.
@@ -3490,8 +3508,12 @@ async function njSegViaKaart(handmatig){
       const bekend = !!geocache[sleutel] || !!njBagZoek(it.naam, it.nr);
       const co = await geocodeAdres(njTitel(it.naam), it.nr);
       if(co && !njSegZoekNummer(it.straat, it.nrNorm, it.nrNorm)){
-        const s = njSegDichtstbij(co, punten);
-        if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', controleren:true, datum:meta.date || ''}]); }
+        const o = njSegOfficieel(co.lat, co.lng);
+        if(o && o.marge >= 5){ njSegZet(it.straat, it.nrNorm, o.seg); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:o.seg, hoe:'officieel', datum:meta.date || ''}]); }
+        else{
+          const s = njSegDichtstbij(co, punten);
+          if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', controleren:true, datum:meta.date || ''}]); }
+        }
       }
       if(!bekend) await new Promise(r=>setTimeout(r, 1100));
     }
@@ -3669,8 +3691,12 @@ function njSegAllePunten(){
 // Vlakken zoals ze nu getekend worden: met alle adressen als die er zijn, anders alleen de looplijst-adressen
 function njSegVlakkenNu(){
   const alle = njSegAllePunten();
-  if(alle && alle.length > 50) return njSegVlakken(alle, {maxd:35, vul:true});
-  return njSegVlakken(njSegPunten().punten);
+  const berekend = (alle && alle.length > 50) ? njSegVlakken(alle, {maxd:35, vul:true}) : njSegVlakken(njSegPunten().punten);
+  // segmenten op de officiële segmentkaart: die grenzen gebruiken; berekende vlakken alleen voor de rest
+  const uit = {};
+  Object.entries(berekend).forEach(([s, v])=>{ if(!NJ_SEG_OFFICIEEL[s]) uit[s] = v; });
+  Object.entries(NJ_SEG_OFFICIEEL).forEach(([s, v])=>{ if(SEGMENT_DATA[s]) uit[s] = {ringen:[v.p], label:v.l, officieel:true}; });
+  return uit;
 }
 function njBagDatum(){ try{ return njBag ? new Date(njBag.datum).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}) : ''; }catch(e){ return ''; } }
 // Kaartje boven de segmentkaart: alle adressen ophalen / status
@@ -3683,9 +3709,9 @@ function njBagKaartje(){
   }
   if(!njBag){
     k.classList.add('leeg');
-    k.innerHTML = '<span class="nj-bag-tekst"><b>Hele wijk op de kaart</b><span>Haal eenmalig alle adressen van Oldenzaal op (Kadaster, ± 1,5 MB). Dan lopen de segmenten door over straten zonder abonnees.</span></span>';
+    k.innerHTML = '<span class="nj-bag-tekst"><b>Alle adressen op de kaart</b><span>De grenzen komen van de officiële segmentkaart. Haal eenmalig alle adressen van Oldenzaal op (Kadaster, ± 1,5 MB): dan staat elk adres meteen op de kaart en herkent de app nieuwe adressen zelf.</span></span>';
   } else {
-    k.innerHTML = '<span class="nj-bag-tekst"><span>Vlakken met alle '+njBag.d.length.toLocaleString('nl-NL')+' adressen (Kadaster) · '+njEsc(njBagDatum())+'</span></span>';
+    k.innerHTML = '<span class="nj-bag-tekst"><span>Grenzen volgens de officiële segmentkaart · '+njBag.d.length.toLocaleString('nl-NL')+' adressen (Kadaster) · '+njEsc(njBagDatum())+'</span></span>';
   }
   const b = document.createElement('button');
   b.type = 'button';
@@ -3698,11 +3724,66 @@ function njBagKaartje(){
     try{
       await njBagOphalen((n, p)=>{ const t = document.getElementById('njBagTekst'); if(t) t.textContent = 'Alle adressen ophalen… '+n.toLocaleString('nl-NL')+' adressen'; });
       toast('Alle '+njBag.d.length.toLocaleString('nl-NL')+' adressen van Oldenzaal staan op de kaart');
+      try{ njSegControleerOfficieel(); njSegAutoBijwerken(); }catch(e){}
     }catch(e){ toast('Ophalen lukte niet, probeer het later opnieuw', true); }
     if(view.mode === 'segment') renderSegment();
   };
   k.appendChild(b);
   return k;
+}
+
+
+// ----- Officiële segmentkaart (DPG-wandkaart, overgenomen van de foto's) -----
+// Per segment de grens (lat,lng) en een plek voor het nummer. Gecontroleerd met de bekende adressen:
+// 565 van de 570 liggen in hun eigen vlak, de overige 5 liggen op de grenslijn (minder dan 10 m).
+const NJ_SEG_OFFICIEEL = {"226":{"p":[[52.311123,6.932031],[52.311185,6.931977],[52.311172,6.931926],[52.311293,6.931851],[52.311287,6.931819],[52.311371,6.931742],[52.311366,6.931703],[52.311625,6.93138],[52.312048,6.930729],[52.311794,6.930235],[52.311546,6.929843],[52.311391,6.929283],[52.311308,6.928771],[52.310913,6.92876],[52.310874,6.928791],[52.310852,6.928757],[52.310596,6.928744],[52.31059,6.929049],[52.310672,6.929462],[52.310686,6.93034],[52.310778,6.930667],[52.310833,6.930781],[52.310861,6.930765],[52.310956,6.93108],[52.310827,6.931224]],"l":[52.311381,6.930683]},"227":{"p":[[52.311067,6.932061],[52.310781,6.931204],[52.310895,6.931072],[52.310643,6.93033],[52.310629,6.929458],[52.310548,6.929044],[52.31055,6.928749],[52.310014,6.928635],[52.309948,6.928729],[52.309975,6.928811],[52.309936,6.92885],[52.309963,6.928933],[52.309923,6.928979],[52.309929,6.929065],[52.309851,6.929433],[52.309814,6.929464],[52.309819,6.929524],[52.309735,6.92969],[52.309742,6.929735],[52.309676,6.929789],[52.310512,6.93232]],"l":[52.310215,6.929928]},"230":{"p":[[52.308277,6.927721],[52.30852,6.927468],[52.308627,6.927421],[52.308718,6.926596],[52.308696,6.924625],[52.308664,6.924326],[52.308508,6.9239],[52.30824,6.924012],[52.30778,6.924529],[52.307526,6.924893],[52.307557,6.925097],[52.307541,6.925254],[52.307426,6.925414],[52.307423,6.925562],[52.307253,6.925727],[52.307131,6.925779],[52.307148,6.926117],[52.306938,6.926308],[52.307139,6.926595],[52.307165,6.926581],[52.307192,6.926664],[52.307225,6.926648],[52.307258,6.92673],[52.307288,6.926707],[52.307322,6.926802],[52.307854,6.927343],[52.308176,6.927577]],"l":[52.308016,6.926133]},"231":{"p":[[52.307342,6.92897],[52.307377,6.928973],[52.308252,6.927757],[52.308169,6.927637],[52.307825,6.927384],[52.307151,6.926687],[52.306943,6.926389],[52.306905,6.926268],[52.307101,6.926094],[52.307091,6.92576],[52.307371,6.925539],[52.307338,6.925424],[52.307404,6.925361],[52.307498,6.925115],[52.307486,6.924845],[52.307705,6.924524],[52.308234,6.92393],[52.308485,6.923823],[52.308278,6.923252],[52.30629,6.925515],[52.305837,6.925515],[52.305693,6.925582],[52.305772,6.925818],[52.306021,6.926266]],"l":[52.307418,6.927895]},"232":{"p":[[52.305657,6.925522],[52.305838,6.925454],[52.306285,6.925454],[52.308258,6.923198],[52.306679,6.918639],[52.30641,6.918128],[52.306204,6.91818],[52.306057,6.918576],[52.305837,6.918845],[52.305559,6.919456],[52.305222,6.919965],[52.304912,6.920347],[52.304403,6.920832],[52.304504,6.921159],[52.304521,6.921416],[52.304579,6.921576],[52.304552,6.921611],[52.304584,6.921698],[52.304567,6.921751],[52.304629,6.921904],[52.304591,6.92195],[52.304748,6.922967]],"l":[52.306236,6.922301]},"236":{"p":[[52.310104,6.927353],[52.310054,6.927803],[52.310094,6.927975],[52.310028,6.928037],[52.310063,6.928259],[52.309994,6.928323],[52.310015,6.928457],[52.309978,6.928501],[52.310036,6.928578],[52.310411,6.928654],[52.310458,6.928615],[52.310478,6.928665],[52.310519,6.928631],[52.310542,6.928678],[52.310588,6.928646],[52.310622,6.928683],[52.310714,6.928608],[52.310747,6.928666],[52.310805,6.928625],[52.31085,6.928693],[52.310889,6.928661],[52.310911,6.928696],[52.311307,6.928707],[52.311566,6.929776],[52.311743,6.930072],[52.311857,6.929815],[52.31226,6.929239],[52.312131,6.928899],[52.312155,6.928866],[52.312104,6.928678],[52.312085,6.928319],[52.312012,6.928121],[52.312065,6.92807],[52.312027,6.927922],[52.312069,6.927882],[52.31205,6.927422],[52.311989,6.926947],[52.311829,6.926251],[52.311535,6.926588],[52.311556,6.926666],[52.311506,6.926769],[52.311423,6.926838],[52.311442,6.926897],[52.311406,6.926934],[52.31142,6.927003],[52.311387,6.927031],[52.311342,6.927418],[52.311065,6.927596],[52.310891,6.927634],[52.310384,6.92739]],"l":[52.311559,6.928073]},"244":{"p":[[52.314558,6.92848],[52.314432,6.927288],[52.314267,6.926819],[52.314103,6.926482],[52.314037,6.926228],[52.31407,6.92605],[52.314018,6.925982],[52.313986,6.926001],[52.313956,6.925909],[52.313705,6.925653],[52.313248,6.925639],[52.313142,6.92554],[52.313028,6.925323],[52.312914,6.92521],[52.312244,6.9252],[52.311946,6.925267],[52.311955,6.925336],[52.311916,6.925376],[52.311912,6.925442],[52.31205,6.926072],[52.311865,6.926227],[52.312069,6.927104],[52.312094,6.927701],[52.312216,6.927695],[52.312278,6.927644],[52.312299,6.927687],[52.312352,6.927644],[52.312368,6.927684],[52.312498,6.927612],[52.312533,6.92769],[52.312609,6.927629],[52.312649,6.927723],[52.313094,6.927923],[52.313202,6.928215],[52.31323,6.928205],[52.313264,6.928291],[52.31359,6.928395],[52.313645,6.928358],[52.313666,6.928414],[52.313717,6.928374],[52.313748,6.928449],[52.313816,6.928401],[52.31387,6.92849],[52.313918,6.928453],[52.313954,6.928517],[52.313995,6.928485],[52.314025,6.92852],[52.314128,6.92844],[52.314154,6.928512]],"l":[52.31341,6.926846]},"249":{"p":[[52.315943,6.930068],[52.315725,6.928766],[52.31561,6.927809],[52.31559,6.927208],[52.315533,6.926746],[52.315413,6.926411],[52.315312,6.926259],[52.314883,6.925814],[52.314562,6.925403],[52.314525,6.925288],[52.314469,6.925279],[52.314468,6.925419],[52.314131,6.926021],[52.314089,6.926185],[52.31412,6.9264],[52.314285,6.926729],[52.314489,6.927357],[52.314555,6.927707],[52.31453,6.927733],[52.314577,6.927975],[52.314599,6.928514],[52.314681,6.92921],[52.314733,6.92917],[52.314753,6.929226],[52.31479,6.929217],[52.314856,6.929414],[52.314898,6.929395],[52.314976,6.929633],[52.31498,6.929875],[52.315269,6.929915],[52.315492,6.929754],[52.315722,6.929981]],"l":[52.315023,6.927159]},"618":{"p":[[52.318492,6.897516],[52.318788,6.897158],[52.318794,6.897034],[52.318891,6.896873],[52.319056,6.896747],[52.319142,6.896603],[52.319159,6.89644],[52.319107,6.896314],[52.31889,6.896165],[52.318811,6.895993],[52.318821,6.895753],[52.319044,6.895308],[52.319266,6.89517],[52.319249,6.895106],[52.31931,6.894684],[52.319359,6.894595],[52.31978,6.894227],[52.319649,6.894003],[52.3196,6.893764],[52.319611,6.893527],[52.319548,6.893222],[52.31941,6.892987],[52.319335,6.892729],[52.31904,6.892292],[52.318659,6.89049],[52.317458,6.889334],[52.317229,6.889034],[52.316599,6.891338],[52.316674,6.891435],[52.316721,6.89173],[52.316661,6.892136],[52.316564,6.89238],[52.316348,6.892624],[52.316269,6.892549],[52.315893,6.893926],[52.316081,6.894061],[52.316529,6.894626],[52.316802,6.894818],[52.316909,6.894941],[52.317306,6.895196],[52.317153,6.895431],[52.317323,6.895545],[52.317327,6.895615],[52.317732,6.89571],[52.31823,6.896144],[52.318079,6.896447],[52.317768,6.896867],[52.318203,6.897258],[52.318319,6.897426]],"l":[52.317833,6.893207]},"619":{"p":[[52.31621,6.895447],[52.316078,6.894928],[52.315957,6.894917],[52.314879,6.894354],[52.314436,6.894254],[52.313629,6.894235],[52.313636,6.894339],[52.313986,6.894834],[52.31422,6.895271],[52.314171,6.895612],[52.314104,6.895777],[52.313982,6.895894],[52.314203,6.896124],[52.314797,6.896536],[52.314788,6.89658],[52.315094,6.896734],[52.315177,6.896808],[52.315209,6.896982],[52.31549,6.8971],[52.316006,6.89588],[52.316069,6.895798],[52.316121,6.895791]],"l":[52.315174,6.895645]},"620":{"p":[[52.315463,6.897158],[52.315159,6.896989],[52.315129,6.896818],[52.314768,6.896633],[52.314626,6.896989],[52.31457,6.897036],[52.314472,6.89705],[52.314202,6.896953],[52.313731,6.89809],[52.313592,6.898504],[52.313583,6.898603],[52.313742,6.898933],[52.313745,6.899011],[52.313456,6.89973],[52.313464,6.899843],[52.313708,6.900149],[52.31404,6.90048],[52.314063,6.900467]],"l":[52.314318,6.898278]},"621":{"p":[[52.313367,6.902062],[52.31403,6.900548],[52.313651,6.900165],[52.313422,6.899868],[52.313411,6.899733],[52.313701,6.899004],[52.313542,6.898627],[52.31355,6.898493],[52.313617,6.898363],[52.313606,6.898325],[52.313733,6.897963],[52.314179,6.896884],[52.314552,6.896975],[52.31475,6.896542],[52.314209,6.896191],[52.313944,6.895921],[52.313982,6.895815],[52.314123,6.895629],[52.314174,6.895282],[52.313936,6.89484],[52.313633,6.894408],[52.313562,6.895197],[52.3135,6.895433],[52.313256,6.896031],[52.313372,6.89614],[52.313274,6.896306],[52.313223,6.896481],[52.313277,6.897059],[52.313235,6.897167],[52.313129,6.897273],[52.313095,6.897444],[52.313011,6.897614],[52.313021,6.897744],[52.312821,6.898369],[52.312702,6.898514],[52.312598,6.898577],[52.312604,6.898822],[52.312681,6.899001],[52.312783,6.899122],[52.312846,6.899298],[52.312706,6.899666],[52.312722,6.899709],[52.312682,6.899957],[52.312713,6.9],[52.312419,6.90083],[52.312409,6.900972],[52.312731,6.901356],[52.312896,6.901499],[52.313223,6.901963]],"l":[52.313164,6.900697]},"622":{"p":[[52.312103,6.897419],[52.312424,6.897543],[52.312602,6.89727],[52.312529,6.89719],[52.312464,6.89721],[52.312259,6.897068],[52.312209,6.896968],[52.312263,6.896835],[52.312303,6.896844],[52.31235,6.896711],[52.312393,6.896676],[52.312485,6.896689],[52.312638,6.89657],[52.312837,6.896736],[52.313221,6.896858],[52.313188,6.896426],[52.313255,6.89624],[52.31333,6.896165],[52.313206,6.89604],[52.313458,6.895422],[52.313523,6.895171],[52.313568,6.894848],[52.313589,6.894232],[52.313041,6.894438],[52.312169,6.894411],[52.312062,6.89446],[52.311949,6.89461],[52.311904,6.894716],[52.31163,6.896206],[52.311888,6.896217],[52.312191,6.896407],[52.311938,6.897008],[52.311946,6.897086],[52.312087,6.897296]],"l":[52.312564,6.895525]},"623":{"p":[[52.31214,6.901737],[52.312148,6.901274],[52.312216,6.901097],[52.312368,6.900991],[52.312308,6.900837],[52.312644,6.899923],[52.312674,6.89973],[52.312652,6.899671],[52.312797,6.899303],[52.312558,6.898828],[52.312559,6.89861],[52.312602,6.8985],[52.312816,6.898289],[52.312912,6.897893],[52.31298,6.897748],[52.312968,6.897631],[52.313058,6.897402],[52.312876,6.897252],[52.312858,6.897153],[52.312909,6.896979],[52.313024,6.896977],[52.313033,6.896926],[52.313006,6.89686],[52.312834,6.896797],[52.31264,6.896636],[52.312494,6.896757],[52.312403,6.89674],[52.312348,6.896787],[52.312303,6.896917],[52.312247,6.896946],[52.312327,6.897073],[52.312429,6.897133],[52.312522,6.897128],[52.312645,6.897253],[52.31244,6.897613],[52.312179,6.897529],[52.312064,6.897425],[52.312054,6.897332],[52.311895,6.897058],[52.312147,6.896418],[52.311854,6.896265],[52.311691,6.89627],[52.311214,6.899039],[52.310975,6.899894],[52.311633,6.900363],[52.311411,6.900982],[52.311906,6.901641]],"l":[52.311909,6.899262]},"624":{"p":[[52.313349,6.902122],[52.312922,6.901759],[52.312556,6.90122],[52.312392,6.901057],[52.312246,6.901154],[52.31219,6.901302],[52.312185,6.901689],[52.312141,6.901804],[52.311955,6.901751],[52.311831,6.90164],[52.311361,6.900983],[52.311586,6.900376],[52.310959,6.899951],[52.310871,6.900263],[52.31047,6.901259],[52.311717,6.903182],[52.312167,6.903791],[52.312419,6.904199],[52.312457,6.904211]],"l":[52.312374,6.902713]},"716":{"p":[[52.318801,6.915224],[52.318877,6.914999],[52.319239,6.913457],[52.319242,6.913356],[52.319387,6.912889],[52.31878,6.910392],[52.318178,6.911113],[52.317974,6.91142],[52.317753,6.911883],[52.317159,6.913501],[52.317282,6.913632],[52.317365,6.913901],[52.317948,6.914517],[52.318021,6.914566],[52.318173,6.914553],[52.318267,6.914625]],"l":[52.318345,6.913096]},"717":{"p":[[52.318779,6.915271],[52.318214,6.914642],[52.318009,6.914626],[52.317334,6.913945],[52.317249,6.91368],[52.317135,6.913559],[52.316909,6.914019],[52.316561,6.915421],[52.316568,6.917028],[52.316479,6.9173],[52.316643,6.917461],[52.316773,6.917477],[52.317902,6.917136]],"l":[52.31745,6.915733]},"729":{"p":[[52.331645,6.911509],[52.331092,6.912237],[52.330864,6.912332],[52.330477,6.912317],[52.330218,6.911896],[52.329179,6.913798],[52.328386,6.914888],[52.327861,6.915261],[52.327733,6.915113],[52.328115,6.913522],[52.327975,6.913517],[52.327831,6.914041],[52.327541,6.914458],[52.327295,6.914497],[52.327063,6.91477],[52.32683,6.914754],[52.326736,6.914634],[52.32582,6.916482],[52.325417,6.916961],[52.325366,6.91692],[52.325354,6.917015],[52.325401,6.917091],[52.325596,6.918195],[52.325585,6.919579],[52.326681,6.919332],[52.32675,6.919095],[52.327098,6.9196],[52.327064,6.919874],[52.32709,6.920191],[52.327232,6.920707],[52.327309,6.920812],[52.327544,6.920729],[52.327512,6.920424],[52.32757,6.920226],[52.327908,6.919694],[52.328091,6.919672],[52.32819,6.919798],[52.328502,6.920602],[52.328518,6.920721],[52.328657,6.920957],[52.328751,6.921248],[52.330891,6.918626],[52.331314,6.916372],[52.331465,6.915209],[52.331547,6.914088]],"l":[52.329091,6.917386]},"730":{"p":[[52.328937,6.924801],[52.32901,6.924309],[52.328589,6.924189],[52.328512,6.92409],[52.328387,6.923784],[52.328448,6.92366],[52.329078,6.92331],[52.328944,6.922671],[52.328959,6.922502],[52.328747,6.921377],[52.328608,6.920984],[52.328473,6.920762],[52.328459,6.920647],[52.328117,6.919774],[52.327921,6.919786],[52.327568,6.920338],[52.327584,6.920663],[52.327534,6.920817],[52.327352,6.920915],[52.327196,6.920736],[52.327099,6.920831],[52.327343,6.921964],[52.327286,6.922771],[52.32754,6.922842],[52.327771,6.923121],[52.328426,6.924586]],"l":[52.328069,6.92189]},"731":{"p":[[52.328974,6.924815],[52.329226,6.924908],[52.329372,6.924834],[52.329417,6.92488],[52.329724,6.924413],[52.329687,6.924359],[52.329767,6.924034],[52.329761,6.923963],[52.329798,6.92389],[52.329825,6.923645],[52.32986,6.92358],[52.329852,6.923525],[52.329964,6.923082],[52.329953,6.923028],[52.330037,6.922733],[52.330076,6.922424],[52.330115,6.922355],[52.330101,6.922294],[52.330216,6.921855],[52.330198,6.921797],[52.330253,6.921672],[52.330251,6.921548],[52.330303,6.921426],[52.330292,6.921325],[52.330348,6.921212],[52.330341,6.921074],[52.330398,6.920968],[52.330841,6.918843],[52.330741,6.919001],[52.33072,6.918987],[52.32968,6.920205],[52.329623,6.920329],[52.32965,6.920374],[52.329617,6.920496],[52.32963,6.920674],[52.329547,6.920849],[52.329439,6.92072],[52.329424,6.920516],[52.329243,6.920734],[52.329159,6.920912],[52.329085,6.920939],[52.32878,6.921309],[52.329008,6.922499],[52.328991,6.922645],[52.329117,6.923278],[52.32905,6.923403],[52.328915,6.923515],[52.328877,6.923492],[52.328849,6.923546],[52.32882,6.923523],[52.328788,6.923584],[52.328723,6.923577],[52.328602,6.923688],[52.328561,6.923667],[52.328532,6.923726],[52.328502,6.9237],[52.328421,6.923745],[52.328566,6.924107],[52.328973,6.924237],[52.329047,6.924332]],"l":[52.329535,6.921899]}};
+function njOffM(lat, lng){ return [(lng - 6.92) * 111320 * Math.cos(52.31 * Math.PI / 180), (lat - 52.31) * 111320]; }
+var njOffCache = null;
+function njOffPolys(){
+  if(njOffCache) return njOffCache;
+  njOffCache = {};
+  Object.entries(NJ_SEG_OFFICIEEL).forEach(([s, v])=>{ njOffCache[s] = v.p.map(([a, b])=>njOffM(a, b)); });
+  return njOffCache;
+}
+function njPuntInPoly(x, y, poly){
+  let c = false;
+  for(let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if(((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c;
+  }
+  return c;
+}
+function njAfstRand(x, y, poly){
+  let best = Infinity;
+  for(let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const x1 = poly[j][0], y1 = poly[j][1], dx = poly[i][0] - x1, dy = poly[i][1] - y1;
+    const t = Math.max(0, Math.min(1, ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy || 1)));
+    const d = Math.hypot(x - (x1 + t*dx), y - (y1 + t*dy));
+    if(d < best) best = d;
+  }
+  return best;
+}
+// In welk officieel segment ligt een punt? {seg, marge} (marge = meters tot de grens) of null
+function njSegOfficieel(lat, lng){
+  const xy = njOffM(lat, lng), P = njOffPolys();
+  for(const s of Object.keys(P)){
+    if(SEGMENT_DATA[s] && njPuntInPoly(xy[0], xy[1], P[s])) return {seg:s, marge:njAfstRand(xy[0], xy[1], P[s])};
+  }
+  return null;
+}
+function njSegCoord(naam, nr){ return (typeof njBagZoek === 'function' ? njBagZoek(naam, nr) : null) || geocache[njSegGeoKey(naam, nr)] || null; }
+// Wat op 'controleren' staat naast de officiële kaart leggen: klopt het, dan goedkeuren; anders verplaatsen
+function njSegControleerOfficieel(){
+  const l = njSegLog(); let goed = 0, verplaatst = 0;
+  l.forEach(x=>{
+    if(!x.controleren) return;
+    const co = njSegCoord(x.naam || x.straat, x.nr); if(!co) return;
+    const o = njSegOfficieel(co.lat, co.lng); if(!o || o.marge < 5) return;
+    if(o.seg === x.seg){ x.controleren = false; x.hoe = 'officieel'; goed++; }
+    else { njSegZet(x.straat, x.nr, o.seg); x.was = x.seg; x.seg = o.seg; x.controleren = false; x.hoe = 'officieel'; verplaatst++; }
+  });
+  if(goed || verplaatst){ njSegLogBewaar(l); try{ njSegTeller(njSegOntbrekend().length); }catch(e){} }
+  return {goed:goed, verplaatst:verplaatst};
 }
 
 /* ===================== einde NIEUW JASJE (logica) ===================== */
