@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-18.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-18.5');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1465,6 +1465,14 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-bag.leeg b{font-size:15px;color:#0E1A2B}
 .nj-bag .nj-knop-primair{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;font-size:15px}
 .nj-bag-opnieuw{flex:0 0 auto;border:none;background:none;color:#0B63CE;font-family:inherit;font-size:13px;font-weight:700;padding:6px 4px;cursor:pointer}
+
+/* ----- Segment: routestappen ----- */
+.nj-seg-route{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:#EEF3FA;color:#0E1A2B}
+.nj-seg-route b{font-size:13px}
+.nj-seg-route-stappen{display:flex;flex-wrap:wrap;gap:6px}
+.nj-seg-route-stap{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:99px;background:#fff;border:1px solid #D5DDE8;font-size:13px;font-weight:600}
+.nj-seg-route-stap i{font-style:normal;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#0B63CE;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.nj-seg-route-stap em{font-style:normal;font-weight:600;color:#5A6A7E}
 </style>
 <script>
 // Offline service worker
@@ -1732,7 +1740,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-18.4';
+const APP_VERSION = '2026-11-18.5';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -2602,6 +2610,7 @@ function njSegStopKaart(){ if(njSegMap){ try{ njSegMap.remove(); }catch(e){} njS
 
 function njSegNummerKnoppen(nr, container){
   const seg = SEGMENT_DATA[nr]; if(!seg) return;
+  try{ const rb = njSegRouteBlok(nr); if(rb) container.appendChild(rb); }catch(e){}
   Object.entries(seg.straten).forEach(([straat, nrs])=>{
     const blok = document.createElement('div');
     blok.className = 'nj-seg-straat';
@@ -3784,6 +3793,48 @@ function njSegControleerOfficieel(){
   });
   if(goed || verplaatst){ njSegLogBewaar(l); try{ njSegTeller(njSegOntbrekend().length); }catch(e){} }
   return {goed:goed, verplaatst:verplaatst};
+}
+
+
+// ----- Looproute gekoppeld aan de segmenten: welke routestappen lopen door een segment? -----
+// Met alle adressen (BAG) en de officiële kaart: per stap tellen in welk segment de huizen liggen.
+// Zonder alle adressen: via de bekende adressen uit de segmenten.
+var njSegRouteCache = {sleutel:'', data:null};
+function njSegRouteAlle(){
+  const sleutel = (njBag ? njBag.datum : '-')+':'+njSegNummers().map(n=>n+'='+njSegAantal(n)).join(',');
+  if(njSegRouteCache.sleutel === sleutel && njSegRouteCache.data) return njSegRouteCache.data;
+  const data = {};
+  njRouteStappen().forEach(st=>{
+    const tel = {}; let tot = 0;
+    const k = njBag ? njBagStraat(st.naam) : null;
+    if(k){
+      njBag.d.forEach(rr=>{
+        if(njBag.sleutels[rr[2]] !== k) return;
+        const n = parseInt(njNrBasis(rr[3]), 10);
+        if(!st.reeksen.some(x=>njRouteBevat(x, n))) return;
+        tot++;
+        const o = njSegOfficieel(rr[0]/1e6, rr[1]/1e6);
+        if(o) tel[o.seg] = (tel[o.seg] || 0) + 1;
+      });
+    }
+    if(!tot){
+      njSegBekendeNummers(st.straat).forEach(b=>{ if(st.reeksen.some(x=>njRouteBevat(x, b.n))){ tot++; tel[b.seg] = (tel[b.seg] || 0) + 1; } });
+    }
+    Object.entries(tel).forEach(([sg, n])=>{
+      if(n < 2 && n / tot < 0.3) return;   // losse huizen op de grens niet meetellen
+      (data[sg] = data[sg] || []).push({stap:st.i+1, naam:st.naam, reeks:NJ_ROUTE[st.wijk][st.i][1], deels:n < tot * 0.9});
+    });
+  });
+  njSegRouteCache = {sleutel:sleutel, data:data};
+  return data;
+}
+function njSegRouteBlok(nr){
+  const rs = njSegRouteAlle()[nr] || [];
+  if(!rs.length) return null;
+  const b = document.createElement('div');
+  b.className = 'nj-seg-route';
+  b.innerHTML = '<b>In je looproute</b><span class="nj-seg-route-stappen">'+rs.map(x=>'<span class="nj-seg-route-stap"><i>'+x.stap+'</i>'+njEsc(njTitel(x.naam))+(x.deels ? ' <em>(deels)</em>' : '')+'</span>').join('')+'</span>';
+  return b;
 }
 
 /* ===================== einde NIEUW JASJE (logica) ===================== */
