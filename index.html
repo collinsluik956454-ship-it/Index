@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-18.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-18.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1457,6 +1457,14 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-seg-logkop .nj-chev{color:#5A6A7E;display:flex}
 .nj-seg-ctrl{background:#FFF7ED;margin:0 -8px;padding:10px 8px;border-radius:10px;border-top-color:transparent}
 .nj-seg-ctrl .nj-stat-sub{color:#B45309;font-weight:700}
+
+/* ----- Segmentkaart: alle adressen (BAG) ----- */
+.nj-bag{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--nj-hdr-muted)}
+.nj-bag .nj-bag-tekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.nj-bag.leeg{flex-direction:column;align-items:stretch;background:#fff;border:1px solid #E2E7EE;border-radius:16px;padding:14px;color:#5A6A7E;font-size:13px}
+.nj-bag.leeg b{font-size:15px;color:#0E1A2B}
+.nj-bag .nj-knop-primair{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;font-size:15px}
+.nj-bag-opnieuw{flex:0 0 auto;border:none;background:none;color:#0B63CE;font-family:inherit;font-size:13px;font-weight:700;padding:6px 4px;cursor:pointer}
 </style>
 <script>
 // Offline service worker
@@ -1724,7 +1732,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-18.2';
+const APP_VERSION = '2026-11-18.3';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -2363,7 +2371,7 @@ function njSegPunten(){
   njSegNummers().forEach(nr=>{
     Object.entries(SEGMENT_DATA[nr].straten).forEach(([straat, nrs])=>{
       nrs.forEach(n=>{
-        const co = geocache[njSegGeoKey(straat, n)];
+        const co = geocache[njSegGeoKey(straat, n)] || njBagZoek(straat, n);
         if(co) punten.push({seg:nr, straat:straat, nr:n, lat:co.lat, lng:co.lng});
         else zonder.push({seg:nr, straat:straat, nr:n});
       });
@@ -2375,14 +2383,15 @@ function njSegPunten(){
 // Vlakken berekenen: elk stukje grond (10 m) krijgt het segment van het dichtstbijzijnde adres
 // (tot 55 m van een adres). De grenzen tussen segmenten liggen dan precies tussen de huizen in.
 var njSegVlakCache = {sleutel:'', vlakken:null};
-function njSegVlakken(punten){
-  const sleutel = punten.length+':'+punten.map(p=>p.seg+p.lat.toFixed(5)+p.lng.toFixed(5)).join('').length+':'+(punten[0]?punten[0].lat:0)+':'+(punten.length?punten[punten.length-1].lng:0);
+function njSegVlakken(punten, opt){
+  opt = opt || {};
+  const sleutel = (opt.maxd || 55)+(opt.vul ? 'v' : '')+':'+punten.length+':'+punten.map(p=>p.seg+p.lat.toFixed(5)+p.lng.toFixed(5)).join('').length+':'+(punten[0]?punten[0].lat:0)+':'+(punten.length?punten[punten.length-1].lng:0);
   if(njSegVlakCache.sleutel === sleutel && njSegVlakCache.vlakken) return njSegVlakCache.vlakken;
   const uit = {};
   if(punten.length < 2){ njSegVlakCache = {sleutel:sleutel, vlakken:uit}; return uit; }
   const lat0 = punten.reduce((a,p)=>a+p.lat,0)/punten.length, lng0 = punten.reduce((a,p)=>a+p.lng,0)/punten.length;
   const mLat = 111320, mLng = 111320*Math.cos(lat0*Math.PI/180);
-  const C = 10, MAXD = 55, B = 60;
+  const C = 10, MAXD = opt.maxd || 55, B = 60;
   const segLijst = [], segIdx = {};
   const pts = punten.map(p=>{
     if(segIdx[p.seg] === undefined){ segIdx[p.seg] = segLijst.length; segLijst.push(p.seg); }
@@ -2407,6 +2416,57 @@ function njSegVlakken(punten){
         for(let q=0;q<e.length;q++){ const p = e[q]; const d = (p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy); if(d < bd){ bd = d; best = p.k; } }
       }
       grid[j*W+i] = best;
+    }
+  }
+  if(opt.vul){
+    // Gaten die helemaal door segmenten omsloten zijn (tuinen, plantsoenen, straatjes zonder adressen)
+    // opvullen vanaf de rand, zodat de vlakken aaneengesloten zijn
+    const MAXGAT = 1500, merk = new Uint8Array(W*H);
+    for(let c0=0; c0<W*H; c0++){
+      if(grid[c0] !== -1 || merk[c0]) continue;
+      const regio = [c0]; merk[c0] = 1; let rand = false;
+      for(let q=0; q<regio.length; q++){
+        const c = regio[q], i = c % W, j = (c - i)/W;
+        if(i === 0 || j === 0 || i === W-1 || j === H-1) rand = true;
+        if(i > 0 && grid[c-1] === -1 && !merk[c-1]){ merk[c-1] = 1; regio.push(c-1); }
+        if(i < W-1 && grid[c+1] === -1 && !merk[c+1]){ merk[c+1] = 1; regio.push(c+1); }
+        if(j > 0 && grid[c-W] === -1 && !merk[c-W]){ merk[c-W] = 1; regio.push(c-W); }
+        if(j < H-1 && grid[c+W] === -1 && !merk[c+W]){ merk[c+W] = 1; regio.push(c+W); }
+      }
+      if(rand || regio.length > MAXGAT) continue;
+      let front = regio.filter(c=>grid[c-1] >= 0 || grid[c+1] >= 0 || grid[c-W] >= 0 || grid[c+W] >= 0);
+      while(front.length){
+        const stap = front.map(c=>[c, grid[c-1] >= 0 ? grid[c-1] : grid[c+1] >= 0 ? grid[c+1] : grid[c-W] >= 0 ? grid[c-W] : grid[c+W]]);
+        stap.forEach(([c, k])=>{ if(grid[c] === -1 && k >= 0) grid[c] = k; });
+        const volg = new Set();
+        stap.forEach(([c])=>{ [c-1, c+1, c-W, c+W].forEach(n=>{ if(grid[n] === -1) volg.add(n); }); });
+        front = Array.from(volg);
+      }
+    }
+    // Hele kleine eilandjes (een paar huizen) die helemaal in één ander segment liggen: bij dat segment
+    // voegen, zodat de kaart rustig blijft. De adresstipjes laten de uitzondering nog wel zien.
+    const MINEILAND = 25, gezien = new Uint8Array(W*H);
+    for(let c0=0; c0<W*H; c0++){
+      const k = grid[c0];
+      if(k < 0 || gezien[c0]) continue;
+      const deel = [c0]; gezien[c0] = 1;
+      const buren = new Set(); let open = false;
+      for(let q=0; q<deel.length; q++){
+        const c = deel[q], i = c % W, j = (c - i)/W;
+        const nb = [i > 0 ? c-1 : -1, i < W-1 ? c+1 : -1, j > 0 ? c-W : -1, j < H-1 ? c+W : -1];
+        nb.forEach(n=>{
+          if(n < 0){ open = true; return; }
+          const kn = grid[n];
+          if(kn === k){ if(!gezien[n]){ gezien[n] = 1; deel.push(n); } }
+          else if(kn < 0) open = true;
+          else buren.add(kn);
+        });
+        if(deel.length > MINEILAND && open) break;
+      }
+      if(deel.length <= MINEILAND && !open && buren.size === 1){
+        const nieuw = buren.values().next().value;
+        deel.forEach(c=>{ grid[c] = nieuw; });
+      }
     }
   }
   const g = (i,j)=> (i<0||j<0||i>=W||j>=H) ? -1 : grid[j*W+i];
@@ -2509,7 +2569,7 @@ function njSegKml(vlakken){
   return s;
 }
 function njSegDownloadKml(){
-  const v = njSegVlakken(njSegPunten().punten);
+  const v = njSegVlakkenNu();
   if(!Object.keys(v).length){ toast('Nog geen vlakken: zoek eerst de adressen op', true); return; }
   const blob = new Blob([njSegKml(v)], {type:'application/vnd.google-earth.kml+xml'});
   const a = document.createElement('a');
@@ -2703,6 +2763,7 @@ function njSegKaartBouwen(wrap){
   filt.appendChild(adrKnop);
   wrap.appendChild(filt);
 
+  wrap.appendChild(njBagKaartje());
   const kaartDiv = document.createElement('div');
   kaartDiv.className = 'nj-seg-kaart';
   kaartDiv.id = 'njSegKaart';
@@ -2816,10 +2877,12 @@ function njSegKaartBouwen(wrap){
     return;
   }
   setTimeout(()=>{
-    if(!document.getElementById('njSegKaart')) return;
-    njSegMap = L.map('njSegKaart', {zoomControl:true, attributionControl:false}).setView([52.3140, 6.9200], 14);
+    // alleen als dit kaartvak nog op het scherm staat (niet als het scherm intussen opnieuw is opgebouwd)
+    if(!kaartDiv.isConnected) return;
+    njSegStopKaart();
+    njSegMap = L.map(kaartDiv, {zoomControl:true, attributionControl:false}).setView([52.3140, 6.9200], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(njSegMap);
-    vlakken = njSegVlakken(punten);
+    vlakken = njSegVlakkenNu();
     const groep = [];
     Object.entries(vlakken).forEach(([nr, v])=>{
       if(!zichtbaar(nr)) return;
@@ -2835,7 +2898,7 @@ function njSegKaartBouwen(wrap){
       }
     });
     if(njSegAdressenTonen){
-      punten.forEach(p=>{ if(zichtbaar(p.seg)) L.circleMarker([p.lat, p.lng], {radius:3, color:'#1F2937', weight:1, fillColor:'#FFFFFF', fillOpacity:1}).bindTooltip(njTitel(p.straat)+' '+p.nr).addTo(njSegMap); });
+      punten.forEach(p=>{ if(zichtbaar(p.seg)) L.circleMarker([p.lat, p.lng], {radius:3.5, color:'#FFFFFF', weight:1.2, fillColor:njSegKleur(p.seg), fillOpacity:1}).bindTooltip(njTitel(p.straat)+' '+p.nr+' · '+p.seg).addTo(njSegMap); });
     }
     if(groep.length){ try{ njSegMap.fitBounds(L.featureGroup(groep).getBounds(), {padding:[16,16]}); }catch(e){} }
     else if(!punten.length){ infoTekst('Nog geen adressen op de kaart. Tik op "Adressen opzoeken".'); }
@@ -2894,6 +2957,7 @@ function njSegBewaar(nrs){
   nrs.forEach(nr=>{ if(SEGMENT_DATA[nr]) opgeslagen[nr] = SEGMENT_DATA[nr]; });
   try{ localStorage.setItem(STORAGE_SEG_WIJKEN, JSON.stringify(opgeslagen)); }catch(e){}
   njSegVlakCache = {sleutel:'', vlakken:null};
+  njSegAlleCache = {sleutel:'', punten:null};
 }
 function njSegZet(straatUp, nrTekst, naarSeg){
   const nn = njNrNorm(nrTekst), gewijzigd = [];
@@ -3360,7 +3424,7 @@ function njSegLogToevoegen(items){
 }
 function njSegLogWeg(straat, nr){ njSegLogBewaar(njSegLog().filter(x=>!(x.straat === straat && x.nr === nr))); }
 function njSegControleren(){ return njSegLog().filter(x=>x.controleren).length; }
-const NJ_SEG_HOE = {straat:'enige segment in deze straat', buren:'buren in de straat zitten daar', kaart:'via de kaart (adressen in de buurt)', route:'looproute (vorige versie): graag controleren'};
+const NJ_SEG_HOE = {straat:'enige segment in deze straat', buren:'buren in de straat zitten daar', kaart:'via de kaart (adressen in de buurt): graag even controleren', route:'looproute (vorige versie): graag controleren'};
 
 // Vorige versie (2026-11-18.1) deelde ook in via de looproute; dat bleek niet altijd goed.
 // Zoek die indelingen terug en zet ze op 'controleren'.
@@ -3406,8 +3470,8 @@ function njSegControleVorigeVersie(){
 function njSegDichtstbij(co, punten){
   const mLat = 111320, mLng = 111320 * Math.cos(co.lat * Math.PI / 180);
   const dichtbij = punten.map(p=>({seg:p.seg, d:Math.hypot((p.lat-co.lat)*mLat, (p.lng-co.lng)*mLng)}))
-    .filter(x=>x.d <= 100).sort((a,b)=>a.d-b.d).slice(0, 5);
-  if(dichtbij.length < 3) return null;
+    .filter(x=>x.d <= 100).sort((a,b)=>a.d-b.d).slice(0, 6);
+  if(dichtbij.length < 5) return null;
   return dichtbij.every(x=>x.seg === dichtbij[0].seg) ? dichtbij[0].seg : null;
 }
 var njSegKaartBezig = false;
@@ -3423,11 +3487,11 @@ async function njSegViaKaart(handmatig){
   try{
     for(const it of lijst){
       const sleutel = njSegGeoKey(it.naam, it.nr);
-      const bekend = !!geocache[sleutel];
+      const bekend = !!geocache[sleutel] || !!njBagZoek(it.naam, it.nr);
       const co = await geocodeAdres(njTitel(it.naam), it.nr);
       if(co && !njSegZoekNummer(it.straat, it.nrNorm, it.nrNorm)){
         const s = njSegDichtstbij(co, punten);
-        if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', datum:meta.date || ''}]); }
+        if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', controleren:true, datum:meta.date || ''}]); }
       }
       if(!bekend) await new Promise(r=>setTimeout(r, 1100));
     }
@@ -3457,6 +3521,189 @@ function njRouteHint(it){
   return {tekst:tekst, segs:segs};
 }
 function njSegMapsUrl(naam, nr){ return 'https://www.google.nl/maps/search/'+encodeURIComponent(njTitel(naam)+' '+nr+', Oldenzaal'); }
+
+
+// ----- Alle adressen van Oldenzaal (BAG, Kadaster via PDOK) -----
+// Eenmalig ophalen en op de telefoon bewaren (IndexedDB, niet gesynchroniseerd).
+// Daarmee staan alle adressen meteen op de kaart en lopen de segment-vlakken door
+// over straten en huizen die niet op de looplijst staan.
+const NJ_BAG_URL = 'https://api.pdok.nl/kadaster/bag/ogc/v2/collections/adres/items?f=json&bbox=6.860,52.280,6.975,52.345&limit=1000';
+var njBag = null, njBagBezig = false, njBagLaadBelofte = null;
+function njIdb(){
+  return new Promise((ok, fout)=>{
+    if(typeof indexedDB === 'undefined') return fout(new Error('geen IndexedDB'));
+    const r = indexedDB.open('looplijst_kaart', 1);
+    r.onupgradeneeded = ()=>{ r.result.createObjectStore('data'); };
+    r.onsuccess = ()=>ok(r.result);
+    r.onerror = ()=>fout(r.error);
+  });
+}
+async function njIdbZet(k, v){ const db = await njIdb(); return new Promise((ok, fout)=>{ const tx = db.transaction('data', 'readwrite'); tx.objectStore('data').put(v, k); tx.oncomplete = ()=>ok(); tx.onerror = ()=>fout(tx.error); }); }
+async function njIdbHaal(k){ const db = await njIdb(); return new Promise((ok, fout)=>{ const q = db.transaction('data').objectStore('data').get(k); q.onsuccess = ()=>ok(q.result); q.onerror = ()=>fout(q.error); }); }
+function njBagSleutel(naam){ return njStraatSleutel(naam).replace(/^SINT\s+/, ''); }
+function njBagMaakIndex(v){
+  v.sleutels = v.straten.map(njBagSleutel);
+  v.index = {}; v.straatMemo = {};
+  v.d.forEach((r, i)=>{
+    const k = v.sleutels[r[2]];
+    v.index[k+'|'+njNrNorm(r[3])] = i;
+    const b = njNrBasis(r[3]);
+    if(b && v.index[k+'|#'+b] === undefined) v.index[k+'|#'+b] = i;
+  });
+}
+function njBagLaad(){
+  if(njBag) return Promise.resolve(njBag);
+  if(!njBagLaadBelofte){
+    njBagLaadBelofte = njIdbHaal('bag').then(v=>{ if(v && v.d && v.d.length){ njBagMaakIndex(v); njBag = v; } return njBag; }).catch(()=>null);
+  }
+  return njBagLaadBelofte;
+}
+// Straatnaam uit de app -> straat in de BAG (ook bij kleine tikfouten)
+function njBagStraat(straat){
+  if(!njBag) return null;
+  const k = njBagSleutel(straat);
+  if(njBag.straatMemo[k] !== undefined) return njBag.straatMemo[k];
+  let res = njBag.sleutels.indexOf(k) >= 0 ? k : null;
+  if(!res && k.length >= 8) res = njBag.sleutels.find(s=>s.length >= 8 && njLev1(s, k)) || null;
+  njBag.straatMemo[k] = res;
+  return res;
+}
+function njBagZoek(straat, nr){
+  const k = njBagStraat(straat);
+  if(!k) return null;
+  let i = njBag.index[k+'|'+njNrNorm(nr)];
+  if(i === undefined){
+    const b = njNrBasis(nr);
+    if(b){ i = njBag.index[k+'|#'+b]; const n = parseInt(b, 10); if(i === undefined && n >= 1000) i = njBag.index[k+'|#'+Math.floor(n/100)]; }
+  }
+  if(i === undefined) return null;
+  const r = njBag.d[i];
+  return {lat:r[0]/1e6, lng:r[1]/1e6};
+}
+async function njBagOphalen(bijVoortgang){
+  if(njBagBezig) return null;
+  njBagBezig = true;
+  try{
+    let url = NJ_BAG_URL, pagina = 0;
+    const straten = [], sIdx = {}, d = [];
+    while(url && pagina < 80){
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      (j.features || []).forEach(f=>{
+        const p = f.properties || {}, c = f.geometry && f.geometry.coordinates;
+        if(!c || p.woonplaats_naam !== 'Oldenzaal' || !p.openbare_ruimte_naam || !p.huisnummer) return;
+        let si = sIdx[p.openbare_ruimte_naam];
+        if(si === undefined){ si = sIdx[p.openbare_ruimte_naam] = straten.length; straten.push(p.openbare_ruimte_naam); }
+        d.push([Math.round(c[1]*1e6), Math.round(c[0]*1e6), si, String(p.huisnummer)+(p.huisletter || '')+(p.toevoeging ? '-'+p.toevoeging : '')]);
+      });
+      const volgende = (j.links || []).find(l=>l.rel === 'next');
+      url = volgende ? volgende.href : null;
+      pagina++;
+      if(bijVoortgang) bijVoortgang(d.length, pagina);
+    }
+    if(d.length < 1000) throw new Error('te weinig adressen');
+    const v = {datum:new Date().toISOString(), straten:straten, d:d};
+    try{ await njIdbZet('bag', v); }catch(e){}
+    njBagMaakIndex(v);
+    njBag = v; njBagLaadBelofte = Promise.resolve(v);
+    njSegAlleCache = {sleutel:'', punten:null};
+    njSegVlakCache = {sleutel:'', vlakken:null};
+    return v;
+  } finally { njBagBezig = false; }
+}
+
+// Elk BAG-adres in je bezorggebied een segment geven (alleen voor het tekenen van de vlakken):
+// eerst via de buren in dezelfde straat aan dezelfde kant (binnen je looproute), anders via het
+// dichtstbijzijnde ingedeelde adres.
+var njSegAlleCache = {sleutel:'', punten:null};
+function njSegAllePunten(){
+  if(!njBag) return null;
+  const sleutel = njBag.datum+':'+njSegNummers().map(nr=>nr+'='+njSegAantal(nr)).join(',');
+  if(njSegAlleCache.sleutel === sleutel && njSegAlleCache.punten) return njSegAlleCache.punten;
+  const bekend = {};
+  njSegNummers().forEach(seg=>Object.entries(SEGMENT_DATA[seg].straten).forEach(([st, nrs])=>{
+    const k = njBagStraat(st) || njBagSleutel(st);
+    nrs.forEach(x=>{ let n = parseInt(njNrBasis(x), 10); if(isNaN(n)) return; if(n >= 1000) n = Math.floor(n/100); (bekend[k] = bekend[k] || []).push({n:n, nn:njNrNorm(x), seg:seg}); });
+  }));
+  const reeksen = {};
+  njRouteStappen().forEach(s=>{ const k = njBagStraat(s.naam) || njBagSleutel(s.naam); reeksen[k] = (reeksen[k] || []).concat(s.reeksen); });
+  const uit = [], later = [];
+  njBag.d.forEach(r=>{
+    const k = njBag.sleutels[r[2]], n = parseInt(njNrBasis(r[3]), 10), nn = njNrNorm(r[3]);
+    const lat = r[0]/1e6, lng = r[1]/1e6, lijst = bekend[k], rk = reeksen[k];
+    const inRoute = !!rk && !isNaN(n) && rk.some(x=>njRouteBevat(x, n));
+    // ligt de straat in je looproute, dan horen alleen de nummers binnen de route-reeksen erbij
+    // (plus bekende adressen en nummers precies tussen twee bekende adressen)
+    const magVerder = !rk || inRoute;
+    let seg = null;
+    if(lijst && !isNaN(n)){
+      const ex = lijst.find(b=>b.nn === nn) || lijst.find(b=>b.n === n);
+      if(ex) seg = ex.seg;
+      else{
+        let lo = null, hi = null;
+        lijst.forEach(b=>{ if((b.n % 2) !== (n % 2)) return; if(b.n < n && (!lo || b.n > lo.n)) lo = b; if(b.n > n && (!hi || b.n < hi.n)) hi = b; });
+        if(lo && hi) seg = (n - lo.n <= hi.n - n) ? lo.seg : hi.seg;
+        else if(!magVerder) seg = null;
+        else if(lo || hi){ const e = lo || hi; if(Math.abs(e.n - n) <= 20) seg = e.seg; }
+        else{ let e = null; lijst.forEach(b=>{ if(!e || Math.abs(b.n - n) < Math.abs(e.n - n)) e = b; }); if(e && Math.abs(e.n - n) <= 10) seg = e.seg; }
+      }
+    }
+    if(seg) uit.push({seg:seg, lat:lat, lng:lng});
+    else if(inRoute || lijst) later.push({lat:lat, lng:lng, ver:(inRoute ? 150 : 50)});   // anders: op ligging
+  });
+  // rest: segment van het dichtstbijzijnde ingedeelde adres (binnen 50 m, of 150 m als het in je looproute ligt)
+  const C = 150, mLat = 111320, mLng = 111320 * Math.cos(52.31 * Math.PI / 180), em = {};
+  uit.forEach(p=>{ const s = Math.floor(p.lng*mLng/C)+','+Math.floor(p.lat*mLat/C); (em[s] = em[s] || []).push(p); });
+  later.forEach(p=>{
+    const x = p.lng*mLng, y = p.lat*mLat, kx = Math.floor(x/C), ky = Math.floor(y/C);
+    let best = null, bd = p.ver*p.ver;
+    for(let dx=-1; dx<=1; dx++) for(let dy=-1; dy<=1; dy++){
+      (em[(kx+dx)+','+(ky+dy)] || []).forEach(q=>{ const a = q.lng*mLng - x, b = q.lat*mLat - y, d = a*a + b*b; if(d < bd){ bd = d; best = q; } });
+    }
+    if(best) uit.push({seg:best.seg, lat:p.lat, lng:p.lng});
+  });
+  njSegAlleCache = {sleutel:sleutel, punten:uit};
+  return uit;
+}
+// Vlakken zoals ze nu getekend worden: met alle adressen als die er zijn, anders alleen de looplijst-adressen
+function njSegVlakkenNu(){
+  const alle = njSegAllePunten();
+  if(alle && alle.length > 50) return njSegVlakken(alle, {maxd:35, vul:true});
+  return njSegVlakken(njSegPunten().punten);
+}
+function njBagDatum(){ try{ return njBag ? new Date(njBag.datum).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}) : ''; }catch(e){ return ''; } }
+// Kaartje boven de segmentkaart: alle adressen ophalen / status
+function njBagKaartje(){
+  const k = document.createElement('div');
+  k.className = 'nj-bag';
+  if(njBagBezig){
+    k.innerHTML = '<span class="nj-bag-tekst" id="njBagTekst">Alle adressen ophalen…</span>';
+    return k;
+  }
+  if(!njBag){
+    k.classList.add('leeg');
+    k.innerHTML = '<span class="nj-bag-tekst"><b>Hele wijk op de kaart</b><span>Haal eenmalig alle adressen van Oldenzaal op (Kadaster, ± 1,5 MB). Dan lopen de segmenten door over straten zonder abonnees.</span></span>';
+  } else {
+    k.innerHTML = '<span class="nj-bag-tekst"><span>Vlakken met alle '+njBag.d.length.toLocaleString('nl-NL')+' adressen (Kadaster) · '+njEsc(njBagDatum())+'</span></span>';
+  }
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = njBag ? 'nj-bag-opnieuw' : 'nj-knop-primair';
+  b.innerHTML = njBag ? 'Opnieuw' : njIco('inladen', 18)+'<span>Alle adressen ophalen</span>';
+  b.onclick = async ()=>{
+    if(typeof navigator !== 'undefined' && navigator.onLine === false){ toast('Geen internet', true); return; }
+    b.disabled = true;
+    k.innerHTML = '<span class="nj-bag-tekst" id="njBagTekst">Alle adressen ophalen…</span>';
+    try{
+      await njBagOphalen((n, p)=>{ const t = document.getElementById('njBagTekst'); if(t) t.textContent = 'Alle adressen ophalen… '+n.toLocaleString('nl-NL')+' adressen'; });
+      toast('Alle '+njBag.d.length.toLocaleString('nl-NL')+' adressen van Oldenzaal staan op de kaart');
+    }catch(e){ toast('Ophalen lukte niet, probeer het later opnieuw', true); }
+    if(view.mode === 'segment') renderSegment();
+  };
+  k.appendChild(b);
+  return k;
+}
 
 /* ===================== einde NIEUW JASJE (logica) ===================== */
 
@@ -10218,6 +10465,8 @@ async function geocodeAdres(straat, nr, city='Oldenzaal'){
   const nrClean = match ? (match[1] + (match[2]?match[2].toUpperCase():'')).trim() : nrStr.replace(/\s+/g,'').slice(0,8);
   const key = (straat+' '+nrClean).toLowerCase().trim();
   if(geocache[key]) return geocache[key];
+  // alle adressen van Oldenzaal (BAG) al op de telefoon? Dan is opzoeken niet nodig
+  try{ const bag = (typeof njBagZoek === 'function' && /oldenzaal/i.test(city)) ? njBagZoek(straat, nrStr) : null; if(bag) return bag; }catch(e){}
 
   try {
     const q = encodeURIComponent(straat+' '+nrClean+', '+city+', Netherlands');
@@ -15544,7 +15793,7 @@ function toonStraatToewijzing(parsed, onbekende){
 
 syncToggle();
 render();
-setTimeout(njSegAutoCheck, 800);
+setTimeout(()=>{ njBagLaad().then(()=>{ njSegAutoCheck(); if(njBag && view.mode === 'segment' && njSegWeergave === 'kaart') renderSegment(); }); }, 800);
 
 // Firebase sync uitgeschakeld
 </script>
