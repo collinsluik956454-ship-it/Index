@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-18.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-18.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1450,6 +1450,13 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-seg-hulp{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:#EEF3FA;font-size:13px;color:#0E1A2B}
 .nj-seg-hulp .nj-knop-rand{height:42px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
 .nj-seg-maps{display:inline-flex;align-items:center;gap:5px;color:#0B63CE}
+
+.nj-seg-logkop{display:flex;align-items:center;gap:10px;width:100%;padding:0;border:none;background:none;font-family:inherit;text-align:left;color:#0E1A2B;cursor:pointer}
+.nj-seg-logtekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nj-seg-logtekst b{font-size:15px}
+.nj-seg-logkop .nj-chev{color:#5A6A7E;display:flex}
+.nj-seg-ctrl{background:#FFF7ED;margin:0 -8px;padding:10px 8px;border-radius:10px;border-top-color:transparent}
+.nj-seg-ctrl .nj-stat-sub{color:#B45309;font-weight:700}
 </style>
 <script>
 // Offline service worker
@@ -1717,7 +1724,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-18.1';
+const APP_VERSION = '2026-11-18.2';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -2159,7 +2166,7 @@ function njModules(){
   M.krant = {ic:'krant', titel:'Per krant', sub:krantSet.size+' krantensoorten', actief:isModeActief('krant'),
     go: ga({mode:'krant',level:'wijk',krant:null,wijk:null,ronde:null,straat:null})};
   M.kaart = {ic:'kaart', titel:'Wijkenkaart', sub:'Kaart + navigeren', actief:true, go: ga({mode:'kaart',level:null})};
-  M.segment = {ic:'segment', titel:'Segmenten', sub:(njSegNakijken ? njSegNakijken+' adres'+(njSegNakijken===1?'':'sen')+' nakijken' : 'Lijst, kaart met vlakken en bijwerken'), actief:true, go: ga({mode:'segment',level:null})};
+  M.segment = {ic:'segment', titel:'Segmenten', sub:(function(){ var c = 0; try{ c = njSegControleren(); }catch(e){} var d = []; if(njSegNakijken) d.push(njSegNakijken+' adres'+(njSegNakijken===1?'':'sen')+' nakijken'); if(c) d.push(c+' controleren'); return d.length ? d.join(' · ') : 'Lijst, kaart met vlakken en bijwerken'; })(), actief:true, go: ga({mode:'segment',level:null})};
 
   // Kerstfooi
   var kaartTotaal = 0, fooiTot = {totaal:0};
@@ -2948,7 +2955,7 @@ function renderSegBijwerken(){
   if(ontbrekend.length){
     const hulp = document.createElement('div');
     hulp.className = 'nj-seg-hulp';
-    hulp.innerHTML = '<span>De app deelt adressen zelf in via de segmenten, je looproute en de kaart. Deze lukten niet zeker.</span>';
+    hulp.innerHTML = '<span>De app deelt een adres alleen zelf in als het zeker is (buren in de straat, of duidelijk op de kaart). Bij deze niet; de looproute helpt je kiezen.</span>';
     const kb = document.createElement('button');
     kb.type = 'button';
     kb.className = 'nj-knop-rand';
@@ -3013,6 +3020,60 @@ function renderSegBijwerken(){
     kaart2.appendChild(ops);
   }
   wrap.appendChild(kaart2);
+
+  // 2b. Wat heeft de app zelf ingedeeld? Controleren en zo nodig wijzigen
+  const autoLog = njSegLog().slice().reverse();
+  if(autoLog.length){
+    const ctrl = autoLog.filter(x=>x.controleren).length;
+    const open = (njSegLogOpen === null) ? ctrl > 0 : njSegLogOpen;
+    const kaartL = document.createElement('section');
+    kaartL.className = 'nj-kaart nj-seg-kaart2';
+    const kop = document.createElement('button');
+    kop.type = 'button';
+    kop.className = 'nj-seg-logkop';
+    kop.setAttribute('aria-expanded', open ? 'true' : 'false');
+    kop.innerHTML = '<span class="nj-seg-logtekst"><b>Automatisch ingedeeld</b><span class="nj-stat-sub">'+(ctrl ? '<span class="nj-rood">'+ctrl+' graag controleren</span> · ' : '')+'klopt het niet? Kies een ander segment</span></span>'+
+      '<span class="nj-teller'+(ctrl ? '' : ' nul')+'">'+autoLog.length+'</span><span class="nj-chev">'+njIco(open ? 'op' : 'neer', 18, 2.2)+'</span>';
+    kop.onclick = ()=>{ njSegLogOpen = !open; renderSegBijwerken(); };
+    kaartL.appendChild(kop);
+    if(open){
+      autoLog.sort((a,b)=>(b.controleren ? 1 : 0)-(a.controleren ? 1 : 0)).slice(0, 40).forEach(x=>{
+        const r = document.createElement('div');
+        r.className = 'nj-seg-mist'+(x.controleren ? ' nj-seg-ctrl' : '');
+        r.innerHTML = '<span class="nj-seg-mist-adr">'+njEsc(njTitel(x.naam || x.straat))+' '+njEsc(x.nr)+' <span>→ segment '+njEsc(x.seg)+'</span></span>'+
+          '<span class="nj-stat-sub">'+njEsc(NJ_SEG_HOE[x.hoe] || '')+'</span>';
+        const rij = document.createElement('div');
+        rij.className = 'nj-chips';
+        const ok = document.createElement('button');
+        ok.type = 'button';
+        ok.className = 'nj-chip nj-seg-kies';
+        ok.innerHTML = '<i style="background:'+njSegKleur(x.seg)+'"></i>'+njEsc(x.seg)+' klopt';
+        ok.onclick = ()=>{ njSegLogWeg(x.straat, x.nr); renderSegBijwerken(); };
+        rij.appendChild(ok);
+        const sel = document.createElement('select');
+        sel.className = 'nj-seg-select';
+        sel.setAttribute('aria-label', 'Ander segment voor '+njTitel(x.naam || x.straat)+' '+x.nr);
+        sel.innerHTML = '<option value="">Ander…</option>'+njSegNummers().filter(n=>n !== x.seg).map(n=>'<option value="'+n+'">'+n+' · '+njEsc(njSegWijk(n))+'</option>').join('');
+        sel.onchange = ()=>{ if(!sel.value) return; njSegZet(x.straat, x.nr, sel.value); njSegLogWeg(x.straat, x.nr); toast(njTitel(x.naam || x.straat)+' '+x.nr+' staat nu in '+sel.value); renderSegBijwerken(); };
+        rij.appendChild(sel);
+        const gm = document.createElement('button');
+        gm.type = 'button';
+        gm.className = 'nj-chip nj-seg-maps';
+        gm.innerHTML = njIco('kaart', 15)+'Google Maps';
+        gm.onclick = ()=>window.open(njSegMapsUrl(x.naam || x.straat, x.nr), '_blank');
+        rij.appendChild(gm);
+        r.appendChild(rij);
+        kaartL.appendChild(r);
+      });
+      const alles = document.createElement('button');
+      alles.type = 'button';
+      alles.className = 'nj-knop-rand';
+      alles.textContent = 'Alles klopt, lijst leegmaken';
+      alles.onclick = ()=>{ if(ctrl && !confirm(ctrl+' indeling(en) zijn nog niet gecontroleerd. Toch leegmaken?')) return; njSegLogBewaar([]); njSegLogOpen = null; renderSegBijwerken(); };
+      kaartL.appendChild(alles);
+    }
+    wrap.appendChild(kaartL);
+  }
 
   // 3. Per straat aanpassen
   const straten = [], mooi = {};
@@ -3116,7 +3177,7 @@ function njSegZeker(it){
   if(!r.lo && !r.hi) r = buren(false);
   if(r.lo && r.hi) return r.lo.seg === r.hi.seg ? r.lo.seg : null;
   const een = r.lo || r.hi;
-  return (een && Math.abs(een.v - b) <= 6) ? een.seg : null;
+  return (een && Math.abs(een.v - b) <= 4) ? een.seg : null;
 }
 function njSegTeller(n){
   njSegNakijken = n;
@@ -3131,13 +3192,15 @@ function njSegAutoBijwerken(){
     if(k && /^\d+$/.test(k) && !SEGMENT_DATA[k]){ SEGMENT_DATA[k] = {naam:'OLDENZAAL '+k, straten:{}}; res.nieuw.push(k); }
   }));
   if(res.nieuw.length) njSegBewaar(res.nieuw);
+  const log = [];
   njSegOntbrekend().forEach(it=>{
-    const s = njSegHerken(it);
-    if(s){ njSegZet(it.straat, it.nrNorm, s); res.auto++; }
+    const h = njSegHerken(it);
+    if(h){ njSegZet(it.straat, it.nrNorm, h.seg); res.auto++; log.push({straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:h.seg, hoe:h.hoe, datum:meta.date || ''}); }
     else res.nakijken++;
   });
+  njSegLogToevoegen(log);
   njSegNakijken = res.nakijken;
-  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:2, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
+  try{ localStorage.setItem(STORAGE_SEG_AUTO, JSON.stringify({datum:meta.date || '', v:3, nakijken:res.nakijken, auto:res.auto, wanneer:new Date().toISOString()})); }catch(e){}
   njSegNaWerk();
   return res;
 }
@@ -3154,10 +3217,11 @@ function njSegAutoCheck(){
   try{
     if(!meta || !meta.date || typeof DATA === 'undefined' || !DATA.length) return;
     let st = null; try{ st = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTO)); }catch(e){}
-    if(st && st.datum === meta.date && st.v === 2){ njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null; njSegNaWerk(); return; }
+    if(st && st.datum === meta.date && st.v === 3){ njSegNakijken = (typeof st.nakijken === 'number') ? st.nakijken : null; njSegNaWerk(); return; }
+    const ctrl = (st && st.v === 2) ? njSegControleVorigeVersie() : 0;
     const res = njSegAutoBijwerken();
-    if(res.auto || res.nieuw.length || res.nakijken){
-      toast(njSegMelding(res));
+    if(res.auto || res.nieuw.length || res.nakijken || ctrl){
+      toast(njSegMelding(res)+(ctrl ? ' · '+ctrl+' controleren' : ''));
       if(view.mode === 'segment' || view.mode === 'segbijwerken' || view.mode === 'tab_bezorgen') render();
     }
   }catch(e){ console.error(e); }
@@ -3257,8 +3321,9 @@ function njRouteBuren(st){
   const een = voor.length ? voor : na;
   return een.length === 1 ? een[0] : null;
 }
-// Segment via de looproute: in welke reeks valt het adres, en welk segment hebben de bekende adressen daar?
-function njSegViaRoute(it){
+// Regel van versie 2026-11-18.1 (segment via de looproute). Bleek niet betrouwbaar; wordt alleen nog
+// gebruikt om indelingen van die versie terug te vinden en op 'controleren' te zetten.
+function njSegViaRouteOud(it){
   const n = parseInt(njNrBasis(it.nr), 10);
   if(isNaN(n)) return null;
   const bekend = njSegBekendeNummers(it.straat);
@@ -3282,18 +3347,68 @@ function njSegViaRoute(it){
   });
   return (besluiten.length && besluiten.every(x=>x && x === besluiten[0])) ? besluiten[0] : null;
 }
-function njSegHerken(it){ return njSegViaRoute(it) || njSegZeker(it); }
+function njSegHerken(it){ const s = njSegZeker(it); return s ? {seg:s, hoe:(njSegKandidaten(it.straat).length === 1 ? 'straat' : 'buren')} : null; }
+// ----- Logboek: wat heeft de app zelf ingedeeld? (om te controleren) -----
+const STORAGE_SEG_AUTOLOG = 'looplijst_v23_seg_autolog';
+var njSegLogOpen = null;   // null = vanzelf open als er iets te controleren is
+function njSegLog(){ try{ const l = JSON.parse(localStorage.getItem(STORAGE_SEG_AUTOLOG)); return Array.isArray(l) ? l : []; }catch(e){ return []; } }
+function njSegLogBewaar(l){ try{ localStorage.setItem(STORAGE_SEG_AUTOLOG, JSON.stringify(l.slice(-80))); }catch(e){} }
+function njSegLogToevoegen(items){
+  if(!items.length) return;
+  const l = njSegLog().filter(x=>!items.some(y=>y.straat === x.straat && y.nr === x.nr));
+  njSegLogBewaar(l.concat(items));
+}
+function njSegLogWeg(straat, nr){ njSegLogBewaar(njSegLog().filter(x=>!(x.straat === straat && x.nr === nr))); }
+function njSegControleren(){ return njSegLog().filter(x=>x.controleren).length; }
+const NJ_SEG_HOE = {straat:'enige segment in deze straat', buren:'buren in de straat zitten daar', kaart:'via de kaart (adressen in de buurt)', route:'looproute (vorige versie): graag controleren'};
+
+// Vorige versie (2026-11-18.1) deelde ook in via de looproute; dat bleek niet altijd goed.
+// Zoek die indelingen terug en zet ze op 'controleren'.
+function njSegInBasis(straatUp, nrNorm){
+  return Object.keys(SEGMENT_BASIS).some(seg=>Object.keys(SEGMENT_BASIS[seg].straten).some(k=>{
+    const kk = njStraatSleutel(k);
+    const zelfde = kk === straatUp || (kk.length >= 8 && straatUp.length >= 8 && njLev1(kk, straatUp));
+    return zelfde && SEGMENT_BASIS[seg].straten[k].some(x=>njNrNorm(x) === nrNorm);
+  }));
+}
+function njSegControleVorigeVersie(){
+  const gevonden = [], gezien = {};
+  (typeof DATA_ECHT!=='undefined' ? DATA_ECHT : DATA).forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>s.adressen.forEach(a=>{
+    const st = njStraatSleutel(s.naam), nn = njNrNorm(a.nr), basis = njNrBasis(a.nr);
+    const sl = st+'|'+(basis || nn);
+    if(gezien[sl]) return; gezien[sl] = 1;
+    const huidig = njSegZoekNummer(st, nn, basis);
+    if(!huidig) return;
+    const k = njSegStraatVan(huidig, st); if(!k) return;
+    const orig = SEGMENT_DATA[huidig].straten[k].find(x=>njNrNorm(x) === nn || njNrNorm(x) === basis);
+    if(!orig || njSegInBasis(st, njNrNorm(orig))) return;   // stond al in de meegeleverde segmenten
+    // alle later toegevoegde nummers van deze straat even weghalen, dan opnieuw beoordelen
+    const weg = [];
+    njSegKandidaten(st).forEach(seg=>{
+      const kk = njSegStraatVan(seg, st), l = SEGMENT_DATA[seg].straten[kk];
+      weg.push([seg, kk, l.slice()]);
+      SEGMENT_DATA[seg].straten[kk] = l.filter(x=>njSegInBasis(st, njNrNorm(x)));
+    });
+    const leeg = weg.filter(([seg, kk])=>!SEGMENT_DATA[seg].straten[kk].length);
+    leeg.forEach(([seg, kk])=>{ delete SEGMENT_DATA[seg].straten[kk]; });
+    const it = {straat:st, naam:s.naam, nr:(basis || nn), nrNorm:njNrNorm(orig)};
+    let oud = null, veilig = null;
+    try{ oud = njSegViaRouteOud(it); veilig = njSegZeker(it); }catch(e){}
+    weg.forEach(([seg, kk, l])=>{ SEGMENT_DATA[seg].straten[kk] = l; });
+    if(oud === huidig && veilig !== huidig) gevonden.push({straat:st, naam:s.naam, nr:njNrNorm(orig), seg:huidig, hoe:'route', controleren:true, datum:meta.date || ''});
+  }))));
+  njSegLogToevoegen(gevonden);
+  return gevonden.length;
+}
+
 
 // ----- Via de kaart: adres opzoeken en kijken in welk segment de buren in de buurt zitten -----
 function njSegDichtstbij(co, punten){
   const mLat = 111320, mLng = 111320 * Math.cos(co.lat * Math.PI / 180);
   const dichtbij = punten.map(p=>({seg:p.seg, d:Math.hypot((p.lat-co.lat)*mLat, (p.lng-co.lng)*mLng)}))
-    .filter(x=>x.d <= 120).sort((a,b)=>a.d-b.d).slice(0, 6);
-  if(dichtbij.length < 2) return null;
-  const tel = {};
-  dichtbij.forEach(x=>{ tel[x.seg] = (tel[x.seg]||0) + 1; });
-  const top = Object.entries(tel).sort((a,b)=>b[1]-a[1])[0];
-  return (top[1] / dichtbij.length >= 0.75 && dichtbij[0].seg === top[0]) ? top[0] : null;
+    .filter(x=>x.d <= 100).sort((a,b)=>a.d-b.d).slice(0, 5);
+  if(dichtbij.length < 3) return null;
+  return dichtbij.every(x=>x.seg === dichtbij[0].seg) ? dichtbij[0].seg : null;
 }
 var njSegKaartBezig = false;
 async function njSegViaKaart(handmatig){
@@ -3312,7 +3427,7 @@ async function njSegViaKaart(handmatig){
       const co = await geocodeAdres(njTitel(it.naam), it.nr);
       if(co && !njSegZoekNummer(it.straat, it.nrNorm, it.nrNorm)){
         const s = njSegDichtstbij(co, punten);
-        if(s){ njSegZet(it.straat, it.nrNorm, s); n++; }
+        if(s){ njSegZet(it.straat, it.nrNorm, s); n++; njSegLogToevoegen([{straat:it.straat, naam:it.naam, nr:it.nrNorm, seg:s, hoe:'kaart', datum:meta.date || ''}]); }
       }
       if(!bekend) await new Promise(r=>setTimeout(r, 1100));
     }
@@ -8484,6 +8599,7 @@ try{ localStorage.removeItem('looplijst_v23_seg_data_dynamic'); }catch(e){}
 const STORAGE_SEG_WIJKEN = 'looplijst_v23_seg_data_wijken';
 const STORAGE_SEG_LAST_UPDATE = 'looplijst_v23_seg_laatst_update';
 const SEG_WAARSCHUW_NA_DAGEN = 14; // waarschuw als wijkindeling langer dan dit niet is bijgewerkt
+const SEGMENT_BASIS = JSON.parse(JSON.stringify(SEGMENT_DATA));
 try{
   const opgeslagenWijken = JSON.parse(localStorage.getItem(STORAGE_SEG_WIJKEN));
   if(opgeslagenWijken && typeof opgeslagenWijken === 'object'){
