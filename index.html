@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-21.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-22.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1769,7 +1769,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-21.2';
+const APP_VERSION = '2026-11-22.1';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -14851,6 +14851,13 @@ function matchBekendeStraat(text){
 }
 function canonical(key){ return CANON_NAMES[key] || key; }
 
+// Begint hier een klacht? Met "!" ervoor (oudere PDF's, het "!" als tekst) of zonder (nieuwere PDF's:
+// het "!" is daar een plaatje): "NIET/KRANT za 21 nov 2026 Abo TT TTOL Naam, Straat 61, Plaats m d w d v z"
+function isKlachtStartRegel(line){
+  if(/^!\s*\S/.test(line)) return true;
+  if(/^(START|STOP)\s+Abo\b/i.test(line)) return false;
+  return /^[A-Z][A-Z\/ ]{1,30}?\s+(?:ma|di|wo|do|vr|za|zo)\s+\d{1,2}\s+[a-z]+\s+\d{4}\s+Abo\b/i.test(line);
+}
 async function pdfExtractLines(arrayBuffer){
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
@@ -14902,14 +14909,14 @@ async function pdfExtractLines(arrayBuffer){
     // de volgende klacht/mutatie begint.
     for(let li=0; li<volleBreedteLijnen.length; li++){
       const line = volleBreedteLijnen[li];
-      if(!/^!\s*\S/.test(line)) continue;
-      let samengevoegd = line;
+      if(!isKlachtStartRegel(line)) continue;
+      let samengevoegd = /^!/.test(line) ? line : '! ' + line;
       let lj = li+1;
       let bijgevoegd = 0;
       const MAX_VERVOLGREGELS = 3; // veiligheidslimiet: een klacht-adres wrapt nooit meer dan een paar keer
       while(!/\bm\s+d\s+w\s+d\s+v\s+z\s*$/i.test(samengevoegd) && lj < volleBreedteLijnen.length && bijgevoegd < MAX_VERVOLGREGELS){
         const volgende = volleBreedteLijnen[lj];
-        if(/^!\s*\S/.test(volgende) || /^(START|STOP)\s+Abo\b/i.test(volgende)) break; // volgend blok begint al
+        if(isKlachtStartRegel(volgende) || /^(START|STOP)\s+Abo\b/i.test(volgende)) break; // volgend blok begint al
         // Stop ook als de volgende regel er zelf al als een straat-kop of huisnummer-regel uitziet
         // (dat betekent dat we het klachtblokje al voorbij zijn gelopen)
         if(/^\d+\s*[A-Za-z]{0,3}\s+(TT OL|NRC|TEL|HFD|VK|AD NL|TR)\b/i.test(volgende)) break;
