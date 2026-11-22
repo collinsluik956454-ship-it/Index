@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-22.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-22.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1506,6 +1506,14 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-seg-bron{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--nj-hdr-muted);margin:2px 4px 0}
 .nj-seg-bron b{color:inherit}
 .nj-seg-nr.gestopt{text-decoration:line-through;opacity:.55}
+
+.nj-seg-nr.klacht{border:2px solid #B42318;color:#B42318;position:relative}
+.nj-seg-nr.klacht::after{content:"!";position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:99px;background:#B42318;color:#fff;font-size:11px;font-weight:900;line-height:16px;text-align:center}
+.nj-seg-nr.klacht.af{background:#15803D;border-color:#B42318;color:#fff}
+.nj-klacht-pin{background:none !important;border:none !important}
+.nj-klacht-pin span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:99px;background:#B42318;color:#fff;font:900 14px Inter,system-ui,sans-serif;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);box-sizing:border-box}
+.leaflet-tooltip.nj-klacht-tip{background:#B42318;color:#fff;border:none;font-weight:800;font-size:11px;padding:1px 6px;box-shadow:none}
+.leaflet-tooltip.nj-klacht-tip::before{border-top-color:#B42318}
 </style>
 <script>
 // Offline service worker
@@ -1773,7 +1781,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-22.2';
+const APP_VERSION = '2026-11-22.3';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/>',
@@ -2662,9 +2670,9 @@ function njSegNummerKnoppen(nr, container){
       const n = it.nr;
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'nj-seg-nr'+(isSegAdresGedaan(nr, straat, n) ? ' af' : '')+(it.start ? ' nieuw' : '')+(it.stop ? ' gestopt' : '');
+      b.className = 'nj-seg-nr'+(isSegAdresGedaan(nr, straat, n) ? ' af' : '')+(it.start ? ' nieuw' : '')+(it.stop ? ' gestopt' : '')+(it.klacht ? ' klacht' : '');
       b.textContent = n;
-      b.title = it.prods.join(', ')+(it.start ? ' · nieuw' : '')+(it.stop ? ' · stop' : '');
+      b.title = it.prods.join(', ')+(it.start ? ' · nieuw' : '')+(it.stop ? ' · stop' : '')+(it.klacht ? ' · klacht' : '');
       b.onclick = ()=>{ toggleSegAdres(nr, straat, n); b.classList.toggle('af', isSegAdresGedaan(nr, straat, n)); };
       rij.appendChild(b);
     });
@@ -2752,7 +2760,8 @@ function renderSegment(){
     if(!wijken.length){ lijstBox.innerHTML = '<div class="nj-kaart" style="text-align:center;color:#5A6A7E">Niets gevonden</div>'; return; }
     const bron = document.createElement('div');
     bron.className = 'nj-seg-bron';
-    bron.innerHTML = njIco('lijst', 16)+'<span>Adressen uit de looplijst van <b>'+njEsc(meta.date || '')+'</b> · '+njSegLooplijst().totaal+' brievenbussen</span>';
+    const nKl = njKlachtenHuidig().length;
+    bron.innerHTML = njIco('lijst', 16)+'<span>Adressen uit de looplijst van <b>'+njEsc(meta.date || '')+'</b> · '+njSegLooplijst().totaal+' brievenbussen'+(nKl ? ' · <b style="color:#B42318">'+nKl+' klacht'+(nKl===1?'':'en')+'</b>' : '')+'</span>';
     lijstBox.appendChild(bron);
     wijken.forEach(wk=>{
       const nrs = perWijk[wk];
@@ -2766,13 +2775,14 @@ function renderSegment(){
         const LLn = njSegLL(nr), stratenLL = Object.keys(LLn.straten);
         const totaal = LLn.aantal, gedaan = njSegLLGedaan(nr);
         const nieuw = stratenLL.reduce((a,st)=>a+LLn.straten[st].filter(it=>it.start).length, 0);
+        const nKlacht = njSegLLKlachten(nr);
         const open = njSegOpen === nr || (!!fl && nrs.length === 1);
         const r = document.createElement('button');
         r.type = 'button';
         r.className = 'nj-rij nj-seg-rij'+(open ? ' open' : '');
         r.innerHTML = '<span class="nj-seg-chip" style="background:'+njSegKleur(nr)+'">'+nr+'</span>'+
           '<span class="nj-rij-tekst"><span class="nj-rij-titel nj-1regel">'+(stratenLL.length ? njEsc(stratenLL.map(njTitel).join(', ')) : '<span style="color:#5A6A7E">Geen adressen in deze looplijst</span>')+'</span>'+
-          '<span class="nj-rij-sub">'+totaal+' adres'+(totaal===1?'':'sen')+' · '+stratenLL.length+' stra'+(stratenLL.length===1?'at':'ten')+(nieuw ? ' · <b style="color:#B45309">'+nieuw+' nieuw</b>' : '')+(gedaan ? ' · <b style="color:#15803D">'+gedaan+' afgevinkt</b>' : '')+'</span></span>'+
+          '<span class="nj-rij-sub">'+totaal+' adres'+(totaal===1?'':'sen')+' · '+stratenLL.length+' stra'+(stratenLL.length===1?'at':'ten')+(nKlacht ? ' · <b style="color:#B42318">'+nKlacht+' klacht'+(nKlacht===1?'':'en')+'</b>' : '')+(nieuw ? ' · <b style="color:#B45309">'+nieuw+' nieuw</b>' : '')+(gedaan ? ' · <b style="color:#15803D">'+gedaan+' afgevinkt</b>' : '')+'</span></span>'+
           '<span class="nj-chev nj-draai">'+njIco('neer', 18, 2.2)+'</span>';
         r.onclick = ()=>{ njSegOpen = (njSegOpen === nr) ? null : nr; teken(zoek.value); };
         box.appendChild(r);
@@ -2955,8 +2965,10 @@ function njSegKaartBouwen(wrap){
       }
     });
     if(njSegAdressenTonen){
-      punten.forEach(p=>{ if(zichtbaar(p.seg)) L.circleMarker([p.lat, p.lng], {radius:3.5, color:'#FFFFFF', weight:1.2, fillColor:njSegKleur(p.seg), fillOpacity:1}).bindTooltip(njTitel(p.straat)+' '+p.nr+' · '+p.seg).addTo(njSegMap); });
+      punten.forEach(p=>{ if(zichtbaar(p.seg) && !p.klacht) L.circleMarker([p.lat, p.lng], {radius:3.5, color:'#FFFFFF', weight:1.2, fillColor:njSegKleur(p.seg), fillOpacity:1}).bindTooltip(njTitel(p.straat)+' '+p.nr+' · '+p.seg).addTo(njSegMap); });
     }
+    // klachten uit de looplijst: altijd zichtbaar, rood
+    punten.forEach(p=>{ if(p.klacht && zichtbaar(p.seg)) L.marker([p.lat, p.lng], {zIndexOffset:1000, icon:L.divIcon({className:'nj-klacht-pin', html:'<span>!</span>', iconSize:[24,24], iconAnchor:[12,12]})}).bindTooltip('Klacht · '+njTitel(p.straat)+' '+p.nr+' · '+p.seg).addTo(njSegMap); });
     if(groep.length){ try{ njSegMap.fitBounds(L.featureGroup(groep).getBounds(), {padding:[16,16]}); }catch(e){} }
     else if(!punten.length){ infoTekst('Nog geen adressen op de kaart. Tik op "Adressen opzoeken".'); }
     setTimeout(()=>{ try{ njSegMap && njSegMap.invalidateSize(); }catch(e){} }, 250);
@@ -3971,7 +3983,13 @@ function njKlachtKaart(){
     if(p) rij.type = 'button';
     rij.className = 'nj-klacht-rij'+(it.klaar ? ' klaar' : '')+(p ? '' : ' los');
     let seg = k.segment;
-    if(k.straat){ try{ seg = njSegZoekNummer(njStraatSleutel(k.straat), njNrNorm(k.huisnr), njNrBasis(k.huisnr)) || segmentVoorStraat(k.straat) || k.segment; }catch(e){} }
+    if(k.straat){
+      try{
+        seg = njSegZoekNummer(njStraatSleutel(k.straat), njNrNorm(k.huisnr), njNrBasis(k.huisnr));
+        if(!seg){ const co = njSegCoord(k.straat, k.huisnr), o = co ? njSegOfficieel(co.lat, co.lng) : null; if(o) seg = o.seg; }
+        if(!seg){ const kand = njSegKandidaten(njStraatSleutel(k.straat)); seg = kand.length === 1 ? kand[0] : null; }
+      }catch(e){}
+    }
     const adres = k.straat ? njTitel(k.straat)+(k.huisnr ? ' '+k.huisnr : '') : (k.raw ? k.raw.slice(0, 60) : 'Adres onbekend');
     const sub = [k.type ? njTitel(k.type) : 'Klacht', k.product, k.datum ? njKlachtDatumKort(k.datum) : ''].filter(Boolean).join(' · ');
     rij.innerHTML = '<span class="nj-klacht-tekst"><b>'+njEsc(adres)+'</b><span>'+njEsc(sub)+(p ? '' : ' · staat niet in je looplijst')+'</span></span>'+
@@ -4006,7 +4024,7 @@ var njSegLLCache = {sleutel:'', data:null};
 function njSegLooplijst(){
   const L = (typeof DATA_ECHT !== 'undefined' ? DATA_ECHT : DATA) || [];
   let n = 0; L.forEach(w=>w.rondes.forEach(r=>r.straten.forEach(s=>{ n += s.adressen.length; })));
-  const sleutel = (meta && meta.date || '')+':'+n+':'+njSegNummers().map(x=>x+'='+njSegAantal(x)).join(',');
+  const sleutel = (meta && meta.date || '')+':'+n+':'+njKlachtenHuidig().length+':'+njSegNummers().map(x=>x+'='+njSegAantal(x)).join(',');
   if(njSegLLCache.sleutel === sleutel && njSegLLCache.data) return njSegLLCache.data;
   const per = {}, zonder = [], gezien = {};
   L.forEach((w, wi)=>w.rondes.forEach((r, ri)=>r.straten.forEach((s, si)=>{
@@ -4016,7 +4034,7 @@ function njSegLooplijst(){
       const sl = st+'|'+nn;
       if(gezien[sl]){ const it = gezien[sl]; if(it.prods.indexOf(a.prod) < 0) it.prods.push(a.prod); it.stop = it.stop || !!a.stop; it.start = it.start || !!a.start; return; }
       const seg = njSegZoekNummer(st, nn, basis);
-      const it = {straat:s.naam, nr:String(a.nr).trim(), prods:[a.prod], stop:!!a.stop, start:!!a.start, seg:seg};
+      const it = {straat:s.naam, nr:String(a.nr).trim(), prods:[a.prod], stop:!!a.stop, start:!!a.start, seg:seg, klacht:njKlachtOpAdres(s.naam, a.nr)};
       gezien[sl] = it;
       if(!seg){ zonder.push(it); return; }
       const S = per[seg] = per[seg] || {straten:{}, aantal:0};
@@ -4030,6 +4048,7 @@ function njSegLooplijst(){
   return njSegLLCache.data;
 }
 function njSegLL(nr){ return njSegLooplijst().per[nr] || {straten:{}, aantal:0}; }
+function njSegLLKlachten(nr){ let k = 0; Object.values(njSegLL(nr).straten).forEach(l=>l.forEach(it=>{ if(it.klacht) k++; })); return k; }
 function njSegLLGedaan(nr){
   let g = 0;
   Object.entries(njSegLL(nr).straten).forEach(([st, l])=>l.forEach(it=>{ if(isSegAdresGedaan(nr, st, it.nr)) g++; }));
@@ -4040,7 +4059,7 @@ function njSegLLPunten(){
   const punten = [], zonder = [];
   Object.entries(njSegLooplijst().per).forEach(([seg, S])=>Object.entries(S.straten).forEach(([st, l])=>l.forEach(it=>{
     const co = njSegCoord(st, it.nr);
-    if(co) punten.push({seg:seg, straat:st, nr:it.nr, lat:co.lat, lng:co.lng, start:it.start, stop:it.stop});
+    if(co) punten.push({seg:seg, straat:st, nr:it.nr, lat:co.lat, lng:co.lng, start:it.start, stop:it.stop, klacht:it.klacht});
     else zonder.push({seg:seg, straat:st, nr:it.nr});
   })));
   return {punten:punten, zonder:zonder};
@@ -11014,7 +11033,8 @@ async function renderKaart(){
         '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #1a2d5a;display:inline-block"></span> Te bezorgen</div>'+
         '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#1565c0;border:2px solid #0a3020;display:inline-block"></span> Afgevinkt</div>'+
         '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#43a047;border:2px solid #1b5e20;display:inline-block"></span> Nieuw (START)</div>'+
-        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#e53935;border:2px solid #b71c1c;display:inline-block"></span> Afgemeld (STOP)</div>';
+        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#e53935;border:2px solid #b71c1c;display:inline-block"></span> Afgemeld (STOP)</div>'+
+        ((typeof njKlachtenHuidig === 'function' && njKlachtenHuidig().length) ? '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #B42318;display:inline-block;box-sizing:border-box"></span> Klacht</div>' : '');
       return d;
     };
     leg.addTo(kaartMap);
@@ -11110,15 +11130,18 @@ function _kaartVoegPinToe(a, co){
     if(a.start) return '#43a047';  // groen = START (nieuw)
     return isDone() ? '#1565c0' : '#fff'; // donkergroen = afgevinkt, wit = nog te bezorgen
   }
+  const heeftKlacht = (typeof njKlachtOpAdres === 'function') && njKlachtOpAdres(a.straat, a.nr);
   function pinRand(){
+    if(heeftKlacht) return '#B42318';
     if(a.stop)  return '#b71c1c';
     if(a.start) return '#1b5e20';
     return isDone() ? '#0a3020' : '#1a2d5a';
   }
 
   const marker = L.circleMarker([co.lat, co.lng],{
-    radius:7, color:pinRand(), weight:2, fillColor:pinKleur(), fillOpacity:1,
+    radius:heeftKlacht ? 10 : 7, color:pinRand(), weight:heeftKlacht ? 4 : 2, fillColor:pinKleur(), fillOpacity:1,
   }).addTo(kaartMap);
+  if(heeftKlacht){ try{ marker.bindTooltip('Klacht', {permanent:true, direction:'top', className:'nj-klacht-tip', offset:[0,-8]}); }catch(e){} }
 
   function updateStijl(){
     marker.setStyle({fillColor:pinKleur(), color:pinRand()});
