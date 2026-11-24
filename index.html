@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.19');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.20');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -2200,7 +2200,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.19';
+const APP_VERSION = '2026-11-24.20';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -3253,6 +3253,12 @@ function prvAgenda(wrap, kop){
     const iso = prvIso(dd);
     if(iso > sel && prvAfsprakenOp(iso).length) dagSectie(iso);
   }
+  const ctl = document.createElement('button');
+  ctl.type = 'button';
+  ctl.className = 'nj-knop-rand prv-knop-rand';
+  ctl.innerHTML = njIco('zoek', 18)+'<span>Agenda van dit apparaat komt niet door? Controleren</span>';
+  ctl.onclick = ()=>prvGa({mode:'p_agendacontrole'});
+  wrap.appendChild(ctl);
   prvFab('Afspraak', ()=>prvGa({mode:'p_afspraak', datum:sel}));
 }
 function prvVeld(label, html){ return '<label class="prv-veld"><span>'+njEsc(label)+'</span>'+html+'</label>'; }
