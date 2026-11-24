@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.10');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.11');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -2101,7 +2101,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.10';
+const APP_VERSION = '2026-11-24.11';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2836,6 +2836,7 @@ function prvOntgrendel(daarna){
     vergeten: ()=>{
       if(!confirm('Pincode vergeten?\n\nJe kunt een nieuwe pincode kiezen, maar dan worden je privé-gegevens (afspraken, huishoudboekje en notities) gewist, ook op je andere telefoon.')) return;
       if(!confirm('Weet je het zeker? Dit kan niet ongedaan worden.')) return;
+      try{ prvToestel.spiegel = {}; prvBewaarToestel(); }catch(e){}   // telefoon-afspraken laten staan
       agenda = []; saveAgenda();
       budgetTrans = []; saveBudgetTrans();
       prvNotities = []; prvBewaarNotities();
@@ -3054,6 +3055,7 @@ function prvLeeg(tekst){ const d = document.createElement('div'); d.className = 
 function prvSaldo(ms){ try{ return maandTotalen(ms); }catch(e){ return {inkomsten:0, uitgaven:0, saldo:0}; } }
 
 function prvOverzicht(wrap){
+  try{ prvSpiegel(); }catch(e){}
   const vandaag = vandaagIso();
   if(prvInstel.agenda){
     const tot = new Date(); tot.setDate(tot.getDate() + 14);
@@ -3096,6 +3098,7 @@ function prvOverzicht(wrap){
 
 var prvAgendaDag = null;
 function prvAgenda(wrap, kop){
+  try{ prvSpiegel(); }catch(e){}
   const vandaag = vandaagIso();
   const sel = prvAgendaDag || vandaag;
   const d = prvDatum(sel), dow = (d.getDay() + 6) % 7;
@@ -4012,6 +4015,9 @@ function prvTekstUitHtml(s){
 const PRV_GEANNULEERD = /^\s*(canceled|cancelled|geannuleerd|afgezegd|abgesagt)\b[^:]{0,20}:/i;
 function prvTelNaarItem(e){
   if(e.status === 2 || e.zelf === 2 || PRV_GEANNULEERD.test(e.titel || '')) return null;
+  return prvTelVelden(e);
+}
+function prvTelVelden(e){
   const it = {id:'t'+e.id+'_'+e.begin, tel:true, eventId:e.id, titel:e.titel || '(geen titel)', notitie:prvTekstUitHtml(e.notitie), notitieRuw:e.notitie || '', plek:e.plek || '', kleur:e.kleur, kalender:e.kalender, kalenderNaam:e.kalenderNaam, herhaalt:!!e.herhaalt, heleDag:!!e.heleDag, begin:e.begin, eind:e.eind};
   if(e.heleDag){ it.datum = new Date(e.begin).toISOString().slice(0, 10); it.tijd = ''; it.eindTijd = ''; it.totDatum = new Date(Math.max(e.begin, e.eind - 86400000)).toISOString().slice(0, 10); }
   else { const b = new Date(e.begin), t = new Date(e.eind); it.datum = prvIso(b); it.tijd = String(b.getHours()).padStart(2,'0')+':'+String(b.getMinutes()).padStart(2,'0'); it.eindTijd = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); it.totDatum = prvIso(t); }
@@ -4031,12 +4037,26 @@ function prvTelTussen(van, tot){
   return prvTelCache.lijst.filter(a=>a.datum <= tot && (a.totDatum || a.datum) >= van);
 }
 function prvSorteer(l){ return l.sort((a,b)=>(a.datum+(a.tijd||'00:00')).localeCompare(b.datum+(b.tijd||'00:00'))); }
+function prvSpiegelTerug(){ const t = {}; const sp = prvToestel.spiegel || {}; Object.keys(sp).forEach(id=>{ t[String(sp[id].e)] = id; }); return t; }
+function prvEigenZichtbaar(){
+  // afspraken uit Privé die al als telefoon-afspraak getoond worden, niet dubbel laten zien
+  if(!prvTelAan()) return agenda;
+  const sp = prvToestel.spiegel || {}, er = new Set((prvTelCache ? prvTelCache.lijst : []).map(x=>String(x.eventId)));
+  return agenda.filter(a=>!(sp[a.id] && er.has(String(sp[a.id].e))));
+}
+function prvTelGemarkeerd(lijst){
+  const terug = prvSpiegelTerug();
+  return lijst.map(x=>terug[String(x.eventId)] ? Object.assign({}, x, {spiegelId:terug[String(x.eventId)]}) : x);
+}
 function prvAfsprakenOp(iso){
-  const eigen = agenda.filter(a=>a.datum === iso);
-  const tel = prvTelTussen(iso, iso).map(a=>a.datum === iso ? a : Object.assign({}, a, {doorloop:true}));
+  const tel = prvTelGemarkeerd(prvTelTussen(iso, iso)).map(a=>a.datum === iso ? a : Object.assign({}, a, {doorloop:true}));
+  const eigen = prvEigenZichtbaar().filter(a=>a.datum === iso);
   return eigen.concat(tel).sort((a,b)=>((a.tijd || '00:00').localeCompare(b.tijd || '00:00')));
 }
-function prvAfsprakenTussen(van, tot){ return prvSorteer(agenda.filter(a=>a.datum >= van && a.datum <= tot).concat(prvTelTussen(van, tot).filter(a=>a.datum >= van))); }
+function prvAfsprakenTussen(van, tot){
+  const tel = prvTelGemarkeerd(prvTelTussen(van, tot)).filter(a=>a.datum >= van);
+  return prvSorteer(prvEigenZichtbaar().filter(a=>a.datum >= van && a.datum <= tot).concat(tel));
+}
 function prvAfspraakRij(a, metDatum){
   const b = document.createElement('button');
   b.type = 'button';
@@ -4045,8 +4065,8 @@ function prvAfspraakRij(a, metDatum){
   const sub = [a.plek, a.notitie].filter(Boolean).join(' · ');
   b.innerHTML = '<span class="prv-tijd">'+tijd+(metDatum ? '<small>'+njEsc(PRV_DAGKORT[prvDatum(a.datum).getDay()]+' '+prvDatum(a.datum).getDate()+' '+PRV_MAANDEN[prvDatum(a.datum).getMonth()].slice(0,3))+'</small>' : (a.tijd && a.eindTijd ? '<small>tot '+njEsc(a.eindTijd)+'</small>' : ''))+'</span>'+
     '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(a.titel)+'</span>'+(sub ? '<span class="nj-rij-sub">'+njEsc(sub)+'</span>' : '')+
-    (a.tel ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(a.kleur || '#6D28D9')+'"></i>'+njEsc(a.kalenderNaam || 'Telefoon-agenda')+(a.herhaalt ? ' · herhaalt' : '')+'</span>' : '')+'</span>';
-  b.onclick = ()=>prvGa(a.tel ? {mode:'p_afspraak', tel:a} : {mode:'p_afspraak', id:a.id});
+    (a.tel ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(a.kleur || '#6D28D9')+'"></i>'+njEsc(a.kalenderNaam || 'Telefoon-agenda')+(a.herhaalt ? ' · herhaalt' : '')+(a.spiegelId ? ' · uit Privé' : '')+'</span>' : '')+'</span>';
+  b.onclick = ()=>prvGa(a.spiegelId ? {mode:'p_afspraak', id:a.spiegelId} : a.tel ? {mode:'p_afspraak', tel:a} : {mode:'p_afspraak', id:a.id});
   return b;
 }
 function prvTelJson(titel, datum, tijd, eindTijd, notitie, kalender){
@@ -4068,6 +4088,7 @@ function prvAfspraak(wrap, kop){
   const a = telA || (view.id ? agenda.find(x=>x.id === view.id) : null);
   const koppel = prvTelAan();
   const nieuwOpTel = !a && koppel;
+  const spiegel = (!telA && a && koppel) ? (prvToestel.spiegel || {})[a.id] : null;
   kop('Privé · Agenda', a ? 'Afspraak' : 'Nieuwe afspraak');
   if(telA && telA.herhaalt){
     const k = document.createElement('section');
@@ -4088,7 +4109,8 @@ function prvAfspraak(wrap, kop){
     prvVeld('Tot (mag leeg)', '<input id="prvAgEind" type="time" value="'+njEsc(a && a.eindTijd ? a.eindTijd : '')+'">')+'</div>'+
     prvVeld('Notitie (mag leeg)', '<textarea id="prvAgNotitie" rows="3">'+njEsc(a && a.notitie ? a.notitie : '')+'</textarea>')+
     (nieuwOpTel && kals.length ? prvVeld('In welke agenda', '<select id="prvAgKal">'+kals.map(x=>'<option value="'+njEsc(x.id)+'"'+(stdKal && x.id === stdKal.id ? ' selected' : '')+'>'+njEsc(prvKalLabel(x))+'</option>').join('')+'</select>') : '')+
-    (telA ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(telA.kleur || '#6D28D9')+'"></i>Staat in je telefoon-agenda: '+njEsc(telA.kalenderNaam || '')+'</span>' : (a && koppel ? '<span class="prv-agenda-bron">Staat alleen in de app</span>' : ''));
+    (telA ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(telA.kleur || '#6D28D9')+'"></i>Staat alleen in je telefoon-agenda: '+njEsc(telA.kalenderNaam || '')+'</span>' :
+      a ? '<span class="prv-agenda-bron">'+(spiegel ? 'Uit Privé: staat in je telefoon-agenda en op je andere telefoon' : 'Uit Privé: komt ook op je andere telefoon')+'</span>' : '');
   wrap.appendChild(k);
   const opslaan = document.createElement('button');
   opslaan.type = 'button';
@@ -4106,13 +4128,21 @@ function prvAfspraak(wrap, kop){
       const sel = document.getElementById('prvAgKal');
       const kal = sel ? sel.value : (stdKal && stdKal.id);
       if(!kal){ toast('Geen agenda gevonden om in op te slaan', true); return; }
+      const nieuw = {id:'a'+Date.now(), titel:titel, datum:datum, tijd:tijd, eindTijd:eindTijd, notitie:notitie, gewijzigd:Date.now()};
       const id = prvTel().maak(prvTelJson(titel, datum, tijd, eindTijd, notitie, kal));
       if(!id){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
-      if(kal !== prvToestel.kalender || (stdKal && kal !== stdKal.id)){ prvToestel.kalender = kal; if(stdKal && kal !== stdKal.id) prvToestel.kalenderZelf = true; prvBewaarToestel(); }
+      agenda.push(nieuw); saveAgenda();
+      prvToestel.spiegel = prvToestel.spiegel || {};
+      prvToestel.spiegel[nieuw.id] = {e:String(id), g:nieuw.gewijzigd, k:kal};
+      if(kal !== prvToestel.kalender || (stdKal && kal !== stdKal.id)){ prvToestel.kalender = kal; if(stdKal && kal !== stdKal.id) prvToestel.kalenderZelf = true; }
+      prvBewaarToestel();
       const kk = prvTelKalenders().find(x=>x.id === kal);
       view.gezetIn = kk ? kk.naam+(prvKalSoort(kk) === 'telefoon' ? ' (alleen op deze telefoon)' : ' ('+prvKalSoort(kk)+')') : '';
-    } else if(a){ a.titel = titel; a.datum = datum; a.tijd = tijd; a.eindTijd = eindTijd; a.notitie = notitie; saveAgenda(); }
-    else { agenda.push({id:'a'+Date.now(), titel:titel, datum:datum, tijd:tijd, eindTijd:eindTijd, notitie:notitie}); saveAgenda(); }
+    } else if(a){
+      a.titel = titel; a.datum = datum; a.tijd = tijd; a.eindTijd = eindTijd; a.notitie = notitie; a.gewijzigd = Date.now(); saveAgenda();
+      if(spiegel && prvTel().wijzig(String(spiegel.e), prvTelJson(titel, datum, tijd, eindTijd, notitie, null))){ spiegel.g = a.gewijzigd; prvBewaarToestel(); }
+    }
+    else { agenda.push({id:'a'+Date.now(), titel:titel, datum:datum, tijd:tijd, eindTijd:eindTijd, notitie:notitie, gewijzigd:Date.now()}); saveAgenda(); }
     prvTelVergeet();
     prvAgendaDag = datum;
     toast(a ? 'Afspraak opgeslagen' : (nieuwOpTel ? 'Afspraak gezet in '+(view.gezetIn || 'je telefoon-agenda') : 'Afspraak toegevoegd'));
@@ -4125,9 +4155,12 @@ function prvAfspraak(wrap, kop){
     weg.className = 'nj-knop-rand prv-knop-weg';
     weg.textContent = 'Afspraak verwijderen';
     weg.onclick = ()=>{
-      if(!confirm('Afspraak "'+a.titel+'" verwijderen?'+(telA ? '\n\nHij gaat ook uit je telefoon-agenda.' : ''))) return;
+      if(!confirm('Afspraak "'+a.titel+'" verwijderen?'+(telA ? '\n\nHij gaat ook uit je telefoon-agenda.' : '\n\nHij gaat ook uit de agenda op je andere telefoon.'))) return;
       if(telA){ if(!prvTel().verwijder(String(telA.eventId))){ toast('Verwijderen lukte niet', true); return; } prvTelVergeet(); }
-      else { agenda = agenda.filter(x=>x.id !== a.id); saveAgenda(); }
+      else {
+        agenda = agenda.filter(x=>x.id !== a.id); saveAgenda();
+        if(spiegel){ try{ prvTel().verwijder(String(spiegel.e)); }catch(e){} delete prvToestel.spiegel[a.id]; prvBewaarToestel(); prvTelVergeet(); }
+      }
       toast('Afspraak verwijderd'); prvGa({mode:'p_agenda'});
     };
     wrap.appendChild(weg);
@@ -4157,6 +4190,7 @@ function prvTelKoppel(aan){
     const k = prvTelStandaardKalender();
     if(k) prvToestel.kalender = k.id;
     prvBewaarToestel(); prvTelVergeet();
+    prvSpiegel(true);
     toast('Gekoppeld met je telefoon-agenda');
     render();
   };
@@ -4202,18 +4236,10 @@ function prvTelInstelSectie(wrap){
     alle.className = 'prv-instel-rij';
     alle.innerHTML = '<span class="nj-rij-tekst"><span class="nj-rij-titel">Agenda\'s op deze telefoon</span><span class="nj-rij-sub prv-wrap">'+njEsc(prvTelKalenders().map(x=>prvKalLabel(x)+(x.schrijfbaar ? '' : ' (alleen lezen)')).join(' • ') || 'Geen gevonden')+'</span></span>';
     l.appendChild(alle);
-    if(agenda.length){
-      l.appendChild(prvActieRij('kalender', agenda.length+' afspra'+(agenda.length===1?'ak':'ken')+' uit de app overzetten', 'Naar je telefoon-agenda, dan staan ze ook in OneCalendar', ()=>{
-        const kal = prvTelStandaardKalender();
-        if(!kal){ toast('Geen agenda gevonden om in op te slaan', true); return; }
-        if(!confirm(agenda.length+' afspra'+(agenda.length===1?'ak':'ken')+' naar "'+kal.naam+'" zetten?')) return;
-        let ok = 0;
-        agenda = agenda.filter(a=>{ const id = prvTel().maak(prvTelJson(a.titel, a.datum, a.tijd || '', a.eindTijd || '', a.notitie || '', kal.id)); if(id){ ok++; return false; } return true; });
-        saveAgenda(); prvTelVergeet();
-        toast(ok+' afspra'+(ok===1?'ak':'ken')+' overgezet'+(agenda.length ? ', '+agenda.length+' niet gelukt' : ''));
-        render();
-      }));
-    }
+    const inf = document.createElement('div');
+    inf.className = 'prv-instel-rij';
+    inf.innerHTML = '<div class="prv-info">'+njIco('info', 18, 2.2)+'<span>Afspraken die je in Privé maakt, komen op elke gekoppelde telefoon in de agenda, ook op je andere telefoon met een ander e-mailadres. Wijzig of verwijder je zo\'n afspraak (in Privé of in OneCalendar), dan gebeurt dat op beide telefoons.</span></div>';
+    l.appendChild(inf);
   }
   sec.appendChild(l);
 }
@@ -4232,8 +4258,85 @@ function prvTelTip(wrap){
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden) return;
   prvTelVergeet();
-  if(prvTelAan() && (view.mode === 'p_agenda' || view.mode === 'p_overzicht')) render();
+  if(prvTelAan()){ prvSpiegel(true); if(view.mode === 'p_agenda' || view.mode === 'p_overzicht') render(); }
 });
+
+// ===== Privé-afspraken op elke gekoppelde telefoon (spiegelen) =====
+// De lijst 'agenda' gaat mee met synchroniseren. Elke gekoppelde telefoon zet die afspraken in zijn eigen
+// agenda en onthoudt (alleen op die telefoon) welke telefoon-afspraak bij welke Privé-afspraak hoort.
+// Wijzigen/verwijderen kan aan beide kanten: in Privé (gewijzigd-tijd) of in OneCalendar (anders dan Privé).
+var prvSpiegelT = 0;
+function prvEindTijd(tijd, eind){
+  if(!tijd) return '';
+  const m = t=>{ const [h, mm] = t.split(':').map(Number); return h*60 + mm; };
+  if(eind && m(eind) > m(tijd)) return eind;
+  const n = (m(tijd) + 60) % 1440;
+  return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+}
+function prvVergelijkApp(a){ return [String(a.titel || '').trim(), a.datum, a.tijd || '', prvEindTijd(a.tijd, a.eindTijd), String(a.notitie || '').trim()].join('|'); }
+function prvVergelijkTel(it){ return [String(it.titel || '').trim(), it.datum, it.tijd || '', it.tijd ? it.eindTijd : '', String(it.notitie || '').trim()].join('|'); }
+function prvSpiegel(forceer){
+  if(!prvTelAan()) return false;
+  if(!forceer && Date.now() - prvSpiegelT < 15000) return false;
+  prvSpiegelT = Date.now();
+  const sp = prvToestel.spiegel = prvToestel.spiegel || {};
+  const nu = new Date();
+  const van = new Date(nu); van.setDate(van.getDate() - 60); van.setHours(0, 0, 0, 0);
+  const tot = new Date(nu); tot.setDate(tot.getDate() + 400); tot.setHours(0, 0, 0, 0);
+  const grens = new Date(nu); grens.setDate(grens.getDate() - 30);
+  const vanIso = prvIso(van), totIso = prvIso(tot), grensIso = prvIso(grens);
+  const lokaal = {};
+  try{ JSON.parse(prvTel().afspraken(String(van.getTime()), String(tot.getTime())) || '[]').forEach(e=>{ if(!lokaal[e.id]) lokaal[e.id] = e; }); }
+  catch(e){ return false; }
+  let agendaAnders = false, toestelAnders = false;
+  const kal = prvTelStandaardKalender();
+  const maak = a=>{
+    if(!kal) return null;
+    const id = prvTel().maak(prvTelJson(a.titel, a.datum, a.tijd || '', a.eindTijd || '', a.notitie || '', kal.id));
+    return id ? String(id) : null;
+  };
+  agenda.slice().forEach(a=>{
+    const m = sp[a.id], g = a.gewijzigd || 0;
+    if(!m){
+      if(a.datum < grensIso || a.datum > totIso) return;
+      const id = maak(a);
+      if(id){ sp[a.id] = {e:id, g:g, k:kal.id}; toestelAnders = true; }
+      return;
+    }
+    const ev = lokaal[m.e];
+    if(!ev){
+      if(a.datum < vanIso || a.datum > totIso) return;
+      if(g !== m.g){ const id = maak(a); if(id){ m.e = id; m.g = g; toestelAnders = true; } return; }
+      // op deze telefoon weggehaald (bijv. in OneCalendar): ook uit Privé, dus ook van je andere telefoon
+      agenda = agenda.filter(x=>x.id !== a.id); delete sp[a.id];
+      agendaAnders = toestelAnders = true;
+      return;
+    }
+    const it = prvTelVelden(ev);
+    if(prvVergelijkApp(a) === prvVergelijkTel(it)){ if(m.g !== g){ m.g = g; toestelAnders = true; } return; }
+    if(g !== m.g){
+      // in Privé gewijzigd (op deze of je andere telefoon): telefoon-agenda bijwerken
+      if(prvTel().wijzig(m.e, prvTelJson(a.titel, a.datum, a.tijd || '', a.eindTijd || '', a.notitie || '', null))){ m.g = g; toestelAnders = true; }
+    } else {
+      // in de telefoon-agenda (OneCalendar) gewijzigd: Privé bijwerken, dan gaat het ook naar je andere telefoon
+      a.titel = it.titel; a.datum = it.datum; a.tijd = it.tijd || ''; a.eindTijd = it.tijd ? it.eindTijd : ''; a.notitie = it.notitie || '';
+      a.gewijzigd = Date.now(); m.g = a.gewijzigd;
+      agendaAnders = toestelAnders = true;
+    }
+  });
+  // in Privé verwijderd (op deze of je andere telefoon): ook uit de telefoon-agenda
+  Object.keys(sp).forEach(id=>{
+    if(agenda.some(a=>a.id === id)) return;
+    try{ prvTel().verwijder(String(sp[id].e)); }catch(e){}
+    delete sp[id]; toestelAnders = true;
+  });
+  if(agendaAnders) saveAgenda();
+  if(toestelAnders) prvBewaarToestel();
+  if(agendaAnders || toestelAnders) prvTelVergeet();
+  return agendaAnders || toestelAnders;
+}
+// bij het opstarten (ook na synchroniseren van je andere telefoon) bijwerken
+setTimeout(()=>{ try{ if(prvTelAan() && prvSpiegel(true) && (view.mode === 'p_agenda' || view.mode === 'p_overzicht')) render(); }catch(e){} }, 2500);
 
 // ----- PRIVÉ deel 4: boodschappenlijst en takenlijst (bij Notities) -----
 const PRV_LIJST_NAAM = {boodschap:'Boodschappen', taak:'Taken'};
