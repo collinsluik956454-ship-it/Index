@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.22');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.23');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -150,6 +150,8 @@
       status('Gesynchroniseerd '+hh);
       if(gewijzigd){
         var a=document.activeElement; var typt=a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA');
+        var live=false; try{ live=!!(window.__syncToepassen && window.__syncToepassen(pull)); }catch(e){ live=false; }
+        if(live){ status('Gesynchroniseerd '+hh); return; }
         var laatsteReload=0; try{ laatsteReload=parseInt(sessionStorage.getItem('looplijst_sync_reload')||'0',10)||0; }catch(e){}
         if(Date.now()-laatsteReload<20000){ status('Gesynchroniseerd '+hh); }
         else if(!typt){ try{ sessionStorage.setItem('looplijst_sync_reload',String(Date.now())); }catch(e){} location.reload(); }
@@ -2209,7 +2211,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.22';
+const APP_VERSION = '2026-11-24.23';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -3046,13 +3048,20 @@ window.addEventListener('pagehide', ()=>{
   try{ sessionStorage.setItem('looplijst_view_bewaard', JSON.stringify({view:view, open:prvOpen, t:Date.now()})); }catch(e){}
 });
 function prvStartView(){
-  if(!prvAan()) return;
   let sync = 0, bew = null;
   try{ sync = parseInt(sessionStorage.getItem('looplijst_sync_reload') || '0', 10) || 0; bew = JSON.parse(sessionStorage.getItem('looplijst_view_bewaard') || 'null'); }catch(e){}
   if(sync && Date.now() - sync < 20000){
-    if(bew && bew.view && njIsPrive(bew.view.mode) && Date.now() - bew.t < 30000){ view = bew.view; prvOpen = !!bew.open || !prvHeeftPin(); if(!prvOpen) view = {mode:'start'}; }
-    return;   // na synchroniseren gewoon verder waar je was (Werk)
+    // herladen door synchroniseren: terug naar hetzelfde scherm en dezelfde plek
+    if(bew && bew.view && Date.now() - bew.t < 30000){
+      const m = bew.view.mode;
+      if(njIsPrive(m)){ if(prvAan()){ view = bew.view; prvOpen = !!bew.open || !prvHeeftPin(); if(!prvOpen) view = {mode:'start'}; } }
+      else if(m && m !== 'persoon' && m !== 'kerst') view = bew.view;
+      const y = bew.scroll || 0;
+      if(y) setTimeout(()=>{ const mn = document.getElementById('main'); if(mn) mn.scrollTop = y; }, 80);
+    }
+    return;
   }
+  if(!prvAan()) return;
   view = {mode:'start', level:null, wijk:null, ronde:null, straat:null, krant:null};
 }
 
@@ -6014,6 +6023,85 @@ function prvTaakBewerk(wrap, kop){
   }
   if(!it) setTimeout(()=>{ const i = document.getElementById('prvTkT'); if(i) i.focus(); }, 60);
 }
+
+// ===================== SAMEN TEGELIJK: wijzigingen van de andere telefoon ongemerkt bijwerken =====================
+// Vroeger herlaadde de app bij elke wijziging van de ander (en begon dan opnieuw). Nu worden de
+// gewijzigde gegevens in het geheugen bijgewerkt en het huidige scherm opnieuw getekend, op dezelfde plek.
+// Alleen bij gegevens die hier niet live kunnen (bijv. een nieuwe looplijst-PDF) wordt nog herladen,
+// en dan kom je terug op hetzelfde scherm en dezelfde plek.
+const SYNC_PREFIX = 'looplijst_v23_';
+function syncJson(k, std){ try{ const v = JSON.parse(localStorage.getItem(SYNC_PREFIX + k)); return (v === null || v === undefined) ? std : v; }catch(e){ return std; } }
+const SYNC_LIVE = {
+  done: ()=>{ done = syncJson('done', {}); },
+  doneZaterdag: ()=>{ doneZaterdag = syncJson('doneZaterdag', {}); },
+  kerst: ()=>{ doneKerst = syncJson('kerst', {}); },
+  fooi: ()=>{ fooi = syncJson('fooi', {}); },
+  fooi_dagen: ()=>{ fooiDagen = syncJson('fooi_dagen', {}); },
+  volgordevink: ()=>{ volgordeVink = syncJson('volgordevink', {}); },
+  straatvink: ()=>{ straatVink = syncJson('straatvink', {}); },
+  vrijvink: ()=>{ vrijVink = syncJson('vrijvink', {}); },
+  wijkorder: ()=>{ wijkOrder = syncJson('wijkorder', []); },
+  rondeorder: ()=>{ rondeOrder = syncJson('rondeorder', {}); },
+  straatorder: ()=>{ straatOrder = syncJson('straatorder', {}); },
+  adresorder: ()=>{ adresOrder = syncJson('adresorder', {}); },
+  seg_done: ()=>{ segDone = syncJson('seg_done', {}); },
+  extramap: ()=>{ EXTRA_MAP = syncJson('extramap', {}); },
+  actievemodi: ()=>{ const v = syncJson('actievemodi', null); if(Array.isArray(v)) actieveModi = v; },
+  vaste_volgorde: ()=>{ njVasteVolgorde = syncJson('vaste_volgorde', null); },
+  pakaantal: ()=>{ pakAantalMap = syncJson('pakaantal', {}); },
+  pakvink2: ()=>{ pakVink = syncJson('pakvink2', {}); },
+  tariefcodes: ()=>{ const t = syncJson('tariefcodes', null); if(t) tariefcodes = t; },
+  tariefPerRonde: ()=>{ tariefPerRonde = syncJson('tariefPerRonde', {}); },
+  vergoeding_opgebouwd: ()=>{ const x = syncJson('vergoeding_opgebouwd', null); if(x) vergoedingOpgebouwd = x; },
+  agenda: ()=>{ agenda = syncJson('agenda', []); try{ prvTelVergeet(); }catch(e){} },
+  budget_trans: ()=>{ budgetTrans = syncJson('budget_trans', []); },
+  budget_cats: ()=>{ const c = syncJson('budget_cats', null); if(c) budgetCats = c; },
+  budget_budgets: ()=>{ budgetBudgets = syncJson('budget_budgets', {}); },
+  prive_notities: ()=>{ prvNotities = syncJson('prive_notities', []); },
+  prive_sparen: ()=>{ prvSparen = syncJson('prive_sparen', []); },
+  prive_vastelasten: ()=>{ prvVast = Object.assign({lijst:[], genegeerd:[]}, syncJson('prive_vastelasten', {})); },
+  prive_rekeningen: ()=>{ prvRekeningen = syncJson('prive_rekeningen', {}); },
+  prive_bankkoppel: ()=>{ ebData = Object.assign({sessies:[]}, syncJson('prive_bankkoppel', {})); },
+  prive_instel: ()=>{ Object.assign(prvInstel, syncJson('prive_instel', {})); },
+  personen: ()=>{ prsLaad(); },
+};
+// gegevens die de app elke keer zelf opnieuw leest: niets te doen
+const SYNC_VANZELF = new Set(['tijd', 'km', 'mutaties_log', 'klachten_log', 'kerst_doel', 'kerst_rondeperiodes', 'bonus_archief', 'jaararchief',
+  'kranten_per_dag', 'kranten_per_dag_extra', 'bekende_straten', 'bekende_segmenten', 'segment_classificatie', 'extra_straten', 'seg_autolog', 'seg_auto',
+  'apparaten', 'prive_pin', 'nieuwePeriodeSinds', 'bonus_instelling', 'kaart_bijwerken', 'seg_laatst_update', 'vorigeWeek', 'kerst_modus', 'kerst_weergave']);
+var syncLater = false;
+function syncMagNuTekenen(){
+  const m = view.mode;
+  if(m === 'kaart' || (m === 'segment' && typeof njSegWeergave !== 'undefined' && njSegWeergave === 'kaart')) return false;   // kaart niet laten verspringen
+  if(document.querySelector('#prvPin, .prv-blad-bg, .sheet.show')) return false;                                                // er staat iets open
+  const a = document.activeElement;
+  if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return false;                          // je bent aan het typen
+  return true;
+}
+function syncHerteken(){
+  if(!syncMagNuTekenen()){ syncLater = true; return; }
+  syncLater = false;
+  const main = document.getElementById('main');
+  const y = main ? main.scrollTop : 0, wy = window.scrollY;
+  try{ render(); }catch(e){ return; }
+  if(main) main.scrollTop = y;
+  if(wy) window.scrollTo(0, wy);
+}
+// aangeroepen door de synchronisatie (bovenin) met de sleutels die van de andere telefoon kwamen
+window.__syncToepassen = function(sleutels){
+  const korte = sleutels.filter(k=>k.indexOf(SYNC_PREFIX) === 0).map(k=>k.slice(SYNC_PREFIX.length));
+  if(korte.some(k=>!SYNC_LIVE[k] && !SYNC_VANZELF.has(k))) return false;   // iets dat alleen met herladen goed komt
+  korte.forEach(k=>{ if(SYNC_LIVE[k]){ try{ SYNC_LIVE[k](); }catch(e){ console.warn('[sync] bijwerken', k, e); } } });
+  syncHerteken();
+  return true;
+};
+// was tekenen uitgesteld (typen, iets open)? dan zodra dat klaar is
+document.addEventListener('focusout', ()=>{ if(syncLater) setTimeout(()=>{ if(syncLater) syncHerteken(); }, 300); });
+document.addEventListener('click', ()=>{ if(syncLater) setTimeout(()=>{ if(syncLater) syncHerteken(); }, 600); }, true);
+// bij herladen (alleen nog bij grote wijzigingen): onthouden waar je was
+window.addEventListener('pagehide', ()=>{
+  try{ const m = document.getElementById('main'); sessionStorage.setItem('looplijst_view_bewaard', JSON.stringify({view:view, open:prvOpen, t:Date.now(), scroll: m ? m.scrollTop : 0})); }catch(e){}
+});
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
 var NJ_SEG_KLEUREN = {
