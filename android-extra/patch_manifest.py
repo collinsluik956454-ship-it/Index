@@ -10,6 +10,12 @@ filters = """<intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/pdf" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="looplijst" android:host="bank" />
+            </intent-filter>
         </activity>"""
 assert '</activity>' in s
 s = s.replace('</activity>', filters, 1)

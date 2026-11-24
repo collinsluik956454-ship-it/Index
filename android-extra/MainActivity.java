@@ -18,12 +18,17 @@ import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Iterator;
 import java.util.TimeZone;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
     private volatile String gedeeldePdf = "";
+    private volatile String bankTerug = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,6 +42,7 @@ public class MainActivity extends BridgeActivity {
             }
         }, "LooplijstShare");
         getBridge().getWebView().addJavascriptInterface(new AgendaBrug(), "LooplijstAgenda");
+        getBridge().getWebView().addJavascriptInterface(new BankBrug(), "LooplijstBank");
         leesIntent(getIntent(), false);
     }
 
@@ -354,6 +360,74 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    // ===== Bank (Enable Banking): webverzoeken buiten de WebView om, en de bank-login in de browser =====
+    private void bankAntwoord(final String id, final int status, final String body) {
+        getBridge().getWebView().post(new Runnable() {
+            public void run() {
+                getBridge().getWebView().evaluateJavascript(
+                    "window.__bankAntwoord && window.__bankAntwoord(" + JSONObject.quote(id) + "," + status + "," + JSONObject.quote(body == null ? "" : body) + ")", null);
+            }
+        });
+    }
+
+    private class BankBrug {
+        @JavascriptInterface
+        public String neem() {
+            String r = bankTerug;
+            bankTerug = "";
+            return r;
+        }
+
+        @JavascriptInterface
+        public void open(String url) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            } catch (Exception e) {
+                // genegeerd
+            }
+        }
+
+        @JavascriptInterface
+        public void verzoek(final String id, final String methode, final String adres, final String kopjes, final String inhoud) {
+            new Thread(new Runnable() {
+                public void run() {
+                    HttpURLConnection con = null;
+                    try {
+                        con = (HttpURLConnection) new URL(adres).openConnection();
+                        con.setRequestMethod(methode);
+                        con.setConnectTimeout(20000);
+                        con.setReadTimeout(60000);
+                        JSONObject k = new JSONObject(kopjes == null || kopjes.length() == 0 ? "{}" : kopjes);
+                        Iterator<String> it = k.keys();
+                        while (it.hasNext()) { String n = it.next(); con.setRequestProperty(n, k.getString(n)); }
+                        if (inhoud != null && inhoud.length() > 0) {
+                            con.setDoOutput(true);
+                            OutputStream os = con.getOutputStream();
+                            os.write(inhoud.getBytes("UTF-8"));
+                            os.close();
+                        }
+                        int status = con.getResponseCode();
+                        InputStream in = status >= 400 ? con.getErrorStream() : con.getInputStream();
+                        ByteArrayOutputStream uit = new ByteArrayOutputStream();
+                        if (in != null) {
+                            byte[] buf = new byte[16384];
+                            int n;
+                            while ((n = in.read(buf)) > 0) uit.write(buf, 0, n);
+                            in.close();
+                        }
+                        bankAntwoord(id, status, uit.toString("UTF-8"));
+                    } catch (Exception e) {
+                        bankAntwoord(id, 0, String.valueOf(e.getMessage()));
+                    } finally {
+                        if (con != null) con.disconnect();
+                    }
+                }
+            }).start();
+        }
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -371,6 +445,18 @@ public class MainActivity extends BridgeActivity {
             uri = intent.getData();
         }
         if (uri == null) return;
+        // terug van de bank-login (looplijst://bank?code=...&state=...)
+        if ("looplijst".equalsIgnoreCase(uri.getScheme())) {
+            bankTerug = uri.toString();
+            if (meld) {
+                getBridge().getWebView().post(new Runnable() {
+                    public void run() {
+                        getBridge().getWebView().evaluateJavascript("window.dispatchEvent(new Event('looplijstBank'))", null);
+                    }
+                });
+            }
+            return;
+        }
         try {
             InputStream in = getContentResolver().openInputStream(uri);
             if (in == null) return;

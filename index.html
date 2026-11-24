@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.14');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.15');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1881,6 +1881,17 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-rek-kaart{gap:10px}
 .prv-rek-kop{display:flex;align-items:flex-start;gap:10px}
 .prv-rek-naam{font-size:17px !important;font-weight:800;min-height:42px !important}
+
+/* bank automatisch */
+.prv-rood-tekst{color:#B42318 !important;font-weight:700}
+.prv-bank-sessie{align-items:flex-start;padding-top:10px;padding-bottom:10px}
+.prv-bank-knoppen{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.prv-details{border-top:1px solid var(--nj-lijn2);padding-top:10px}
+.prv-details summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--nj-muted);min-height:32px}
+.prv-details .prv-nieuw{margin-top:8px}
+.prv-kopieer{font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all}
+.prv-auto-knop{margin-top:-4px}
+.prv-auto-knop span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 <script>
 // Offline service worker
@@ -2159,7 +2170,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.14';
+const APP_VERSION = '2026-11-24.15';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2785,7 +2796,7 @@ try{ prvNotities = JSON.parse(localStorage.getItem(STORAGE_NOTITIES)) || []; }ca
 function prvBewaarNotities(){ try{ localStorage.setItem(STORAGE_NOTITIES, JSON.stringify(prvNotities)); }catch(e){} }
 function prvAan(){ return !!(prvInstel && prvInstel.aan); }
 var PRV_HUBS = ['p_overzicht','p_agenda','p_huishoud','p_notities','p_instel'];
-var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel', p_rekeningen:'p_huishoud'};
+var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel', p_rekeningen:'p_huishoud', p_bank:'p_huishoud'};
 function prvTerug(){
   if(view.mode === 'p_spaar' && view.bewerk && view.id !== 'nieuw'){ prvGa({mode:'p_spaar', id:view.id}); return; }
   prvGa({mode: PRV_OUDER[view.mode] || 'p_overzicht'});
@@ -3096,6 +3107,7 @@ function njRenderPrive(){
   if(m === 'p_agendacontrole'){ return prvAgendaControle(wrap, kop); }
   if(m === 'p_personen'){ return prsBeheer(wrap, kop); }
   if(m === 'p_rekeningen'){ return prvRekeningenScherm(wrap, kop); }
+  if(m === 'p_bank'){ return prvBankScherm(wrap, kop); }
   if(m === 'p_notities'){ kop('Privé', 'Notities'); return prvNotitieLijst(wrap); }
   if(m === 'p_notitie'){ return prvNotitie(wrap, kop); }
   if(m === 'p_instel'){ kop('Privé', 'Meer'); return prvInstellingen(wrap); }
@@ -3318,6 +3330,13 @@ function prvHuishoud(wrap, kop){
   extra.querySelector('[data-a="potjes"]').onclick = ()=>prvGa({mode:'p_potjes'});
   extra.querySelector('[data-a="bank"]').onclick = prvKiesAfschrift;
   wrap.appendChild(extra);
+  const auto = document.createElement('button');
+  auto.type = 'button';
+  auto.className = 'nj-knop-rand prv-knop-rand prv-auto-knop';
+  const nb = (ebData.sessies || []).length;
+  auto.innerHTML = njIco('ververs', 18)+'<span>'+(nb ? 'Bank automatisch · '+nb+' gekoppeld · '+ebWanneer(ebData.laatst) : 'Bank automatisch ophalen')+'</span>';
+  auto.onclick = ()=>prvGa({mode:'p_bank'});
+  wrap.appendChild(auto);
   prvFab('Bedrag', ()=>prvGa({mode:'p_bedrag'}));
 }
 function prvBedrag(wrap, kop){
@@ -5267,6 +5286,356 @@ function prvRekeningenScherm(wrap, kop){
   b.innerHTML = njIco('inladen', 18)+'<span>Bankafschrift inlezen</span>';
   b.onclick = prvKiesAfschrift;
   wrap.appendChild(b);
+  const a = document.createElement('button');
+  a.type = 'button';
+  a.className = 'nj-knop-rand prv-knop-rand';
+  a.innerHTML = njIco('ververs', 18)+'<span>Bank automatisch ophalen</span>';
+  a.onclick = ()=>prvGa({mode:'p_bank'});
+  wrap.appendChild(a);
+}
+
+// ----- PRIVÉ deel 8: bank automatisch (Enable Banking) -----
+// De sleutel (Application ID + privésleutel .pem) staat ALLEEN op dit apparaat, nooit in de synchronisatie.
+// Gekoppelde banken (sessies, geen geheim) en de opgehaalde betalingen gaan wel mee naar je andere telefoon.
+const STORAGE_EB_SLEUTEL = 'looplijst_eb_sleutel';
+const STORAGE_EB = 'looplijst_v23_prive_bankkoppel';
+const EB_API = 'https://api.enablebanking.com';
+const EB_TERUG = 'https://collinsluik956454-ship-it.github.io/Index/bank.html';
+var ebSleutel = {};
+try{ ebSleutel = JSON.parse(localStorage.getItem(STORAGE_EB_SLEUTEL)) || {}; }catch(e){ ebSleutel = {}; }
+function ebBewaarSleutel(){ try{ localStorage.setItem(STORAGE_EB_SLEUTEL, JSON.stringify(ebSleutel)); }catch(e){} }
+var ebData = {sessies:[]};
+try{ Object.assign(ebData, JSON.parse(localStorage.getItem(STORAGE_EB)) || {}); }catch(e){}
+function ebBewaar(){ try{ localStorage.setItem(STORAGE_EB, JSON.stringify(ebData)); }catch(e){} }
+function ebKlaar(){ return !!(ebSleutel.appId && ebSleutel.pem); }
+var ebBanken = null, ebBezig = false, ebSleutelObj = null;
+
+// --- JWT (RS256) met de privésleutel, zoals Enable Banking vraagt ---
+function ebB64url(bytes){ const b = new Uint8Array(bytes); let s = ''; for(let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function ebB64urlTekst(t){ return ebB64url(new TextEncoder().encode(t)); }
+function ebLengte(n){ if(n < 128) return [n]; const b = []; while(n > 0){ b.unshift(n & 255); n >>= 8; } return [0x80 | b.length].concat(b); }
+function ebPkcs1NaarPkcs8(pkcs1){
+  const binnen = [0x02, 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x04].concat(ebLengte(pkcs1.length));
+  const totaal = binnen.length + pkcs1.length, kop = [0x30].concat(ebLengte(totaal));
+  const uit = new Uint8Array(kop.length + totaal);
+  uit.set(kop, 0); uit.set(binnen, kop.length); uit.set(pkcs1, kop.length + binnen.length);
+  return uit;
+}
+function ebPemNaarDer(pem){
+  const b64 = String(pem).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  const der = Uint8Array.from(atob(b64), c=>c.charCodeAt(0));
+  return /BEGIN RSA PRIVATE KEY/.test(pem) ? ebPkcs1NaarPkcs8(der) : der;
+}
+async function ebJwt(){
+  if(!ebSleutelObj) ebSleutelObj = await crypto.subtle.importKey('pkcs8', ebPemNaarDer(ebSleutel.pem), {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['sign']);
+  const iat = Math.floor(Date.now() / 1000);
+  const kop = ebB64urlTekst(JSON.stringify({typ:'JWT', alg:'RS256', kid:ebSleutel.appId}));
+  const body = ebB64urlTekst(JSON.stringify({iss:'enablebanking.com', aud:'api.enablebanking.com', iat:iat, exp:iat + 3600}));
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', ebSleutelObj, new TextEncoder().encode(kop+'.'+body));
+  return kop+'.'+body+'.'+ebB64url(sig);
+}
+
+// --- webverzoek: in de app via Android (geen CORS), anders gewoon fetch ---
+var ebWacht = {}, ebTeller = 0;
+window.__bankAntwoord = (id, status, body)=>{ const w = ebWacht[id]; if(!w) return; delete ebWacht[id]; w({status:status, body:body}); };
+function ebFoutTekst(status, json){
+  let m = json && (json.message || json.error || json.detail || json.code);
+  if(m && typeof m !== 'string') m = JSON.stringify(m);
+  if(status === 0) return 'Geen verbinding met Enable Banking';
+  if(status === 401) return 'De sleutel of het Application ID klopt niet';
+  return 'Enable Banking gaf fout '+status+(m ? ': '+m : '');
+}
+async function ebVerzoek(methode, pad, data){
+  const kopjes = {'Authorization':'Bearer '+(await ebJwt()), 'Content-Type':'application/json', 'Accept':'application/json'};
+  const url = EB_API + pad, inhoud = data ? JSON.stringify(data) : '';
+  let res;
+  const brug = window.LooplijstBank;
+  if(brug && typeof brug.verzoek === 'function'){
+    res = await new Promise(ok=>{
+      const id = 'b'+(++ebTeller)+'_'+Date.now();
+      ebWacht[id] = ok;
+      brug.verzoek(id, methode, url, JSON.stringify(kopjes), inhoud);
+      setTimeout(()=>{ if(ebWacht[id]){ delete ebWacht[id]; ok({status:0, body:''}); } }, 90000);
+    });
+  } else {
+    try{ const r = await fetch(url, {method:methode, headers:kopjes, body:inhoud || undefined}); res = {status:r.status, body:await r.text()}; }
+    catch(e){ res = {status:0, body:''}; }
+  }
+  let json = null; try{ json = res.body ? JSON.parse(res.body) : null; }catch(e){}
+  if(res.status < 200 || res.status >= 300){ const err = new Error(ebFoutTekst(res.status, json)); err.status = res.status; throw err; }
+  return json || {};
+}
+function ebOpen(url){ const brug = window.LooplijstBank; if(brug && typeof brug.open === 'function') brug.open(url); else window.open(url, '_blank'); }
+
+// --- banken ophalen, koppelen, terugkomen van de bank ---
+async function ebBankenLijst(){
+  if(ebBanken) return ebBanken;
+  const r = await ebVerzoek('GET', '/aspsps?country=NL&psu_type=personal');
+  ebBanken = (r.aspsps || []).map(a=>({naam:a.name, max:a.maximum_consent_validity || 0})).sort((a,b)=>a.naam.localeCompare(b.naam));
+  return ebBanken;
+}
+async function ebBankKoppelen(bank, persoon){
+  try{
+    toast('Koppeling met '+bank+' starten…');
+    let geldig = 180 * 86400;
+    try{ const b = (await ebBankenLijst()).find(x=>x.naam === bank); if(b && b.max) geldig = Math.min(geldig, b.max); }catch(e){}
+    const tot = new Date(Date.now() + Math.max(3600, geldig - 3600) * 1000).toISOString();
+    const st = 'lp'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+    const r = await ebVerzoek('POST', '/auth', {access:{valid_until:tot}, aspsp:{name:bank, country:'NL'}, state:st, redirect_url:EB_TERUG, psu_type:'personal'});
+    if(!r.url) throw new Error('Enable Banking gaf geen inlogpagina terug');
+    ebSleutel.wacht = {state:st, bank:bank, persoon:persoon, tot:tot, t:Date.now()};
+    ebBewaarSleutel();
+    ebOpen(r.url);
+  }catch(e){ toast(e.message || 'Koppelen lukte niet', true); }
+}
+async function ebTerug(adres){
+  let code = '', state = '', fout = '';
+  const s = String(adres || '').trim();
+  if(/^[a-z]+:\/\//i.test(s) || s.indexOf('?') >= 0){
+    const q = new URLSearchParams(s.slice(s.indexOf('?') + 1));
+    code = q.get('code') || ''; state = q.get('state') || ''; fout = q.get('error_description') || q.get('error') || '';
+  } else { [code, state] = s.split('|'); }
+  if(fout){ toast('De bank gaf een fout: '+fout, true); return; }
+  if(!code){ toast('Geen code gevonden', true); return; }
+  const w = ebSleutel.wacht || {};
+  if(state && w.state && state !== w.state){ toast('Deze code hoort bij een ander koppelverzoek', true); return; }
+  try{
+    toast('Bank koppelen…');
+    const r = await ebVerzoek('POST', '/sessions', {code:code});
+    const sessie = {id:r.session_id, bank:w.bank || (r.aspsp && r.aspsp.name) || 'Bank', persoon:w.persoon || 'samen', geldigTot:(r.access && r.access.valid_until) || w.tot || '', sinds:Date.now(),
+      rekeningen:(r.accounts || []).map(a=>({uid:a.uid, iban:((a.account_id && a.account_id.iban) || '').replace(/\s/g, '').toUpperCase(), naam:a.name || a.product || ''}))};
+    delete ebSleutel.wacht; ebBewaarSleutel();
+    if(!sessie.rekeningen.length){
+      toast('De bank gaf geen rekeningen terug. Koppel je rekening eerst in het controlepaneel van Enable Banking ("Activate by linking accounts").', true);
+      return;
+    }
+    ebData.sessies = (ebData.sessies || []).filter(x=>!(x.bank === sessie.bank && x.persoon === sessie.persoon)).concat([sessie]);
+    ebBewaar();
+    sessie.rekeningen.forEach(rk=>{
+      if(rk.iban && !prvRekeningen[rk.iban]){ prvRekeningen[rk.iban] = {naam:(sessie.bank+' '+rk.iban.slice(-4)), bank:prvBankVanIban(rk.iban) || sessie.bank, persoon:sessie.persoon, sinds:Date.now()}; }
+    });
+    prvBewaarRekeningen();
+    toast(sessie.bank+' gekoppeld: '+sessie.rekeningen.length+' rekening'+(sessie.rekeningen.length === 1 ? '' : 'en'));
+    await ebOphalen(true);
+  }catch(e){ toast(e.message || 'Koppelen lukte niet', true); }
+  if(view.mode === 'p_bank' || view.mode === 'p_huishoud') render();
+}
+function ebLosmaken(sessie){
+  if(!confirm(sessie.bank+' ('+prvWieNaam(sessie.persoon)+') loskoppelen? Opgehaalde betalingen blijven staan.')) return;
+  ebData.sessies = ebData.sessies.filter(x=>x !== sessie && x.id !== sessie.id);
+  ebBewaar();
+  if(ebKlaar()) ebVerzoek('DELETE', '/sessions/'+encodeURIComponent(sessie.id)).catch(()=>{});
+  toast(sessie.bank+' losgekoppeld');
+  render();
+}
+
+// --- ophalen: betalingen en saldo ---
+function ebDagenTerug(iso, n){ const d = prvDatum(iso); d.setDate(d.getDate() - n); return prvIso(d); }
+function ebVoegToe(x, rk){
+  if(x.status && x.status !== 'BOOK') return false;
+  const ruw = parseFloat(x.transaction_amount && x.transaction_amount.amount);
+  const bedrag = Math.round(Math.abs(ruw) * 100);
+  if(!(bedrag > 0)) return false;
+  const type = x.credit_debit_indicator === 'CRDT' ? 'inkomst' : x.credit_debit_indicator === 'DBIT' ? 'uitgave' : (ruw < 0 ? 'uitgave' : 'inkomst');
+  const datum = x.booking_date || x.value_date || x.transaction_date;
+  if(!datum) return false;
+  const naam = (type === 'inkomst' ? (x.debtor && x.debtor.name) : (x.creditor && x.creditor.name)) || '';
+  const notitie = [naam].concat(x.remittance_information || []).filter(Boolean).join(' · ').replace(/\s+/g, ' ').slice(0, 300);
+  const sleutel = 'eb:'+rk.uid+':'+(x.entry_reference || x.transaction_id || (datum+':'+bedrag+':'+notitie.slice(0, 40)));
+  if(budgetTrans.some(t=>t.bron === sleutel)) return false;
+  // stond hij er al door een ingelezen afschrift? dan niet dubbel
+  const al = budgetTrans.find(t=>!t.bron && (!rk.iban || t.rek === rk.iban) && t.datum === datum && t.bedrag === bedrag && t.type === type);
+  if(al){ al.bron = sleutel; return false; }
+  const cat = prvRaadPotje(notitie, type);
+  prvZorgPotje(cat);
+  budgetTrans.push(Object.assign({id:'eb'+Date.now().toString(36)+Math.random().toString(36).slice(2, 6), type:type, bedrag:bedrag, categorie:cat, datum:datum, notitie:notitie, tegen:naam || prvTegenpartij(notitie), bron:sleutel}, rk.iban ? {rek:rk.iban} : {}));
+  return true;
+}
+function ebSaldo(b, rk){
+  const lijst = (b && b.balances) || [];
+  const k = ['CLBD', 'ITBD', 'XPCD', 'CLAV', 'ITAV', 'OPBD', 'PRCD'].map(t=>lijst.find(x=>x.balance_type === t)).find(Boolean) || lijst[0];
+  if(!k || !rk.iban || !prvRekeningen[rk.iban]) return;
+  const c = Math.round(parseFloat(k.balance_amount && k.balance_amount.amount) * 100);
+  if(isNaN(c)) return;
+  prvRekeningen[rk.iban].saldo = c;
+  prvRekeningen[rk.iban].saldoDatum = k.reference_date || (k.last_change_date_time || '').slice(0, 10) || vandaagIso();
+}
+async function ebOphalen(stil){
+  if(!ebKlaar() || ebBezig || !(ebData.sessies || []).length) return {nieuw:0, fouten:[]};
+  ebBezig = true;
+  let nieuw = 0;
+  const fouten = [];
+  try{
+    for(const s of ebData.sessies){
+      if(s.geldigTot && new Date(s.geldigTot) < new Date()){ s.verlopen = true; continue; }
+      for(const rk of s.rekeningen){
+        try{
+          const van = rk.laatst ? ebDagenTerug(rk.laatst, 5) : ebDagenTerug(vandaagIso(), 90);
+          let ck = '', n = 0;
+          do{
+            const t = await ebVerzoek('GET', '/accounts/'+encodeURIComponent(rk.uid)+'/transactions?date_from='+van+(ck ? '&continuation_key='+encodeURIComponent(ck) : ''));
+            (t.transactions || []).forEach(x=>{ if(ebVoegToe(x, rk)) nieuw++; });
+            ck = t.continuation_key || ''; n++;
+          } while(ck && n < 25);
+          rk.laatst = vandaagIso(); delete rk.fout;
+          try{ ebSaldo(await ebVerzoek('GET', '/accounts/'+encodeURIComponent(rk.uid)+'/balances'), rk); }catch(e){}
+        }catch(e){
+          rk.fout = e.message;
+          if(e.status === 401 || e.status === 403 || e.status === 422) s.verlopen = e.status !== 401;
+          fouten.push(s.bank+': '+e.message);
+        }
+      }
+    }
+    ebData.laatst = Date.now();
+    ebBewaar();
+    prvBewaarRekeningen();
+    if(nieuw) saveBudgetTrans();
+  } finally { ebBezig = false; }
+  if(!stil || nieuw) toast(nieuw ? nieuw+' nieuwe betaling'+(nieuw === 1 ? '' : 'en')+' van de bank' : (fouten.length ? fouten[0] : 'Geen nieuwe betalingen'), !!fouten.length && !nieuw);
+  if(nieuw && (view.mode === 'p_huishoud' || view.mode === 'p_bank' || view.mode === 'p_rekeningen')) render();
+  return {nieuw:nieuw, fouten:fouten};
+}
+// automatisch: bij openen van de app (hooguit eens per 6 uur, ook als je andere telefoon al heeft opgehaald)
+function ebAutomatisch(){
+  if(!ebKlaar() || !(ebData.sessies || []).length) return;
+  if(Date.now() - (ebData.laatst || 0) < 6 * 3600 * 1000) return;
+  ebOphalen(true);
+}
+// terug van de bank-login: de app wordt geopend met looplijst://bank?code=…
+function ebNeemTerug(){ try{ const b = window.LooplijstBank; const u = b && typeof b.neem === 'function' ? b.neem() : ''; if(u) ebTerug(u); }catch(e){} }
+window.addEventListener('looplijstBank', ebNeemTerug);
+setTimeout(()=>{ ebNeemTerug(); ebAutomatisch(); }, 3000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(()=>{ ebNeemTerug(); ebAutomatisch(); }, 800); });
+
+// --- scherm: Bank automatisch ---
+function ebWanneer(t){ if(!t) return 'nog niet'; const d = new Date(t); const v = vandaagIso() === prvIso(d); return (v ? 'vandaag' : d.getDate()+' '+PRV_MAANDEN[d.getMonth()].slice(0, 3))+' '+String(d.getHours()).padStart(2, '0')+':'+String(d.getMinutes()).padStart(2, '0'); }
+function prvBankScherm(wrap, kop){
+  kop('Privé · Huishoudboekje', 'Bank automatisch');
+  const brug = !!window.LooplijstBank;
+  const uit = document.createElement('p');
+  uit.className = 'prv-uitleg';
+  uit.textContent = 'Betalingen en saldo komen vanzelf van de bank (via Enable Banking), zonder afschrift. Elke paar maanden vraagt de bank om opnieuw toestemming.';
+  wrap.appendChild(uit);
+  if(!brug){
+    const k = document.createElement('div');
+    k.className = 'prv-info prv-let';
+    k.innerHTML = njIco('info', 18, 2.2)+'<span>Dit werkt in de nieuwste app (APK) op je telefoon. In de browser kan het niet.</span>';
+    wrap.appendChild(k);
+  }
+  // 1. sleutel
+  const s1 = prvSectie(wrap, '1 · Sleutel van Enable Banking (alleen op deze telefoon)');
+  const k1 = document.createElement('section');
+  k1.className = 'nj-kaart prv-form';
+  if(ebKlaar()){
+    k1.innerHTML = '<div class="prv-controle-rij ok"><span class="prv-controle-ic">'+njIco('check', 16, 3)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">Sleutel ingesteld</span><span class="nj-rij-sub prv-wrap">Application ID '+njEsc(ebSleutel.appId.slice(0, 8))+'… · staat alleen op deze telefoon</span></span></div>'+
+      '<div class="prv-duo"><button type="button" class="nj-knop-rand prv-knop-rand" data-a="test">Verbinding testen</button><button type="button" class="nj-knop-rand prv-knop-weg" data-a="weg">Sleutel weghalen</button></div>';
+    k1.querySelector('[data-a="test"]').onclick = async ()=>{ try{ ebBanken = null; const l = await ebBankenLijst(); toast('Verbinding goed: '+l.length+' Nederlandse banken'); }catch(e){ toast(e.message, true); } };
+    k1.querySelector('[data-a="weg"]').onclick = ()=>{ if(!confirm('Sleutel van deze telefoon weghalen? Gekoppelde banken blijven, maar deze telefoon haalt dan niets meer op.')) return; ebSleutel = {}; ebSleutelObj = null; ebBanken = null; ebBewaarSleutel(); render(); };
+  } else {
+    k1.innerHTML = prvVeld('Application ID', '<input id="ebAppId" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">')+
+      '<div class="prv-veld"><span>Privésleutel (.pem-bestand)</span><button type="button" class="nj-knop-rand prv-knop-rand" data-a="pem">'+njIco('inladen', 18)+'<span id="ebPemNaam">Kies het .pem-bestand</span></button></div>'+
+      '<button type="button" class="nj-knop-primair prv-knop" data-a="bewaar">Opslaan en testen</button>'+
+      '<p class="prv-uitleg">Het .pem-bestand kreeg je bij het registreren van je app bij Enable Banking (de bestandsnaam is je Application ID). Hij wordt alleen op deze telefoon bewaard.</p>';
+    let pem = '';
+    k1.querySelector('[data-a="pem"]').onclick = ()=>{
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.pem,.key,.txt,application/x-pem-file,text/plain';
+      inp.onchange = async ()=>{
+        const f = inp.files && inp.files[0]; if(!f) return;
+        pem = await f.text();
+        document.getElementById('ebPemNaam').textContent = f.name;
+        const id = f.name.replace(/\.(pem|key|txt)$/i, '');
+        const ai = document.getElementById('ebAppId');
+        if(ai && !ai.value && /^[0-9a-f-]{36}$/i.test(id)) ai.value = id;
+      };
+      inp.click();
+    };
+    k1.querySelector('[data-a="bewaar"]').onclick = async ()=>{
+      const appId = document.getElementById('ebAppId').value.trim();
+      if(!/^[0-9a-f-]{36}$/i.test(appId)){ toast('Vul het Application ID in (36 tekens)', true); return; }
+      if(!/PRIVATE KEY/.test(pem)){ toast('Kies het .pem-bestand met de privésleutel', true); return; }
+      ebSleutel = {appId:appId, pem:pem}; ebSleutelObj = null; ebBanken = null;
+      try{ await ebJwt(); }catch(e){ ebSleutel = {}; toast('Dit .pem-bestand kan niet gelezen worden', true); return; }
+      ebBewaarSleutel();
+      try{ const l = await ebBankenLijst(); toast('Sleutel werkt: '+l.length+' Nederlandse banken'); }
+      catch(e){ toast('Opgeslagen, maar de test gaf: '+e.message, true); }
+      render();
+    };
+  }
+  s1.appendChild(k1);
+  // 2. gekoppelde banken
+  const s2 = prvSectie(wrap, '2 · Gekoppelde banken');
+  const sessies = ebData.sessies || [];
+  if(!sessies.length) s2.appendChild(prvLeeg('Nog geen bank gekoppeld.'));
+  else {
+    const l = document.createElement('div'); l.className = 'nj-lijst';
+    sessies.forEach(s=>{
+      const dagen = s.geldigTot ? Math.ceil((new Date(s.geldigTot) - Date.now()) / 86400000) : null;
+      const verlopen = s.verlopen || (dagen !== null && dagen <= 0);
+      const fout = s.rekeningen.map(r=>r.fout).filter(Boolean)[0];
+      const r = document.createElement('div');
+      r.className = 'prv-instel-rij prv-bank-sessie';
+      r.innerHTML = '<span class="nj-ico prv-ico">'+njIco('geld', 18)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(s.bank)+(prvWieKeuzes().length > 1 ? ' · '+njEsc(prvWieNaam(s.persoon)) : '')+'</span>'+
+        '<span class="nj-rij-sub prv-wrap">'+njEsc(s.rekeningen.map(x=>(prvRekeningen[x.iban] && prvRekeningen[x.iban].naam) || prvIbanKort(x.iban) || x.naam).join(', '))+'</span>'+
+        '<span class="nj-rij-sub prv-wrap '+(verlopen || (dagen !== null && dagen < 14) ? 'prv-rood-tekst' : '')+'">'+(verlopen ? 'Toestemming verlopen: opnieuw koppelen' : dagen !== null ? 'Toestemming nog '+dagen+' dagen geldig' : '')+(fout && !verlopen ? ' · '+njEsc(fout) : '')+'</span></span>';
+      const knoppen = document.createElement('span');
+      knoppen.className = 'prv-bank-knoppen';
+      knoppen.innerHTML = '<button type="button" class="nj-chip prv-chip" data-a="opnieuw">'+(verlopen || (dagen !== null && dagen < 14) ? 'Vernieuwen' : 'Opnieuw')+'</button><button type="button" class="nj-ib prv-weg" aria-label="'+njEsc(s.bank)+' loskoppelen">'+njIco('wis', 16)+'</button>';
+      knoppen.querySelector('[data-a="opnieuw"]').onclick = ()=>{ if(!ebKlaar()){ toast('Stel eerst de sleutel in (stap 1)', true); return; } ebBankKoppelen(s.bank, s.persoon); };
+      knoppen.querySelector('.prv-weg').onclick = ()=>ebLosmaken(s);
+      r.appendChild(knoppen);
+      l.appendChild(r);
+    });
+    s2.appendChild(l);
+    const op = document.createElement('button');
+    op.type = 'button';
+    op.className = 'nj-knop-primair prv-knop';
+    op.innerHTML = njIco('ververs', 18, 2.4)+'<span>Nu ophalen</span>';
+    op.disabled = !ebKlaar();
+    op.onclick = async ()=>{ op.disabled = true; op.querySelector('span').textContent = 'Bezig…'; await ebOphalen(false); render(); };
+    s2.appendChild(op);
+    const st = document.createElement('p');
+    st.className = 'prv-uitleg';
+    st.textContent = 'Laatst opgehaald: '+ebWanneer(ebData.laatst)+'. Daarna vanzelf als je de app opent (hooguit eens per 6 uur).';
+    s2.appendChild(st);
+  }
+  // 3. bank koppelen
+  const s3 = prvSectie(wrap, '3 · Bank koppelen');
+  const k3 = document.createElement('section');
+  k3.className = 'nj-kaart prv-form';
+  const keuzes = prvWieKeuzes();
+  const ik = prsAan() ? prsIk() : null;
+  let wie = ik ? ik.id : 'samen';
+  k3.innerHTML = prvVeld('Bank', '<select id="ebBank"><option>ABN AMRO</option><option>ING</option><option>Rabobank</option></select>')+
+    (keuzes.length > 1 ? '<div class="prv-veld"><span>Van wie</span><div class="nj-chips prv-soort" role="group" aria-label="Van wie">'+keuzes.map(q=>'<button type="button" class="nj-chip'+(q.id === wie ? ' aan' : '')+'" data-w="'+njEsc(q.id)+'">'+njEsc(q.naam)+'</button>').join('')+'</div></div>' : '')+
+    '<button type="button" class="nj-knop-primair prv-knop" data-a="koppel">'+njIco('schakel', 18)+'<span>Inloggen bij de bank</span></button>'+
+    '<p class="prv-uitleg">Je browser opent de bank. Na het inloggen ga je vanzelf terug naar Looplijst.</p>'+
+    '<details class="prv-details"><summary>App ging niet vanzelf open? Code plakken</summary><div class="prv-nieuw"><input id="ebCode" type="text" placeholder="Code van de terugpagina" aria-label="Code van de terugpagina" autocomplete="off"><button type="button" class="nj-knop-primair prv-knop" data-a="code">Koppelen</button></div></details>';
+  k3.querySelectorAll('[data-w]').forEach(b=>{ b.onclick = ()=>{ wie = b.getAttribute('data-w'); k3.querySelectorAll('[data-w]').forEach(c=>c.classList.toggle('aan', c === b)); }; });
+  k3.querySelector('[data-a="koppel"]').onclick = ()=>{ if(!ebKlaar()){ toast('Stel eerst de sleutel in (stap 1)', true); return; } ebBankKoppelen(document.getElementById('ebBank').value, wie); };
+  k3.querySelector('[data-a="code"]').onclick = ()=>{ const v = document.getElementById('ebCode').value.trim(); if(!v){ toast('Plak eerst de code', true); return; } ebTerug(v); };
+  s3.appendChild(k3);
+  if(ebKlaar()){
+    ebBankenLijst().then(l=>{
+      const sel = document.getElementById('ebBank');
+      if(!sel || !l.length) return;
+      const voorkeur = ['ABN AMRO', 'ING', 'Rabobank'];
+      const namen = l.map(x=>x.naam).sort((a,b)=>((voorkeur.indexOf(a) + 1 || 99) - (voorkeur.indexOf(b) + 1 || 99)) || a.localeCompare(b));
+      sel.innerHTML = namen.map(n=>'<option>'+njEsc(n)+'</option>').join('');
+    }).catch(()=>{});
+  }
+  // uitleg voor Enable Banking zelf
+  const s4 = prvSectie(wrap, 'Eenmalig in Enable Banking instellen');
+  const k4 = document.createElement('div');
+  k4.className = 'prv-info';
+  k4.innerHTML = njIco('info', 18, 2.2)+'<span>• Bij je app in het controlepaneel als <b>redirect URL</b> toevoegen:<br><span class="prv-kopieer">'+njEsc(EB_TERUG)+'</span><br>• Je eigen rekeningen (van Collin en van Charlotte) koppelen via "Activate by linking accounts". Rekeningen die daar niet gekoppeld zijn, geeft de bank niet door.</span>';
+  s4.appendChild(k4);
+  const kop2 = document.createElement('button');
+  kop2.type = 'button';
+  kop2.className = 'nj-knop-rand prv-knop-rand';
+  kop2.textContent = 'Redirect URL kopiëren';
+  kop2.onclick = ()=>{ try{ navigator.clipboard.writeText(EB_TERUG).then(()=>toast('Gekopieerd')); }catch(e){ toast(EB_TERUG); } };
+  s4.appendChild(kop2);
 }
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================

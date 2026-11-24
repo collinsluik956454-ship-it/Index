@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Terug naar Looplijst</title>
+<style>
+  :root{color-scheme:light dark}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F4F6F9;color:#0E1A2B;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  @media (prefers-color-scheme:dark){ body{background:#0B1220;color:#E8EEF7} .kaart{background:#111A2B !important;border-color:#223049 !important} .code{background:#1B2638 !important;color:#E8EEF7 !important} p{color:#9AA8BC !important} }
+  .kaart{max-width:360px;margin:16px;padding:24px 20px;background:#fff;border:1px solid #E2E7EE;border-radius:20px;text-align:center;display:flex;flex-direction:column;gap:14px}
+  h1{margin:0;font-size:22px}
+  p{margin:0;font-size:15px;line-height:1.45;color:#5A6A7E}
+  a.knop,button{display:flex;align-items:center;justify-content:center;min-height:52px;border:none;border-radius:14px;background:#6D28D9;color:#fff;font:inherit;font-weight:700;font-size:16px;text-decoration:none;cursor:pointer}
+  button.rand{background:transparent;color:inherit;border:1px solid #C9D2DD}
+  .code{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;background:#EDF1F5;border-radius:10px;padding:10px;color:#0E1A2B}
+  .fout{color:#B42318}
+</style>
+</head>
+<body>
+<main class="kaart">
+  <h1 id="kop">Terug naar Looplijst…</h1>
+  <p id="tekst">De bank is gekoppeld. Je gaat nu terug naar de app.</p>
+  <a class="knop" id="terug" href="#">Open Looplijst</a>
+  <div id="extra" hidden>
+    <p>Gaat de app niet open? Kopieer dan deze code en plak hem in Looplijst bij "Code plakken".</p>
+    <div class="code" id="code"></div>
+    <button type="button" class="rand" id="kopieer">Code kopiëren</button>
+  </div>
+</main>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var code = q.get('code') || '', state = q.get('state') || '', fout = q.get('error') || '', foutTekst = q.get('error_description') || '';
+  var terug = 'looplijst://bank?' + q.toString();
+  var intentUrl = 'intent://bank?' + q.toString() + '#Intent;scheme=looplijst;package=nl.collin.looplijst;end';
+  var android = /Android/i.test(navigator.userAgent);
+  var link = document.getElementById('terug');
+  link.href = android ? intentUrl : terug;
+  if(fout){
+    document.getElementById('kop').textContent = 'Koppelen niet gelukt';
+    document.getElementById('tekst').textContent = (foutTekst || fout) + '. Ga terug naar Looplijst en probeer het opnieuw.';
+    document.getElementById('tekst').className = 'fout';
+  }
+  if(code){
+    document.getElementById('code').textContent = code + (state ? '|' + state : '');
+    document.getElementById('extra').hidden = false;
+    document.getElementById('kopieer').onclick = function(){
+      var t = document.getElementById('code').textContent;
+      if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ document.getElementById('kopieer').textContent = 'Gekopieerd'; });
+    };
+  }
+  setTimeout(function(){ location.href = link.href; }, 400);
+})();
+</script>
+</body>
+</html>
