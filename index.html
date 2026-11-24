@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.13');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.14');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1867,6 +1867,20 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prs-beheer-rij{gap:12px}
 .prs-samen-tag{background:#E0F2FE;color:#075985}
 .prs-delen .nj-chip{display:inline-flex;align-items:center;gap:5px}
+
+/* meerdere banken en rekeningen */
+.prv-wie{gap:6px}
+.prv-wie .nj-chip{display:inline-flex;align-items:center;gap:6px}
+.prv-wie-stip{width:9px;height:9px;border-radius:99px;display:inline-block}
+.prv-wie-rij{min-height:68px}
+.prv-wie-stand{display:flex;flex-direction:column;align-items:flex-end;flex:0 0 auto}
+.prv-wie-stand small{font-size:11px;font-weight:700;color:var(--nj-muted)}
+.prv-wie-stand b{font-size:16px;font-weight:800;color:var(--nj-ink)}
+.prv-wie-stand b.min{color:#B42318}
+.prv-bank-rij.aan{background:#F5F3FF}
+.prv-rek-kaart{gap:10px}
+.prv-rek-kop{display:flex;align-items:flex-start;gap:10px}
+.prv-rek-naam{font-size:17px !important;font-weight:800;min-height:42px !important}
 </style>
 <script>
 // Offline service worker
@@ -2145,7 +2159,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.13';
+const APP_VERSION = '2026-11-24.14';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2771,7 +2785,7 @@ try{ prvNotities = JSON.parse(localStorage.getItem(STORAGE_NOTITIES)) || []; }ca
 function prvBewaarNotities(){ try{ localStorage.setItem(STORAGE_NOTITIES, JSON.stringify(prvNotities)); }catch(e){} }
 function prvAan(){ return !!(prvInstel && prvInstel.aan); }
 var PRV_HUBS = ['p_overzicht','p_agenda','p_huishoud','p_notities','p_instel'];
-var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel'};
+var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel', p_rekeningen:'p_huishoud'};
 function prvTerug(){
   if(view.mode === 'p_spaar' && view.bewerk && view.id !== 'nieuw'){ prvGa({mode:'p_spaar', id:view.id}); return; }
   prvGa({mode: PRV_OUDER[view.mode] || 'p_overzicht'});
@@ -3081,6 +3095,7 @@ function njRenderPrive(){
   if(m === 'p_spaar'){ return prvSpaar(wrap, kop); }
   if(m === 'p_agendacontrole'){ return prvAgendaControle(wrap, kop); }
   if(m === 'p_personen'){ return prsBeheer(wrap, kop); }
+  if(m === 'p_rekeningen'){ return prvRekeningenScherm(wrap, kop); }
   if(m === 'p_notities'){ kop('Privé', 'Notities'); return prvNotitieLijst(wrap); }
   if(m === 'p_notitie'){ return prvNotitie(wrap, kop); }
   if(m === 'p_instel'){ kop('Privé', 'Meer'); return prvInstellingen(wrap); }
@@ -3221,15 +3236,17 @@ function prvHuishoud(wrap, kop){
   nav.innerHTML = '<button type="button" class="nj-chip" data-d="-1">'+njIco('terug', 16, 2.4)+' Vorige</button>'+(ms !== huidigeMaandSleutel() ? '<button type="button" class="nj-chip" data-d="0">Deze maand</button>' : '')+'<button type="button" class="nj-chip" data-d="1">Volgende '+njIco('pijl', 16, 2.4)+'</button>';
   nav.querySelectorAll('[data-d]').forEach(b=>{ b.onclick = ()=>{ const d = parseInt(b.getAttribute('data-d'), 10); if(d === 0){ prvMaand = null; render(); } else naar(d); }; });
   wrap.appendChild(nav);
-  const t = prvSaldo(ms);
+  prvWieChips(wrap);
+  const t = prvTotalen(prvTransGefilterd(ms));
   const k = document.createElement('section');
   k.className = 'nj-kaart prv-saldo';
-  k.innerHTML = '<span class="prv-saldo-lbl">Over deze maand</span><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b>'+
+  k.innerHTML = '<span class="prv-saldo-lbl">Over deze maand'+(prvWie ? ' · '+njEsc(prvWieNaam(prvWie)) : '')+'</span><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b>'+
     '<div class="prv-duo"><div class="prv-mini"><small>Inkomsten</small><b>'+prvEuro(t.inkomsten)+'</b></div><div class="prv-mini"><small>Uitgaven</small><b>'+prvEuro(t.uitgaven)+'</b></div></div>';
   wrap.appendChild(k);
   prvVastKaart(wrap, ms);
+  prvPerPersoon(wrap, ms);
   // per potje
-  const trans = transactiesVoorMaand(ms);
+  const trans = prvTransGefilterd(ms);
   const perCat = {};
   trans.forEach(x=>{ if(x.type !== 'inkomst') perCat[x.categorie] = (perCat[x.categorie] || 0) + x.bedrag; });
   const cats = budgetCats.filter(c=>perCat[c] || budgetBudgets[c]);
@@ -3287,7 +3304,7 @@ function prvHuishoud(wrap, kop){
       const r = document.createElement('button'); r.type = 'button'; r.className = 'prv-trans';
       const ink = x.type === 'inkomst';
       r.innerHTML = '<span class="prv-trans-dag">'+prvDatum(x.datum).getDate()+'<small>'+PRV_MAANDEN[prvDatum(x.datum).getMonth()].slice(0,3)+'</small></span>'+
-        '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(x.tegen ? prvHoofd(x.tegen) : (x.notitie || x.categorie || (ink ? 'Inkomsten' : 'Uitgave')))+'</span><span class="nj-rij-sub">'+njEsc(x.categorie || '')+'</span></span>'+
+        '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(x.tegen ? prvHoofd(x.tegen) : (x.notitie || x.categorie || (ink ? 'Inkomsten' : 'Uitgave')))+'</span><span class="nj-rij-sub">'+njEsc((x.categorie || '')+(!prvWie && prvWieKeuzes().length > 1 ? ' · '+prvWieNaam(prvTransWie(x)) : ''))+'</span></span>'+
         '<b class="'+(ink ? 'plus' : 'min')+'">'+(ink ? '+ ' : '− ')+prvEuro(x.bedrag)+'</b>';
       r.onclick = ()=>prvGa({mode:'p_bedrag', id:x.id});
       l.appendChild(r);
@@ -3315,6 +3332,16 @@ function prvBedrag(wrap, kop){
     prvVeld('Potje', '<select id="prvBdCat">'+budgetCats.map(c=>'<option'+((x ? x.categorie : '') === c ? ' selected' : '')+'>'+njEsc(c)+'</option>').join('')+'</select>')+
     '<div class="prv-duo">'+prvVeld('Datum', '<input id="prvBdDatum" type="date" value="'+njEsc(x ? x.datum : vandaagIso())+'">')+'</div>'+
     prvVeld('Omschrijving (mag leeg)', '<input id="prvBdNotitie" type="text" value="'+njEsc(x && x.notitie ? x.notitie : '')+'">');
+  // van wie (bij een betaling van een rekening: van wie die rekening is)
+  const wieKeuzes = prvWieKeuzes();
+  if(x && x.rek && prvRekeningen[x.rek]){ const rr = prvRekeningen[x.rek]; const s = document.createElement('span'); s.className = 'prv-agenda-bron'; s.textContent = 'Van rekening '+rr.naam+(wieKeuzes.length > 1 ? ' ('+prvWieNaam(rr.persoon || 'samen')+')' : ''); k.appendChild(s); }
+  else if(wieKeuzes.length > 1){
+    if(view.wie === undefined){ const ik = prsAan() ? prsIk() : null; view.wie = x ? (x.wie || 'samen') : (ik ? ik.id : 'samen'); }
+    const w = document.createElement('div'); w.className = 'prv-veld';
+    w.innerHTML = '<span>Van wie</span><div class="nj-chips prv-soort" role="group" aria-label="Van wie">'+wieKeuzes.map(q=>'<button type="button" class="nj-chip'+(view.wie === q.id ? ' aan' : '')+'" data-w="'+njEsc(q.id)+'">'+njEsc(q.naam)+'</button>').join('')+'</div>';
+    w.querySelectorAll('[data-w]').forEach(b=>{ b.onclick = ()=>{ view.wie = b.getAttribute('data-w'); w.querySelectorAll('[data-w]').forEach(c=>c.classList.toggle('aan', c === b)); }; });
+    k.appendChild(w);
+  }
   k.querySelectorAll('[data-s]').forEach(b=>{ b.onclick = ()=>{ view.soort = b.getAttribute('data-s'); k.querySelectorAll('[data-s]').forEach(c=>c.classList.toggle('aan', c === b)); }; });
   wrap.appendChild(k);
   const opslaan = document.createElement('button');
@@ -3326,6 +3353,7 @@ function prvBedrag(wrap, kop){
     if(!(c > 0)){ toast('Vul een bedrag in', true); return; }
     const datum = document.getElementById('prvBdDatum').value || vandaagIso();
     const v = {type:view.soort, bedrag:c, categorie:document.getElementById('prvBdCat').value, datum:datum, notitie:document.getElementById('prvBdNotitie').value.trim()};
+    if(view.wie !== undefined && !(x && x.rek)) v.wie = view.wie;
     if(x) Object.assign(x, v); else budgetTrans.push(Object.assign({id:'t'+Date.now()}, v));
     saveBudgetTrans();
     prvMaand = datum.slice(0, 7) === huidigeMaandSleutel() ? null : datum.slice(0, 7);
@@ -3684,28 +3712,13 @@ function prvIsBankAfschriftTekst(tekst){
 }
 
 // --- bestand kiezen en inlezen (PDF of CSV) ---
-function prvKiesAfschrift(){
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = '.pdf,application/pdf,.csv,text/csv,text/plain';
-  inp.onchange = ()=>{ const f = inp.files && inp.files[0]; if(f) prvVerwerkAfschrift(f); };
-  inp.click();
-}
-async function prvVerwerkAfschrift(f){
-  try{
-    let res;
-    if(/\.pdf$/i.test(f.name) || f.type === 'application/pdf'){ toast('Afschrift lezen…'); res = await prvLeesBankPdf(f); }
-    else { const tekst = await f.text(); const r = parseBankCsv(tekst); res = {bank:r.bank, transacties:r.transacties}; }
-    if(!res.transacties.length){ toast('Geen betalingen gevonden in dit bestand', true); return; }
-    prvImportScherm(res);
-  }catch(e){ console.error('[Privé] afschrift', e); toast('Dit afschrift kon niet gelezen worden', true); }
-}
 function prvImportScherm(res){
   const trans = res.transacties.map(t=>{
     const tekst = t.notitie || '';
     const cat = (t.categorie && t.categorie !== 'Overig') ? t.categorie : prvRaadPotje(tekst, t.type);
     const dubbel = budgetTrans.some(b=>b.datum === t.datum && b.bedrag === t.bedrag && b.type === t.type && ((b.notitie || '') === tekst || (b.tegen && b.tegen === prvTegenpartij(tekst))));
-    return {datum:t.datum, bedrag:t.bedrag, type:t.type, notitie:tekst, tegen:prvTegenpartij(tekst), categorie:cat, aan:!dubbel, dubbel:dubbel};
+    const tg = (t.tegen && !/^[A-Z]{2}\d{2}[A-Z0-9]{4}/i.test(t.tegen.replace(/\s/g, ''))) ? t.tegen : prvTegenpartij(tekst);
+    return {datum:t.datum, bedrag:t.bedrag, type:t.type, notitie:tekst, tegen:tg, categorie:cat, aan:!dubbel, dubbel:dubbel};
   }).sort((a,b)=>b.datum.localeCompare(a.datum));
   const oud = document.getElementById('prvImport'); if(oud) oud.remove();
   const bg = document.createElement('div');
@@ -3721,8 +3734,10 @@ function prvImportScherm(res){
   const teken = ()=>{
     const n = trans.filter(t=>t.aan).length;
     const data = trans.map(t=>t.datum).sort();
-    blad.innerHTML = '<div class="prv-blad-kop"><div><b>Bankafschrift</b><span>'+njEsc(res.bank)+' · '+trans.length+' betaling'+(trans.length===1?'':'en')+(data.length ? ' · '+prvDatum(data[0]).getDate()+' '+PRV_MAANDEN[prvDatum(data[0]).getMonth()].slice(0,3)+' – '+prvDatum(data[data.length-1]).getDate()+' '+PRV_MAANDEN[prvDatum(data[data.length-1]).getMonth()].slice(0,3) : '')+'</span></div>'+
+    const rk = res.iban && prvRekeningen[res.iban];
+    blad.innerHTML = '<div class="prv-blad-kop"><div><b>'+njEsc(rk ? rk.naam : 'Bankafschrift')+'</b><span>'+njEsc(res.bank)+(rk && prsAan() ? ' · van '+njEsc(prvWieNaam(rk.persoon || 'samen')) : '')+' · '+trans.length+' betaling'+(trans.length===1?'':'en')+(data.length ? ' · '+prvDatum(data[0]).getDate()+' '+PRV_MAANDEN[prvDatum(data[0]).getMonth()].slice(0,3)+' – '+prvDatum(data[data.length-1]).getDate()+' '+PRV_MAANDEN[prvDatum(data[data.length-1]).getMonth()].slice(0,3) : '')+'</span></div>'+
       '<button type="button" class="nj-ib prv-blad-x" aria-label="Sluiten">'+njIco('kruis', 18, 2.4)+'</button></div>'+
+      (res.waarschuwing ? '<div class="prv-info prv-let">'+njIco('info', 18, 2.2)+'<span>'+njEsc(res.waarschuwing)+'</span></div>' : '')+
       '<p class="prv-uitleg">Het potje is al ingevuld; tik erop om het te veranderen. Wat er al in staat is uitgevinkt.</p>'+
       '<div class="prv-import-lijst"></div>'+
       '<div class="prv-blad-knoppen"><button type="button" class="nj-knop-rand" data-a="nee">Annuleren</button><button type="button" class="nj-knop-primair prv-knop" data-a="ja"'+(n ? '' : ' disabled')+'>'+n+' toevoegen</button></div>';
@@ -3743,8 +3758,9 @@ function prvImportScherm(res){
     blad.querySelector('[data-a="nee"]').onclick = ()=>bg.remove();
     blad.querySelector('[data-a="ja"]').onclick = ()=>{
       let k = 0;
-      trans.forEach(t=>{ if(!t.aan) return; prvZorgPotje(t.categorie); budgetTrans.push({id:'bank'+Date.now()+'-'+(k++), type:t.type, bedrag:t.bedrag, categorie:t.categorie, datum:t.datum, notitie:t.notitie, tegen:t.tegen}); });
+      trans.forEach(t=>{ if(!t.aan) return; prvZorgPotje(t.categorie); budgetTrans.push(Object.assign({id:'bank'+Date.now()+'-'+(k++), type:t.type, bedrag:t.bedrag, categorie:t.categorie, datum:t.datum, notitie:t.notitie, tegen:t.tegen}, res.iban ? {rek:res.iban} : {})); });
       saveBudgetTrans();
+      prvNaImport(res);
       bg.remove();
       const nieuw = prvVasteLastenVoorstel().length;
       toast(k+' betaling'+(k===1?'':'en')+' toegevoegd'+(nieuw ? ' · '+nieuw+' vaste last'+(nieuw===1?'':'en')+' gevonden' : ''));
@@ -5017,6 +5033,241 @@ function prsZetChip(m){
   const chip = document.getElementById('prsChip'); if(chip) chip.onclick = prsWissel;
   const mb = document.getElementById('prsBtn'); if(mb) mb.onclick = ()=>{ closeSheet(); if(prsAan()) prsWissel(); };
 })();
+
+// ----- PRIVÉ deel 7: meerdere banken en rekeningen, en wie wat heeft -----
+// Rekeningen (per IBAN): naam, bank, van wie (persoon of samen), laatste saldo. Gaat mee met synchroniseren.
+const STORAGE_REKENINGEN = 'looplijst_v23_prive_rekeningen';
+var prvRekeningen = {};
+try{ prvRekeningen = JSON.parse(localStorage.getItem(STORAGE_REKENINGEN)) || {}; }catch(e){ prvRekeningen = {}; }
+function prvBewaarRekeningen(){ try{ localStorage.setItem(STORAGE_REKENINGEN, JSON.stringify(prvRekeningen)); }catch(e){} }
+const PRV_BANKEN = [
+  {id:'ABN AMRO', codes:['ABNA'], re:/abn\s?amro|\bABNA/i},
+  {id:'ING', codes:['INGB'], re:/\bING\b|\bINGB/},
+  {id:'Rabobank', codes:['RABO'], re:/rabo/i},
+  {id:'SNS / ASN / RegioBank', codes:['SNSB', 'ASNB', 'RBRB'], re:/\bSNS\b|\bASN\b|regiobank|\bSNSB|\bASNB|\bRBRB/i},
+  {id:'bunq', codes:['BUNQ'], re:/\bbunq\b/i},
+  {id:'Knab', codes:['KNAB'], re:/\bknab\b/i},
+  {id:'Triodos', codes:['TRIO'], re:/triodos|\bTRIO/i},
+];
+function prvBankVanIban(iban){ const c = String(iban || '').slice(4, 8).toUpperCase(); const b = PRV_BANKEN.find(x=>x.codes.indexOf(c) >= 0); return b ? b.id : ''; }
+function prvBankUitTekst(t){ const b = PRV_BANKEN.find(x=>x.re.test(t || '')); return b ? b.id : ''; }
+// eigen rekening = het IBAN dat het vaakst in het afschrift staat (staat bovenaan elke pagina / op elke regel)
+function prvEigenIban(tekst){
+  const tel = {};
+  (String(tekst || '').match(/\bNL\s?\d{2}\s?[A-Z]{4}\s?(?:\d\s?){10}/g) || []).forEach(x=>{ const k = x.replace(/\s/g, '').toUpperCase(); tel[k] = (tel[k] || 0) + 1; });
+  const lijst = Object.keys(tel).sort((a,b)=>tel[b] - tel[a]);
+  return lijst[0] || '';
+}
+function prvIbanMooi(iban){ return String(iban || '').replace(/(.{4})/g, '$1 ').trim(); }
+function prvIbanKort(iban){ return iban ? iban.slice(0, 8)+' ••'+iban.slice(-4) : ''; }
+// van wie is een betaling? (rekening → persoon, of zelf ingevuld bij '+ Bedrag')
+function prvTransWie(t){
+  if(t.rek && prvRekeningen[t.rek]) return prvRekeningen[t.rek].persoon || 'samen';
+  return t.wie || 'samen';
+}
+var prvWie = null;   // filter in het huishoudboekje: null = iedereen, 'samen' of een persoon-id
+function prvTransGefilterd(ms){ return transactiesVoorMaand(ms).filter(t=>!prvWie || prvTransWie(t) === prvWie); }
+function prvTotalen(lijst){ let i = 0, u = 0; lijst.forEach(t=>{ if(t.type === 'inkomst') i += t.bedrag; else u += t.bedrag; }); return {inkomsten:i, uitgaven:u, saldo:i - u}; }
+function prvWieNaam(w){ if(w === 'samen') return 'Samen'; const p = (typeof prsData !== 'undefined' && prsData) ? prsData.lijst.find(x=>x.id === w) : null; return p ? p.naam : 'Samen'; }
+function prvWieKeuzes(){ const l = (prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : []); l.push({id:'samen', naam:'Samen', kleur:'#6D28D9'}); return l; }
+
+// 1. bank kiezen, 2. bestand kiezen
+function prvKiesAfschrift(){ prvBankKeuze({}); }
+function prvBankKeuze(opt){
+  const oud = document.getElementById('prvBank'); if(oud) oud.remove();
+  const bg = document.createElement('div');
+  bg.id = 'prvBank';
+  bg.className = 'prv-blad-bg';
+  const blad = document.createElement('div');
+  blad.className = 'prv-blad prv-keuze';
+  blad.setAttribute('role', 'dialog');
+  blad.setAttribute('aria-modal', 'true');
+  blad.setAttribute('aria-label', 'Van welke bank is het afschrift?');
+  const bekend = {};
+  Object.keys(prvRekeningen).forEach(i=>{ const r = prvRekeningen[i]; if(r.bank) (bekend[r.bank] = bekend[r.bank] || []).push(r.naam); });
+  blad.innerHTML = '<div class="prv-blad-kop"><div><b>Van welke bank?</b><span>'+(opt.herkend ? 'Herkend: '+njEsc(opt.herkend) : 'PDF of CSV van je bankafschrift')+'</span></div><button type="button" class="nj-ib prv-blad-x" aria-label="Sluiten">'+njIco('kruis', 18, 2.4)+'</button></div><div class="nj-lijst prv-bank-lijst"></div>';
+  const l = blad.querySelector('.nj-lijst');
+  const kies = bank=>{
+    bg.remove();
+    if(opt.bestand){ prvVerwerkAfschrift(opt.bestand, bank); return; }
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.pdf,application/pdf,.csv,text/csv,text/plain';
+    inp.onchange = ()=>{ const f = inp.files && inp.files[0]; if(f) prvVerwerkAfschrift(f, bank); };
+    inp.click();
+  };
+  PRV_BANKEN.map(b=>b.id).concat(['Andere bank']).forEach(id=>{
+    const r = document.createElement('button');
+    r.type = 'button';
+    r.className = 'nj-rij prv-bank-rij'+(opt.herkend === id ? ' aan' : '');
+    r.innerHTML = '<span class="nj-ico prv-ico">'+njIco('geld', 18)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(id)+(opt.herkend === id ? ' <span class="prv-vast-tag">herkend</span>' : '')+'</span>'+
+      (bekend[id] ? '<span class="nj-rij-sub">'+njEsc(bekend[id].join(', '))+'</span>' : '')+'</span><span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
+    r.onclick = ()=>kies(id === 'Andere bank' ? '' : id);
+    l.appendChild(r);
+  });
+  blad.querySelector('.prv-blad-x').onclick = ()=>bg.remove();
+  bg.appendChild(blad);
+  bg.onclick = e=>{ if(e.target === bg) bg.remove(); };
+  document.body.appendChild(bg);
+}
+async function prvVerwerkAfschrift(f, bankGekozen){
+  try{
+    let res;
+    if(/\.pdf$/i.test(f.name) || f.type === 'application/pdf'){
+      toast('Afschrift lezen…');
+      const regels = await prvLeesPdfRegels(await f.arrayBuffer());
+      res = prvLeesAfschrift(regels);
+      const tekst = regels.map(r=>r.tekst).join('\n');
+      res.iban = prvEigenIban(tekst);
+      res.saldo = prvEindSaldo(regels);
+    } else {
+      const tekst = await f.text();
+      const r = parseBankCsv(tekst);
+      res = {bank:r.bank, transacties:r.transacties, iban:prvEigenIban(tekst), saldo:null};
+    }
+    const herkend = prvBankVanIban(res.iban) || (res.bank && res.bank !== 'je bank' && res.bank !== 'generiek' && res.bank !== 'onbekend' ? res.bank : '');
+    res.bank = bankGekozen || herkend || 'Andere bank';
+    if(bankGekozen && herkend && bankGekozen.split(' ')[0] !== herkend.split(' ')[0]) res.waarschuwing = 'Dit lijkt een afschrift van '+herkend+', niet van '+bankGekozen;
+    if(!res.transacties.length){ toast('Geen betalingen gevonden in dit bestand', true); return; }
+    const verder = ()=>prvImportScherm(res);
+    if(res.iban && !prvRekeningen[res.iban]) prvNieuweRekening(res, verder);
+    else verder();
+  }catch(e){ console.error('[Privé] afschrift', e); toast('Dit afschrift kon niet gelezen worden', true); }
+}
+// eindsaldo van het afschrift (als het erin staat)
+function prvEindSaldo(regels){
+  let saldo = null;
+  regels.forEach(r=>{
+    if(!/(nieuw saldo|eindsaldo|saldo einde|saldo per|nieuw\s+saldo|eind\s+saldo)/i.test(r.tekst)) return;
+    const b = r.delen.map(x=>prvBedragUit(x.s)).filter(Boolean).pop();
+    if(b) saldo = b.teken === '-' ? -b.c : b.c;
+  });
+  return saldo;
+}
+// nieuwe rekening herkend: vragen wat het is en van wie
+function prvNieuweRekening(res, verder){
+  const oud = document.getElementById('prvRek'); if(oud) oud.remove();
+  const bg = document.createElement('div');
+  bg.id = 'prvRek';
+  bg.className = 'prv-blad-bg';
+  const blad = document.createElement('div');
+  blad.className = 'prv-blad prv-form';
+  blad.setAttribute('role', 'dialog');
+  blad.setAttribute('aria-modal', 'true');
+  blad.setAttribute('aria-label', 'Nieuwe rekening');
+  const keuzes = prvWieKeuzes();
+  const ik = prsAan() ? prsIk() : null;
+  let wie = ik ? ik.id : 'samen';
+  blad.innerHTML = '<div class="prv-blad-kop"><div><b>Nieuwe rekening</b><span>'+njEsc(res.bank)+' · '+njEsc(prvIbanMooi(res.iban))+'</span></div></div>'+
+    '<p class="prv-uitleg">Deze rekening kent de app nog niet. Welke rekening is dit?</p>'+
+    prvVeld('Naam', '<input id="prvRekNaam" type="text" placeholder="Bijv. betaalrekening, spaarrekening" value="'+njEsc((res.bank || 'Rekening')+' '+res.iban.slice(-4))+'">')+
+    (keuzes.length > 1 ? '<div class="prv-veld"><span>Van wie</span><div class="nj-chips prv-soort" role="group" aria-label="Van wie">'+keuzes.map(k=>'<button type="button" class="nj-chip'+(k.id === wie ? ' aan' : '')+'" data-w="'+njEsc(k.id)+'">'+njEsc(k.naam)+'</button>').join('')+'</div></div>' : '')+
+    '<div class="prv-blad-knoppen"><button type="button" class="nj-knop-rand" data-a="nee">Annuleren</button><button type="button" class="nj-knop-primair prv-knop" data-a="ja">Opslaan en verder</button></div>';
+  blad.querySelectorAll('[data-w]').forEach(b=>{ b.onclick = ()=>{ wie = b.getAttribute('data-w'); blad.querySelectorAll('[data-w]').forEach(c=>c.classList.toggle('aan', c === b)); }; });
+  blad.querySelector('[data-a="nee"]').onclick = ()=>bg.remove();
+  blad.querySelector('[data-a="ja"]').onclick = ()=>{
+    const naam = document.getElementById('prvRekNaam').value.trim() || ('Rekening '+res.iban.slice(-4));
+    prvRekeningen[res.iban] = {naam:naam, bank:prvBankVanIban(res.iban) || res.bank, persoon:wie, sinds:Date.now()};
+    prvBewaarRekeningen();
+    bg.remove();
+    toast('Rekening "'+naam+'" opgeslagen');
+    verder();
+  };
+  bg.appendChild(blad);
+  document.body.appendChild(bg);
+  setTimeout(()=>{ const i = document.getElementById('prvRekNaam'); if(i){ i.focus(); i.select(); } }, 60);
+}
+// na het toevoegen: rekening bijwerken (bank, saldo)
+function prvNaImport(res){
+  if(!res.iban || !prvRekeningen[res.iban]) return;
+  const r = prvRekeningen[res.iban];
+  r.bank = prvBankVanIban(res.iban) || (res.bank && res.bank !== 'Andere bank' ? res.bank : r.bank);
+  if(res.saldo !== null && res.saldo !== undefined){
+    const tot = res.transacties.map(t=>t.datum).sort().pop() || vandaagIso();
+    if(!r.saldoDatum || tot >= r.saldoDatum){ r.saldo = res.saldo; r.saldoDatum = tot; }
+  }
+  prvBewaarRekeningen();
+}
+
+// huishoudboekje: kiezen wie je bekijkt
+function prvWieChips(wrap){
+  const keuzes = prvWieKeuzes();
+  if(keuzes.length < 2 && !Object.keys(prvRekeningen).length) return;
+  const d = document.createElement('div');
+  d.className = 'nj-chips prv-wie';
+  d.setAttribute('role', 'group');
+  d.setAttribute('aria-label', 'Van wie bekijk je het huishoudboekje');
+  [{id:null, naam:'Iedereen'}].concat(keuzes).forEach(k=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nj-chip'+(prvWie === k.id ? ' aan' : '');
+    b.setAttribute('aria-pressed', prvWie === k.id ? 'true' : 'false');
+    b.innerHTML = (k.kleur && k.id !== 'samen' ? '<i class="prv-wie-stip" style="background:'+njEsc(k.kleur)+'"></i>' : '')+njEsc(k.naam);
+    b.onclick = ()=>{ prvWie = k.id; render(); };
+    d.appendChild(b);
+  });
+  wrap.appendChild(d);
+}
+// per persoon: wat komt er binnen, wat gaat eruit, wat staat er op de rekeningen
+function prvPerPersoon(wrap, ms){
+  const keuzes = prvWieKeuzes();
+  const rek = Object.keys(prvRekeningen);
+  if(keuzes.length < 2 && !rek.length) return;
+  const sec = prvSectie(wrap, prvWie ? 'Rekeningen' : 'Wie heeft wat');
+  const l = document.createElement('div'); l.className = 'nj-lijst';
+  const alle = transactiesVoorMaand(ms);
+  (prvWie ? keuzes.filter(k=>k.id === prvWie) : keuzes).forEach(k=>{
+    const t = prvTotalen(alle.filter(x=>prvTransWie(x) === k.id));
+    const mijn = rek.filter(i=>(prvRekeningen[i].persoon || 'samen') === k.id);
+    const opRek = mijn.filter(i=>typeof prvRekeningen[i].saldo === 'number');
+    const stand = opRek.reduce((a, i)=>a + prvRekeningen[i].saldo, 0);
+    if(!t.inkomsten && !t.uitgaven && !mijn.length) return;
+    const r = document.createElement('button');
+    r.type = 'button';
+    r.className = 'nj-rij prv-wie-rij';
+    r.innerHTML = (k.id === 'samen' ? '<span class="nj-ico prv-ico">'+njIco('home', 18)+'</span>' : prsAvatar({naam:k.naam, kleur:k.kleur}, 38))+
+      '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(k.naam)+'</span><span class="nj-rij-sub prv-wrap">Deze maand +'+prvEuro(t.inkomsten).replace('€ ', '€ ')+' / −'+prvEuro(t.uitgaven)+(mijn.length ? ' · '+mijn.length+' rekening'+(mijn.length === 1 ? '' : 'en') : '')+'</span></span>'+
+      (opRek.length ? '<span class="prv-wie-stand"><small>op de rekening</small><b class="'+(stand < 0 ? 'min' : '')+'">'+prvEuro(stand)+'</b></span>' : '<span class="prv-wie-stand"><small>over</small><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b></span>');
+    r.onclick = ()=>{ if(prvWie !== k.id){ prvWie = k.id; render(); } else prvGa({mode:'p_rekeningen'}); };
+    l.appendChild(r);
+  });
+  if(!l.children.length) return sec.remove();
+  sec.appendChild(l);
+  if(rek.length){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nj-knop-rand prv-knop-rand';
+    b.innerHTML = njIco('geld', 18)+'<span>Rekeningen ('+rek.length+')</span>';
+    b.onclick = ()=>prvGa({mode:'p_rekeningen'});
+    sec.appendChild(b);
+  }
+}
+// scherm: alle rekeningen
+function prvRekeningenScherm(wrap, kop){
+  kop('Privé · Huishoudboekje', 'Rekeningen');
+  const ibans = Object.keys(prvRekeningen);
+  if(!ibans.length){ wrap.appendChild(prvLeeg('Nog geen rekeningen. Lees een bankafschrift in; een nieuwe rekening wordt dan vanzelf herkend.')); }
+  const keuzes = prvWieKeuzes();
+  ibans.sort((a,b)=>(prvRekeningen[a].persoon || '').localeCompare(prvRekeningen[b].persoon || '')).forEach(iban=>{
+    const r = prvRekeningen[iban];
+    const k = document.createElement('section');
+    k.className = 'nj-kaart prv-form prv-rek-kaart';
+    k.innerHTML = '<div class="prv-rek-kop"><span class="nj-rij-tekst"><input type="text" class="prv-rek-naam" aria-label="Naam van de rekening" value="'+njEsc(r.naam)+'"><span class="nj-rij-sub">'+njEsc((r.bank || 'Bank onbekend')+' · '+prvIbanMooi(iban))+'</span></span>'+
+      (typeof r.saldo === 'number' ? '<span class="prv-wie-stand"><small>saldo '+njEsc(r.saldoDatum ? prvDatum(r.saldoDatum).getDate()+' '+PRV_MAANDEN[prvDatum(r.saldoDatum).getMonth()].slice(0,3) : '')+'</small><b class="'+(r.saldo < 0 ? 'min' : '')+'">'+prvEuro(r.saldo)+'</b></span>' : '')+'</div>'+
+      (keuzes.length > 1 ? '<div class="nj-chips prv-soort" role="group" aria-label="Van wie">'+keuzes.map(w=>'<button type="button" class="nj-chip'+((r.persoon || 'samen') === w.id ? ' aan' : '')+'" data-w="'+njEsc(w.id)+'">'+njEsc(w.naam)+'</button>').join('')+'</div>' : '')+
+      '<button type="button" class="nj-knop-rand prv-knop-weg" data-a="weg">Rekening vergeten</button>';
+    k.querySelector('.prv-rek-naam').onchange = e=>{ r.naam = e.target.value.trim() || r.naam; prvBewaarRekeningen(); toast('Naam opgeslagen'); };
+    k.querySelectorAll('[data-w]').forEach(b=>{ b.onclick = ()=>{ r.persoon = b.getAttribute('data-w'); prvBewaarRekeningen(); toast(r.naam+' is nu van '+prvWieNaam(r.persoon)); render(); }; });
+    k.querySelector('[data-a="weg"]').onclick = ()=>{ if(!confirm('"'+r.naam+'" vergeten? De betalingen blijven in het huishoudboekje staan.')) return; delete prvRekeningen[iban]; prvBewaarRekeningen(); render(); };
+    wrap.appendChild(k);
+  });
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nj-knop-primair prv-knop';
+  b.innerHTML = njIco('inladen', 18)+'<span>Bankafschrift inlezen</span>';
+  b.onclick = prvKiesAfschrift;
+  wrap.appendChild(b);
+}
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
 var NJ_SEG_KLEUREN = {
@@ -15869,12 +16120,13 @@ function parseBankCsv(text){
     }
     const omschr = (cells[iOmschr]||'').trim();
     const tegen = iTegen >= 0 ? (cells[iTegen]||'').trim() : '';
-    const notitie = [tegen, omschr].filter(s=>s && s !== tegen).join(' · ') || tegen || omschr;
+    const notitie = [tegen, omschr].filter((x, i, a)=>x && a.indexOf(x) === i).join(' · ') || tegen || omschr;
     transacties.push({
       datum,
       bedrag: Math.round(bedragEuro * 100),
       type,
       notitie: notitie.substring(0, 100),
+      tegen: tegen,
       categorie: 'Overig'
     });
   }
@@ -17484,14 +17736,14 @@ async function verwerkGekozenPdfBestand(file){
       ){
         wijkenTekst = probeText;
       }
-      if(!wijkenTekst && prvIsBankAfschriftTekst(probeText)) bankAfschrift = true;
+      if(!wijkenTekst && prvIsBankAfschriftTekst(probeText)) bankAfschrift = prvBankVanIban(prvEigenIban(probeText)) || prvBankUitTekst(probeText) || true;
     }catch(probeErr){ console.warn('[Looplijst] Wijken-detectie mislukt, ga door als normale looplijst', probeErr); }
 
     if(bankAfschrift){
       // bankafschrift (bijv. gedeeld vanuit de ABN AMRO-app): naar het huishoudboekje
       parsing.classList.remove('show');
       if(!prvAan()){ prvInstel.aan = true; prvBewaarInstel(); }
-      prvOntgrendel(()=>{ prvGa({mode:'p_huishoud'}); prvVerwerkAfschrift(file); });
+      prvOntgrendel(()=>{ prvGa({mode:'p_huishoud'}); prvBankKeuze({bestand:file, herkend: typeof bankAfschrift === 'string' ? bankAfschrift : ''}); });
       return;
     }
     if(wijkenTekst){
