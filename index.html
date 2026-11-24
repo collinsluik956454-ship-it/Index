@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.12');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.13');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1837,6 +1837,36 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-controle-rij.info .prv-controle-ic{background:#EDE9FE;color:#6D28D9}
 .prv-controle-rij.fout .nj-rij-sub{color:#9A3412}
 .prv-controle-rij .prv-chip{align-self:center}
+
+/* personen */
+.prs-av{display:inline-flex;align-items:center;justify-content:center;border-radius:99px;color:#fff;font-weight:800;flex:0 0 auto;line-height:1}
+.prs-chip{display:none}
+html[data-thema] body.nj-start .prs-chip:not([hidden]){display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px 0 5px;border:none;border-radius:99px;background:#fff;
+  box-shadow:0 1px 3px rgba(14,26,43,.14);font-family:inherit;font-size:15px;font-weight:700;color:#0E1A2B;cursor:pointer;flex:0 0 auto}
+html[data-thema] body.nj-start .prs-chip:not([hidden]) ~ .titles{display:none}
+html[data-thema] body.nj-start header .htop{justify-content:space-between}
+html[data-thema] body.nj-persoon header .menu{display:none}
+.prv-start-groet{grid-column:1/-1;margin:0 4px 2px;font-size:15px;color:var(--nj-hdr-muted)}
+.prs-kies{min-height:calc(100dvh - 90px);display:flex;flex-direction:column;justify-content:center;gap:24px;padding-bottom:24px}
+.prs-kop{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.prs-kop h2{margin:8px 0 0;font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--nj-hdr-ink)}
+.prs-kop p{margin:0;font-size:15px;line-height:1.45;color:var(--nj-hdr-muted);max-width:300px}
+.prs-logo{width:56px;height:56px;border-radius:16px;background:var(--nj-knop);color:var(--nj-knop-ink);display:flex;align-items:center;justify-content:center}
+.prs-tegels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prs-tegel{min-height:196px;border:1px solid var(--nj-lijn);border-radius:22px;background:var(--nj-kaart);color:var(--nj-ink);font-family:inherit;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:16px;cursor:pointer;box-shadow:0 3px 10px rgba(14,26,43,.06);min-width:0}
+.prs-tegel:active{transform:scale(.98)}
+.prs-tegel b{font-size:20px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prs-tegel small{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--nj-muted)}
+.prs-toevoegen{align-self:center;min-height:48px;padding:0 18px;border:1px dashed #B9C3D0;border-radius:14px;background:none;font-family:inherit;font-size:15px;font-weight:700;color:var(--nj-hdr-ink);
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.prs-voet{display:flex;justify-content:center;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--nj-hdr-muted)}
+.prs-blad .nj-lijst{margin-bottom:2px}
+.prs-rij{min-height:72px}
+.prs-vink{width:28px;height:28px;border-radius:99px;background:#DCFCE7;color:#15803D;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.prs-beheer-rij{gap:12px}
+.prs-samen-tag{background:#E0F2FE;color:#075985}
+.prs-delen .nj-chip{display:inline-flex;align-items:center;gap:5px}
 </style>
 <script>
 // Offline service worker
@@ -1891,6 +1921,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
   <div class="prv-schakel" id="prvSchakel" role="group" aria-label="Werk of privé"><button type="button" data-kant="werk" aria-pressed="true"><span data-nj-ic="pakket" data-nj-s="18" style="display:flex"></span>Werk</button><button type="button" data-kant="prive" aria-pressed="false"><span data-nj-ic="home" data-nj-s="18" style="display:flex"></span>Privé</button></div>
   <div class="htop">
     <button class="back hidden" id="back" aria-label="Terug">‹</button>
+    <button type="button" class="prs-chip" id="prsChip" hidden aria-label="Wisselen van persoon"></button>
     <div class="titles">
       <div class="crumb" id="crumb">—</div>
       <h1 id="title">—</h1>
@@ -1953,6 +1984,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
   <div class="nj-sheet-groep">
     <button class="action" id="themaBtn"><span class="ic" data-nj-ic="thema"></span><span>Thema: <b id="themaTxt">Auto</b></span></button>
     <button class="action" id="priveBtn"><span class="ic" data-nj-ic="slot"></span><span>Privé-gedeelte: <b id="priveTxt">Aan</b></span></button>
+    <button class="action" id="prsBtn"><span class="ic" data-nj-ic="schakel"></span><span>Persoon: <b id="prsTxt">—</b> · wisselen</span></button>
     <button class="action" id="apiKeyBtn"><span class="ic" data-nj-ic="sleutel"></span><span>API-sleutel voor muntherkenning</span></button>
     <button class="action" id="forceUpdateBtn"><span class="ic" data-nj-ic="ververs"></span><span>Nieuwste versie ophalen (app verversen)</span></button>
   </div>
@@ -2113,7 +2145,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.12';
+const APP_VERSION = '2026-11-24.13';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2517,7 +2549,7 @@ function njMetTabbar(m){ return m === 'home' || njIsHub(m) || NJ_MET_TABBAR.inde
 
 function njZetChrome(){
   var m = view.mode;
-  var hub = (m === 'home' || njIsHub(m) || m === 'start' || njIsPriveHub(m));
+  var hub = (m === 'home' || njIsHub(m) || m === 'start' || m === 'persoon' || njIsPriveHub(m));
   document.body.classList.toggle('nj-hub', hub);
   prvZetChrome(m);
   document.body.classList.toggle('nj-tabs', njMetTabbar(m));
@@ -2739,7 +2771,7 @@ try{ prvNotities = JSON.parse(localStorage.getItem(STORAGE_NOTITIES)) || []; }ca
 function prvBewaarNotities(){ try{ localStorage.setItem(STORAGE_NOTITIES, JSON.stringify(prvNotities)); }catch(e){} }
 function prvAan(){ return !!(prvInstel && prvInstel.aan); }
 var PRV_HUBS = ['p_overzicht','p_agenda','p_huishoud','p_notities','p_instel'];
-var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel'};
+var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel'};
 function prvTerug(){
   if(view.mode === 'p_spaar' && view.bewerk && view.id !== 'nieuw'){ prvGa({mode:'p_spaar', id:view.id}); return; }
   prvGa({mode: PRV_OUDER[view.mode] || 'p_overzicht'});
@@ -2961,7 +2993,9 @@ function prvStartView(){
 
 // ----- chrome: schakelaar en privé-tabbalk -----
 function prvZetChrome(m){
-  const prive = njIsPrive(m), start = m === 'start';
+  const prive = njIsPrive(m), start = m === 'start' || m === 'persoon';
+  document.body.classList.toggle('nj-persoon', m === 'persoon');
+  try{ prsZetChip(m); }catch(e){}
   document.body.classList.toggle('nj-prive', prive);
   document.body.classList.toggle('nj-ptabs', prive);
   document.body.classList.toggle('nj-start', start);
@@ -3006,6 +3040,8 @@ function njRenderStart(){
   main.innerHTML = '';
   const wrap = document.createElement('div');
   wrap.className = 'prv-start';
+  const ik = prsAan() ? prsIk() : null;
+  if(ik){ const g = document.createElement('p'); g.className = 'prv-start-groet'; g.textContent = prsGroet()+' '+ik.naam+', wat ga je doen?'; wrap.appendChild(g); }
   const knop = (kant, ic, titel, sub, extra)=>{
     const b = document.createElement('button');
     b.type = 'button';
@@ -3044,6 +3080,7 @@ function njRenderPrive(){
   if(m === 'p_vastelasten'){ return prvVasteLasten(wrap, kop); }
   if(m === 'p_spaar'){ return prvSpaar(wrap, kop); }
   if(m === 'p_agendacontrole'){ return prvAgendaControle(wrap, kop); }
+  if(m === 'p_personen'){ return prsBeheer(wrap, kop); }
   if(m === 'p_notities'){ kop('Privé', 'Notities'); return prvNotitieLijst(wrap); }
   if(m === 'p_notitie'){ return prvNotitie(wrap, kop); }
   if(m === 'p_instel'){ kop('Privé', 'Meer'); return prvInstellingen(wrap); }
@@ -3338,14 +3375,14 @@ function prvPotjes(wrap){
 }
 
 // ----- notities -----
-function prvNotitiesGesorteerd(){ return prvNotities.slice().sort((a,b)=>((b.vast?1:0) - (a.vast?1:0)) || ((b.gewijzigd || 0) - (a.gewijzigd || 0))); }
+function prvNotitiesGesorteerd(){ return prvNotities.filter(prsMagZien).sort((a,b)=>((b.vast?1:0) - (a.vast?1:0)) || ((b.gewijzigd || 0) - (a.gewijzigd || 0))); }
 function prvNotitieRij(n){
   const r = document.createElement('button'); r.type = 'button'; r.className = 'nj-rij prv-notitie-rij';
   const titel = n.titel || (n.soort ? PRV_LIJST_NAAM[n.soort] : '') || (n.lijst ? (n.items[0] && n.items[0].t) : (n.tekst || '').split('\n')[0]) || 'Zonder titel';
   const af = n.lijst ? n.items.filter(i=>i.af).length : 0;
   const sub = n.soort ? prvLijstSub(n) : n.lijst ? af+' van '+n.items.length+' afgevinkt' : (n.tekst || '').replace(/\s+/g, ' ').slice(0, 70);
   r.innerHTML = '<span class="nj-ico prv-ico">'+njIco(n.soort === 'boodschap' ? 'mandje' : n.lijst ? 'lijst' : 'notitie', 20)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(titel)+
-    (n.vast ? ' <span class="prv-vast-tag">'+njIco('punaise', 12, 2.4)+'Vast</span>' : '')+'</span><span class="nj-rij-sub">'+njEsc(sub || 'Leeg')+'</span></span><span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
+    (n.vast ? ' <span class="prv-vast-tag">'+njIco('punaise', 12, 2.4)+'Vast</span>' : '')+(prsAan() && !n.soort && (n.samen || !n.van) ? ' <span class="prv-vast-tag prs-samen-tag">Samen</span>' : '')+'</span><span class="nj-rij-sub">'+njEsc(sub || 'Leeg')+'</span></span><span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>';
   r.onclick = ()=>prvGa({mode:'p_notitie', id:n.id});
   return r;
 }
@@ -3384,6 +3421,17 @@ function prvNotitie(wrap, kop){
     '<button type="button" class="nj-knop-rand prv-knop-rand" data-a="deel">'+njIco('deel', 18, 2.2)+'<span>Delen</span></button>';
   acties.querySelector('[data-a="vast"]').onclick = ()=>{ n.vast = !n.vast; bewaar(); toast(n.vast ? 'Staat nu bovenaan' : 'Niet meer vast'); render(); };
   acties.querySelector('[data-a="deel"]').onclick = ()=>{ const t = prvNotitieTekst(n).trim(); if(!t){ toast('Deze notitie is nog leeg', true); return; } prvDeel(n.titel || 'Notitie', t); };
+  if(prsAan()){
+    // van jezelf of samen
+    const ik = prsIk(), samen = !!n.samen || !n.van;
+    const wie = prsData.lijst.filter(p=>!ik || p.id !== ik.id).map(p=>p.naam).join(' en ') || 'de anderen';
+    const sd = document.createElement('div');
+    sd.className = 'nj-chips prv-soort prs-delen';
+    sd.setAttribute('role', 'group'); sd.setAttribute('aria-label', 'Wie ziet deze notitie');
+    sd.innerHTML = '<button type="button" class="nj-chip'+(samen ? '' : ' aan')+'" data-s="0">'+njIco('slot', 14, 2.4)+' Alleen ik</button><button type="button" class="nj-chip'+(samen ? ' aan' : '')+'" data-s="1">Samen met '+njEsc(wie)+'</button>';
+    sd.querySelectorAll('[data-s]').forEach(b=>{ b.onclick = ()=>{ const s = b.getAttribute('data-s') === '1'; if(!n.van && ik) n.van = ik.id; n.samen = s; bewaar(); toast(s ? 'Gedeeld met '+wie : 'Alleen voor jou'); render(); }; });
+    k.appendChild(sd);
+  }
 
   const ti = k.querySelector('.prv-notitie-titel');
   ti.oninput = ()=>{ n.titel = ti.value; document.getElementById('title').textContent = n.titel || 'Notitie'; bewaar(); };
@@ -3498,6 +3546,8 @@ function prvInstellingen(wrap){
 
   const as = prvSectie(wrap, 'App');
   const al = document.createElement('div'); al.className = 'nj-lijst';
+  if(prsAan()) al.appendChild(prvActieRij('schakel', 'Personen en apparaten', 'Wie er is, pincodes en gekoppelde telefoons', ()=>prvGa({mode:'p_personen'})));
+  else al.appendChild(prvActieRij('schakel', 'Inloggen met personen', 'Staat uit: iedereen ziet alles', ()=>{ prsData.aan = true; prsBewaar(); toast('Inloggen met personen staat aan'); prsZetIk(null); view = {mode:'persoon'}; render(); }));
   al.appendChild(prvActieRij('thema', 'Thema, synchroniseren en meer', 'Het gewone Meer-menu van de app', ()=>openSheet()));
   as.appendChild(al);
 }
@@ -4404,6 +4454,7 @@ function prvNieuwKeuze(){
   const keuze = (ic, titel, sub, fn)=>{ const r = prvActieRij(ic, titel, sub, ()=>{ bg.remove(); fn(); }); l.appendChild(r); };
   keuze('notitie', 'Notitie', 'Tekst of een lijstje om af te vinken', ()=>{
     const n = {id:'n'+Date.now(), titel:'', tekst:'', lijst:false, items:[], gewijzigd:Date.now()};
+    prsNotitieEigenaar(n);
     prvNotities.push(n); prvBewaarNotities();
     prvGa({mode:'p_notitie', id:n.id, nieuw:true});
   });
@@ -4714,6 +4765,258 @@ function prvAgendaControle(wrap, kop){
   };
   wrap.appendChild(b);
 }
+
+// ===================== PERSONEN: wie gebruikt de app (Collin, Charlotte, ...) =====================
+// De lijst met personen (en hun pincode) gaat mee met synchroniseren; wie er op DIT apparaat is
+// ingelogd staat alleen hier. Samen: looplijst/werk, agenda, huishoudboekje, boodschappen, taken.
+// Van jezelf: je notities (per notitie te delen).
+const STORAGE_PERSONEN = 'looplijst_v23_personen';
+const STORAGE_APPARATEN = 'looplijst_v23_apparaten';
+const STORAGE_IK = 'looplijst_persoon';
+const STORAGE_APPARAAT_ID = 'looplijst_apparaat_id';
+const PRS_KLEUREN = ['#0F766E', '#C2410C', '#0B63CE', '#B91C1C', '#4D7C0F', '#A21CAF'];
+var prsData = null;
+function prsLaad(){
+  try{ prsData = JSON.parse(localStorage.getItem(STORAGE_PERSONEN)); }catch(e){ prsData = null; }
+  if(!prsData || !Array.isArray(prsData.lijst)) prsData = {aan:true, lijst:[{id:'collin', naam:'Collin', kleur:'#0F766E'}, {id:'charlotte', naam:'Charlotte', kleur:'#C2410C'}]};
+}
+prsLaad();
+function prsBewaar(){ try{ localStorage.setItem(STORAGE_PERSONEN, JSON.stringify(prsData)); }catch(e){} }
+function prsAan(){ return !!(prsData && prsData.aan !== false && prsData.lijst.length); }
+function prsIk(){ let id = ''; try{ id = localStorage.getItem(STORAGE_IK) || ''; }catch(e){} return prsData.lijst.find(p=>p.id === id) || null; }
+function prsAvatar(p, maat){ return '<span class="prs-av" style="background:'+njEsc(p.kleur || '#5A6A7E')+';width:'+maat+'px;height:'+maat+'px;font-size:'+Math.round(maat*0.42)+'px" aria-hidden="true">'+njEsc((p.naam || '?').charAt(0).toUpperCase())+'</span>'; }
+function prsApparaatId(){
+  let id = ''; try{ id = localStorage.getItem(STORAGE_APPARAAT_ID) || ''; }catch(e){}
+  if(!id){ id = 'd'+Date.now().toString(36)+Math.random().toString(36).slice(2, 6); try{ localStorage.setItem(STORAGE_APPARAAT_ID, id); }catch(e){} }
+  return id;
+}
+function prsApparaatSoort(){ const ua = navigator.userAgent || ''; return (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) ? 'Tablet' : 'Telefoon'; }
+function prsApparaten(){ try{ return JSON.parse(localStorage.getItem(STORAGE_APPARATEN)) || {}; }catch(e){ return {}; } }
+function prsRegistreer(){
+  // alleen opslaan als er iets verandert (anders herladen de andere apparaten steeds)
+  const reg = prsApparaten(), id = prsApparaatId(), ik = prsIk();
+  const oud = reg[id] || {};
+  const nieuw = {soort:prsApparaatSoort(), persoon: ik ? ik.id : '', sinds: oud.sinds || Date.now(), laatst: Date.now()};
+  if(oud.persoon === nieuw.persoon && oud.soort === nieuw.soort && Date.now() - (oud.laatst || 0) < 7*86400000) return;
+  reg[id] = nieuw;
+  try{ localStorage.setItem(STORAGE_APPARATEN, JSON.stringify(reg)); }catch(e){}
+}
+function prsZetIk(p){
+  try{ if(p) localStorage.setItem(STORAGE_IK, p.id); else localStorage.removeItem(STORAGE_IK); }catch(e){}
+  prvOpen = false;   // Privé opnieuw ontgrendelen voor de nieuwe persoon
+  prsRegistreer();
+}
+function prsNaarStart(){
+  view = prvAan() ? {mode:'start'} : {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
+  render();
+}
+function prsGroet(){ const u = new Date().getHours(); return u < 6 ? 'Goedenacht' : u < 12 ? 'Goedemorgen' : u < 18 ? 'Goedemiddag' : 'Goedenavond'; }
+
+// pincode per persoon
+async function prsPinKlopt(p, pin){ return !!(p.pin && (await prvHash(pin, p.pin.salt)) === p.pin.hash); }
+function prsPinInstellen(p, klaar, metLater){
+  prvPinScherm({titel:'Kies je pincode, '+p.naam, sub:'4 cijfers, alleen voor jou', annuleerTekst: metLater ? 'Later' : 'Annuleren',
+    annuleer: ()=>{ if(metLater && klaar) klaar(); },
+    bijOk: ()=>true,
+    daarna: pin1=>{
+      setTimeout(()=>prvPinScherm({titel:'Herhaal je pincode', sub:'Nog een keer dezelfde 4 cijfers', annuleerTekst: metLater ? 'Later' : 'Annuleren',
+        annuleer: ()=>{ if(metLater && klaar) klaar(); },
+        bijOk: async pin2=>{
+          if(pin2 !== pin1) return 'Niet hetzelfde, probeer opnieuw';
+          const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+          p.pin = {salt:salt, hash: await prvHash(pin2, salt)};
+          prsBewaar();
+          return true;
+        },
+        daarna: ()=>{ toast('Pincode ingesteld'); if(klaar) klaar(); }
+      }), 120);
+    }
+  });
+}
+function prsInloggen(p){
+  const klaar = ()=>{ prsZetIk(p); toast(prsGroet()+' '+p.naam); prsNaarStart(); };
+  if(!p.pin){ prsPinInstellen(p, klaar, true); return; }
+  prvPinScherm({titel:'Hoi '+p.naam, sub:'Voer je pincode in', annuleerTekst:'Terug',
+    bijOk: async pin=>(await prsPinKlopt(p, pin)) ? true : 'Onjuiste pincode',
+    daarna: klaar,
+    vergeten: ()=>prsPinVergeten(p, klaar)
+  });
+}
+function prsPinVergeten(p, klaar){
+  // een nieuwe pincode mag als een andere persoon met zijn/haar pincode meekijkt (of als niemand anders een pincode heeft)
+  const ander = prsData.lijst.filter(x=>x.id !== p.id && x.pin);
+  if(!ander.length){
+    if(!confirm('Pincode van '+p.naam+' vergeten?\n\nJe kiest nu een nieuwe pincode.')) return;
+    delete p.pin; prsBewaar(); prsPinInstellen(p, klaar, false); return;
+  }
+  const a = ander[0];
+  toast('Laat '+a.naam+' even zijn/haar pincode invullen');
+  prvPinScherm({titel:a.naam+' helpt even', sub:'Pincode van '+a.naam+' om '+p.naam+' een nieuwe pincode te geven', annuleerTekst:'Annuleren',
+    bijOk: async pin=>(await prsPinKlopt(a, pin)) ? true : 'Onjuiste pincode',
+    daarna: ()=>{ delete p.pin; prsBewaar(); setTimeout(()=>prsPinInstellen(p, klaar, false), 120); }
+  });
+}
+function prsToevoegen(na){
+  const naam = (prompt('Naam van de nieuwe persoon:') || '').trim();
+  if(!naam) return;
+  if(prsData.lijst.some(p=>p.naam.toLowerCase() === naam.toLowerCase())){ toast(naam+' staat er al', true); return; }
+  const gebruikt = new Set(prsData.lijst.map(p=>p.kleur));
+  const p = {id:'p'+Date.now().toString(36), naam:naam, kleur: PRS_KLEUREN.find(k=>!gebruikt.has(k)) || PRS_KLEUREN[prsData.lijst.length % PRS_KLEUREN.length]};
+  prsData.lijst.push(p); prsBewaar();
+  toast(naam+' toegevoegd');
+  if(na) na(p);
+}
+
+// scherm: wie ben jij?
+function prsRender(){
+  if(!prsAan()){ return prsNaarStart(); }
+  const main = document.getElementById('main');
+  document.getElementById('crumb').textContent = '';
+  document.getElementById('title').textContent = '';
+  main.innerHTML = '';
+  const w = document.createElement('div');
+  w.className = 'prs-kies';
+  const aantal = Object.keys(prsApparaten()).length;
+  w.innerHTML = '<div class="prs-kop"><span class="prs-logo">'+njIco('pakket', 28)+'</span><h2>Wie ben jij?</h2><p>Kies jezelf. Je hoeft dit op dit apparaat maar één keer te doen.</p></div><div class="prs-tegels"></div>'+
+    '<button type="button" class="prs-toevoegen">'+njIco('plus', 18, 2.4)+'Iemand toevoegen</button>'+
+    (aantal ? '<div class="prs-voet">'+njIco('schakel', 16)+'Gekoppeld: '+aantal+' apparat'+(aantal === 1 ? 'uur' : 'en')+'</div>' : '');
+  const t = w.querySelector('.prs-tegels');
+  prsData.lijst.forEach(p=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'prs-tegel';
+    b.innerHTML = prsAvatar(p, 84)+'<b>'+njEsc(p.naam)+'</b><small>'+(p.pin ? njIco('slot', 12, 2.4)+'Met pincode' : 'Nog geen pincode')+'</small>';
+    b.onclick = ()=>prsInloggen(p);
+    t.appendChild(b);
+  });
+  w.querySelector('.prs-toevoegen').onclick = ()=>prsToevoegen(()=>render());
+  main.appendChild(w);
+}
+
+// wisselen (tik op je naam)
+function prsWissel(){
+  const oud = document.getElementById('prsWissel'); if(oud) oud.remove();
+  const ik = prsIk();
+  const bg = document.createElement('div');
+  bg.id = 'prsWissel';
+  bg.className = 'prv-blad-bg';
+  const blad = document.createElement('div');
+  blad.className = 'prv-blad prs-blad';
+  blad.setAttribute('role', 'dialog');
+  blad.setAttribute('aria-modal', 'true');
+  blad.setAttribute('aria-label', 'Wie gebruikt de app?');
+  blad.innerHTML = '<div class="prv-blad-kop"><div><b>Wie gebruikt de app?</b></div><button type="button" class="nj-ib prv-blad-x" aria-label="Sluiten">'+njIco('kruis', 18, 2.4)+'</button></div><div class="nj-lijst"></div>'+
+    '<div class="prv-duo"><button type="button" class="nj-knop-rand prv-knop-rand" data-a="uit">Uitloggen</button><button type="button" class="nj-knop-rand prv-knop-rand" data-a="erbij">Iemand toevoegen</button></div>'+
+    (prvAan() ? '<button type="button" class="nj-knop-rand prv-knop-rand" data-a="beheer">'+njIco('schakel', 18)+'<span>Personen en apparaten</span></button>' : '')+
+    '<p class="prv-uitleg">Samen: looplijst, agenda, huishoudboekje, boodschappen en taken. Van jezelf: je notities.</p>';
+  const l = blad.querySelector('.nj-lijst');
+  prsData.lijst.forEach(p=>{
+    const r = document.createElement('button');
+    r.type = 'button';
+    r.className = 'nj-rij prs-rij';
+    const isIk = ik && ik.id === p.id;
+    r.innerHTML = prsAvatar(p, 44)+'<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(p.naam)+'</span><span class="nj-rij-sub">'+(isIk ? 'Nu ingelogd op dit apparaat' : 'Wisselen'+(p.pin ? ' (vraagt pincode)' : ''))+'</span></span>'+
+      (isIk ? '<span class="prs-vink">'+njIco('check', 16, 3)+'</span>' : '<span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>');
+    r.onclick = ()=>{ if(isIk){ bg.remove(); return; } bg.remove(); prsInloggen(p); };
+    l.appendChild(r);
+  });
+  const sluit = ()=>bg.remove();
+  blad.querySelector('.prv-blad-x').onclick = sluit;
+  blad.querySelector('[data-a="uit"]').onclick = ()=>{ sluit(); prsZetIk(null); view = {mode:'persoon'}; render(); };
+  blad.querySelector('[data-a="erbij"]').onclick = ()=>{ sluit(); prsToevoegen(p=>prsInloggen(p)); };
+  const bh = blad.querySelector('[data-a="beheer"]'); if(bh) bh.onclick = ()=>{ sluit(); njGaPrive('p_personen'); };
+  bg.appendChild(blad);
+  bg.onclick = e=>{ if(e.target === bg) sluit(); };
+  document.body.appendChild(bg);
+}
+
+// Privé → Meer → Personen en apparaten
+function prsBeheer(wrap, kop){
+  kop('Privé · Meer', 'Personen en apparaten');
+  const ik = prsIk();
+  const s1 = prvSectie(wrap, 'Personen');
+  const l1 = document.createElement('div'); l1.className = 'nj-lijst';
+  prsData.lijst.forEach(p=>{
+    const isIk = ik && ik.id === p.id;
+    const r = document.createElement('div');
+    r.className = 'prv-instel-rij prs-beheer-rij';
+    r.innerHTML = prsAvatar(p, 40)+'<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(p.naam)+(isIk ? ' <span class="prv-vast-tag">jij</span>' : '')+'</span><span class="nj-rij-sub">'+(p.pin ? 'Met pincode' : 'Nog geen pincode')+'</span></span>';
+    if(isIk){
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'nj-chip prv-chip'; b.textContent = p.pin ? 'Pincode wijzigen' : 'Pincode instellen';
+      b.onclick = ()=>{
+        if(!p.pin){ prsPinInstellen(p, ()=>render(), false); return; }
+        prvPinScherm({titel:'Huidige pincode', sub:'Om je pincode te wijzigen', bijOk: async pin=>(await prsPinKlopt(p, pin)) ? true : 'Onjuiste pincode', daarna: ()=>setTimeout(()=>prsPinInstellen(p, ()=>render(), false), 120)});
+      };
+      r.appendChild(b);
+    } else {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'nj-ib prv-weg'; b.setAttribute('aria-label', p.naam+' verwijderen'); b.innerHTML = njIco('wis', 16);
+      b.onclick = ()=>{ if(!confirm(p.naam+' uit de lijst halen? Gedeelde dingen blijven staan.')) return; prsData.lijst = prsData.lijst.filter(x=>x.id !== p.id); prsBewaar(); render(); };
+      r.appendChild(b);
+    }
+    l1.appendChild(r);
+  });
+  l1.appendChild(prvActieRij('plus', 'Iemand toevoegen', '', ()=>prsToevoegen(()=>render())));
+  s1.appendChild(l1);
+  const s2 = prvSectie(wrap, 'Gekoppelde apparaten');
+  const l2 = document.createElement('div'); l2.className = 'nj-lijst';
+  const reg = prsApparaten(), mijnId = prsApparaatId();
+  const ids = Object.keys(reg).sort((a,b)=>(reg[b].laatst || 0) - (reg[a].laatst || 0));
+  if(!ids.length) l2.appendChild(prvLeeg('Nog geen apparaten'));
+  ids.forEach(id=>{
+    const a = reg[id], p = prsData.lijst.find(x=>x.id === a.persoon);
+    const r = document.createElement('div');
+    r.className = 'prv-instel-rij';
+    const dagen = Math.floor((Date.now() - (a.laatst || 0)) / 86400000);
+    r.innerHTML = '<span class="nj-ico prv-ico">'+njIco(a.soort === 'Tablet' ? 'kaart' : 'pakket', 18)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc((a.soort || 'Apparaat')+(p ? ' van '+p.naam : ''))+(id === mijnId ? ' <span class="prv-vast-tag">dit apparaat</span>' : '')+'</span><span class="nj-rij-sub">'+(p ? 'Ingelogd als '+njEsc(p.naam) : 'Niemand ingelogd')+' · '+(dagen < 1 ? 'vandaag gezien' : dagen === 1 ? 'gisteren gezien' : dagen+' dagen geleden')+'</span></span>';
+    if(id !== mijnId){
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'nj-ib prv-weg'; b.setAttribute('aria-label', 'Apparaat uit de lijst halen'); b.innerHTML = njIco('wis', 16);
+      b.onclick = ()=>{ if(!confirm('Dit apparaat uit de lijst halen? (Het blijft gekoppeld zolang de app er synchroniseert.)')) return; delete reg[id]; try{ localStorage.setItem(STORAGE_APPARATEN, JSON.stringify(reg)); }catch(e){} render(); };
+      r.appendChild(b);
+    }
+    l2.appendChild(r);
+  });
+  s2.appendChild(l2);
+  const info = document.createElement('div');
+  info.className = 'prv-info';
+  info.innerHTML = njIco('info', 18, 2.2)+'<span>Samen: looplijst en werk, agenda, huishoudboekje, boodschappen en taken. Van jezelf: je notities (per notitie kun je kiezen om hem te delen). Een nieuw apparaat koppel je door de app te installeren; hij synchroniseert vanzelf en vraagt dan één keer wie je bent.</span>';
+  wrap.appendChild(info);
+  const s3 = prvSectie(wrap, 'Inloggen');
+  const l3 = document.createElement('div'); l3.className = 'nj-lijst';
+  l3.appendChild(prvSchakelRij('Inloggen met personen', 'Uit = niemand hoeft te kiezen wie hij is; alle notities zijn dan voor iedereen', prsAan(), ()=>{
+    if(prsAan() && !confirm('Inloggen met personen uitzetten?')) return;
+    prsData.aan = !prsAan(); prsBewaar(); render();
+  }));
+  s3.appendChild(l3);
+}
+
+// notities: van jezelf, of samen
+function prsMagZien(n){
+  if(!prsAan() || n.soort || n.samen || !n.van) return true;
+  const ik = prsIk();
+  return !ik || n.van === ik.id;
+}
+function prsNotitieEigenaar(n){
+  if(!prsAan()) return;
+  const ik = prsIk();
+  if(ik && !n.van && !n.soort) { n.van = ik.id; n.samen = false; }
+}
+// in de kop: wie is ingelogd (alleen op het startscherm), en in het Meer-menu
+function prsZetChip(m){
+  const chip = document.getElementById('prsChip');
+  const ik = prsAan() ? prsIk() : null;
+  if(chip){
+    const toon = !!ik && m === 'start';
+    chip.hidden = !toon;
+    if(toon) chip.innerHTML = prsAvatar(ik, 34)+'<span>'+njEsc(ik.naam)+'</span>'+njIco('neer', 16, 2.4);
+  }
+  const mt = document.getElementById('prsTxt'), mb = document.getElementById('prsBtn');
+  if(mb) mb.hidden = !prsAan();
+  if(mt) mt.textContent = ik ? ik.naam : 'niemand';
+}
+(function(){
+  const chip = document.getElementById('prsChip'); if(chip) chip.onclick = prsWissel;
+  const mb = document.getElementById('prsBtn'); if(mb) mb.onclick = ()=>{ closeSheet(); if(prsAan()) prsWissel(); };
+})();
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
 var NJ_SEG_KLEUREN = {
@@ -7920,7 +8223,7 @@ function updateBackKnop(){
   const hideBtn = document.getElementById('hideToggle');
   const footstat = document.getElementById('footstat');
   njZetChrome();
-  if(view.mode === 'start' || njIsPriveHub(view.mode)){
+  if(view.mode === 'start' || view.mode === 'persoon' || njIsPriveHub(view.mode)){
     back.classList.add('hidden');
     if(footbar) footbar.style.display = 'none';
     return;
@@ -7981,6 +8284,7 @@ function render(){
     DATA = DATA_ECHT; // buiten Kerstkaartjes altijd de echte, actuele looplijst
     kerstSessieNee = ''; // Kerstkaartjes verlaten: bij volgende keer openen weer vragen
   }
+  if(view.mode==='persoon') return prsRender();
   if(view.mode==='start') return njRenderStart();
   if(njIsPrive(view.mode)) return njRenderPrive();
   if(njIsHub(view.mode)) return renderNjHub();
@@ -16231,7 +16535,7 @@ const ENKEL_SCHERM = ['segbijwerken','mijnvolgorde','kaart','segment','bonus','p
 document.getElementById('back').onclick=()=>{
   const goHome = njTerugNaarTab; // terug naar de tab (Vandaag/Bezorgen/Geld/Bijhouden) waar je vandaan kwam
   if(view.mode==='home' || njIsHub(view.mode)) return; // tab-pagina's hebben geen terug
-  if(view.mode==='start' || njIsPriveHub(view.mode)) return;
+  if(view.mode==='start' || view.mode==='persoon' || njIsPriveHub(view.mode)) return;
   if(njIsPrive(view.mode)){ prvTerug(); return; }
   if(view.vanKlacht && view.level==='adres'){ view = {mode:view.mode, level:'wijk', wijk:null, ronde:null, straat:null, krant:null}; render(); return; }
   if(ENKEL_SCHERM.indexOf(view.mode)>=0){
@@ -18539,6 +18843,7 @@ function toonStraatToewijzing(parsed, onbekende){
 
 syncToggle();
 if(view.mode === 'home') prvStartView();
+if(prsAan() && !prsIk()) view = {mode:'persoon'};
 render();
 setTimeout(()=>{ njBagLaad().then(()=>{ njSegAutoCheck(); if(njBag && view.mode === 'segment' && njSegWeergave === 'kaart') renderSegment(); }); }, 800);
 
