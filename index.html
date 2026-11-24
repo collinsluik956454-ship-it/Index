@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.3');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1779,6 +1779,17 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-import-rij > b.plus{color:#15803D}
 .prv-blad-knoppen{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
 .prv-blad-knoppen .nj-knop-primair:disabled{opacity:.45}
+
+/* agenda: gekoppeld aan de telefoon-agenda */
+.prv-agenda-bron{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--nj-muted);margin-top:2px}
+.prv-agenda-bron i{width:9px;height:9px;border-radius:99px;flex:0 0 auto}
+.prv-afspraak .nj-rij-sub{white-space:normal}
+.prv-afspraak-titel{font-size:19px;font-weight:800;color:var(--nj-ink)}
+.prv-tel-tip{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 12px;border:1px dashed #C4B5FD;border-radius:16px;background:var(--nj-kaart)}
+.prv-tel-tip .prv-tip-x{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;background:none;color:#8A97A8}
+.prv-instel-select .nj-rij-tekst{gap:6px}
+.prv-instel-select select{min-height:44px;border:1px solid #CFD9E3;border-radius:12px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:15px;padding:8px 10px;margin:2px 0 8px}
+.prv-form select:disabled, .prv-form input:disabled{opacity:.5}
 </style>
 <script>
 // Offline service worker
@@ -2055,7 +2066,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.3';
+const APP_VERSION = '2026-11-24.4';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   kruis:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
@@ -3004,16 +3015,6 @@ function prvFab(tekst, fn){
   document.getElementById('main').appendChild(b);
 }
 function prvLeeg(tekst){ const d = document.createElement('div'); d.className = 'prv-leeg'; d.textContent = tekst; return d; }
-function prvAfsprakenOp(iso){ return agenda.filter(a=>a.datum === iso).sort((a,b)=>(a.tijd || '99').localeCompare(b.tijd || '99')); }
-function prvAfspraakRij(a, metDatum){
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'prv-afspraak';
-  b.innerHTML = '<span class="prv-tijd">'+(a.tijd ? njEsc(a.tijd) : 'hele dag')+(metDatum ? '<small>'+njEsc(PRV_DAGKORT[prvDatum(a.datum).getDay()]+' '+prvDatum(a.datum).getDate()+' '+PRV_MAANDEN[prvDatum(a.datum).getMonth()].slice(0,3))+'</small>' : '')+'</span>'+
-    '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(a.titel)+'</span>'+(a.notitie ? '<span class="nj-rij-sub">'+njEsc(a.notitie)+'</span>' : '')+'</span>';
-  b.onclick = ()=>prvGa({mode:'p_afspraak', id:a.id});
-  return b;
-}
 function prvSaldo(ms){ try{ return maandTotalen(ms); }catch(e){ return {inkomsten:0, uitgaven:0, saldo:0}; } }
 
 function prvOverzicht(wrap){
@@ -3055,9 +3056,6 @@ function prvOverzicht(wrap){
     wrap.appendChild(b);
   }
 }
-function prvAfsprakenTussen(van, tot){
-  return agenda.filter(a=>a.datum >= van && a.datum <= tot).sort((a,b)=>(a.datum+(a.tijd||'99')).localeCompare(b.datum+(b.tijd||'99')));
-}
 
 var prvAgendaDag = null;
 function prvAgenda(wrap, kop){
@@ -3086,6 +3084,7 @@ function prvAgenda(wrap, kop){
   week.appendChild(dagen);
   week.appendChild(pijl(1, 'Volgende week'));
   wrap.appendChild(week);
+  prvTelTip(wrap);
   const dagSectie = (iso)=>{
     const sec = prvSectie(wrap, (iso === vandaag ? 'Vandaag · ' : '')+prvHoofd(prvDagLang(iso)));
     const l = document.createElement('div'); l.className = 'nj-lijst';
@@ -3107,45 +3106,6 @@ function prvAgenda(wrap, kop){
   prvFab('Afspraak', ()=>prvGa({mode:'p_afspraak', datum:sel}));
 }
 function prvVeld(label, html){ return '<label class="prv-veld"><span>'+njEsc(label)+'</span>'+html+'</label>'; }
-function prvAfspraak(wrap, kop){
-  const a = view.id ? agenda.find(x=>x.id === view.id) : null;
-  kop('Privé · Agenda', a ? 'Afspraak' : 'Nieuwe afspraak');
-  const k = document.createElement('section');
-  k.className = 'nj-kaart prv-form';
-  k.innerHTML = prvVeld('Wat', '<input id="prvAgTitel" type="text" placeholder="Bijv. tandarts" value="'+njEsc(a ? a.titel : '')+'">')+
-    '<div class="prv-duo">'+prvVeld('Datum', '<input id="prvAgDatum" type="date" value="'+njEsc(a ? a.datum : (view.datum || vandaagIso()))+'">')+
-    prvVeld('Tijd (mag leeg)', '<input id="prvAgTijd" type="time" value="'+njEsc(a && a.tijd ? a.tijd : '')+'">')+'</div>'+
-    prvVeld('Notitie (mag leeg)', '<textarea id="prvAgNotitie" rows="3">'+njEsc(a && a.notitie ? a.notitie : '')+'</textarea>');
-  wrap.appendChild(k);
-  const opslaan = document.createElement('button');
-  opslaan.type = 'button';
-  opslaan.className = 'nj-knop-primair prv-knop';
-  opslaan.textContent = a ? 'Opslaan' : 'Toevoegen';
-  opslaan.onclick = ()=>{
-    const titel = document.getElementById('prvAgTitel').value.trim();
-    const datum = document.getElementById('prvAgDatum').value;
-    if(!titel){ toast('Vul in wat het is', true); return; }
-    if(!datum){ toast('Kies een datum', true); return; }
-    const tijd = document.getElementById('prvAgTijd').value, notitie = document.getElementById('prvAgNotitie').value.trim();
-    if(a){ a.titel = titel; a.datum = datum; a.tijd = tijd; a.notitie = notitie; }
-    else agenda.push({id:'a'+Date.now(), titel:titel, datum:datum, tijd:tijd, notitie:notitie});
-    saveAgenda();
-    prvAgendaDag = datum;
-    toast(a ? 'Afspraak opgeslagen' : 'Afspraak toegevoegd');
-    prvGa({mode:'p_agenda'});
-  };
-  wrap.appendChild(opslaan);
-  if(a){
-    const weg = document.createElement('button');
-    weg.type = 'button';
-    weg.className = 'nj-knop-rand prv-knop-weg';
-    weg.textContent = 'Afspraak verwijderen';
-    weg.onclick = ()=>{ if(!confirm('Afspraak "'+a.titel+'" verwijderen?')) return; agenda = agenda.filter(x=>x.id !== a.id); saveAgenda(); toast('Afspraak verwijderd'); prvGa({mode:'p_agenda'}); };
-    wrap.appendChild(weg);
-  }
-  if(!a) setTimeout(()=>{ const i = document.getElementById('prvAgTitel'); if(i) i.focus(); }, 60);
-}
-
 // ----- huishoudboekje -----
 var prvMaand = null;
 function prvWerkVergoeding(){
@@ -3478,6 +3438,8 @@ function prvInstellingen(wrap){
     pl.appendChild(prvActieRij('wis', 'Pincode uitzetten', 'Privé gaat dan open zonder pincode', ()=>prvPinEerstControleren('Om de pincode uit te zetten', ()=>{ try{ localStorage.removeItem(STORAGE_PRIVE_PIN); }catch(e){} toast('Pincode staat uit'); render(); }), true));
   }
   ps.appendChild(pl);
+
+  if(prvInstel.agenda) prvTelInstelSectie(wrap);
 
   const as = prvSectie(wrap, 'App');
   const al = document.createElement('div'); al.className = 'nj-lijst';
@@ -3938,6 +3900,232 @@ async function prvDeel(titel, tekst){
   try{ await navigator.clipboard.writeText(tekst); toast('Gekopieerd, je kunt het nu plakken in WhatsApp'); }
   catch(e){ toast('Delen lukt hier niet', true); }
 }
+
+// ----- PRIVÉ deel 3: agenda, gekoppeld aan de telefoon-agenda (twee kanten op) -----
+// In de Android-app is er window.LooplijstAgenda (MainActivity): die leest en schrijft de agenda van de telefoon
+// (Google-agenda e.d.; OneCalendar laat die ook zien). Zonder koppeling blijven afspraken in de app zelf.
+function prvTel(){ return window.LooplijstAgenda || null; }
+function prvTelToegang(){ try{ return !!(prvTel() && prvTel().toegang()); }catch(e){ return false; } }
+function prvTelAan(){ return !!(prvInstel.agendaKoppel && prvTelToegang()); }
+function prvTelKalenders(){ try{ return JSON.parse(prvTel().kalenders() || '[]'); }catch(e){ return []; } }
+function prvTelStandaardKalender(){
+  const k = prvTelKalenders().filter(x=>x.schrijfbaar);
+  const gekozen = k.find(x=>x.id === prvInstel.agendaKalender);
+  if(gekozen) return gekozen;
+  return k.find(x=>x.hoofd && /google/i.test(x.soort)) || k.find(x=>x.hoofd) || k.find(x=>/google/i.test(x.soort)) || k[0] || null;
+}
+var prvTelCache = null;
+function prvTelVergeet(){ prvTelCache = null; }
+function prvTelNaarItem(e){
+  const it = {id:'t'+e.id+'_'+e.begin, tel:true, eventId:e.id, titel:e.titel || '(geen titel)', notitie:e.notitie || '', plek:e.plek || '', kleur:e.kleur, kalender:e.kalender, kalenderNaam:e.kalenderNaam, herhaalt:!!e.herhaalt, heleDag:!!e.heleDag, begin:e.begin, eind:e.eind};
+  if(e.heleDag){ it.datum = new Date(e.begin).toISOString().slice(0, 10); it.tijd = ''; it.eindTijd = ''; it.totDatum = new Date(Math.max(e.begin, e.eind - 86400000)).toISOString().slice(0, 10); }
+  else { const b = new Date(e.begin), t = new Date(e.eind); it.datum = prvIso(b); it.tijd = String(b.getHours()).padStart(2,'0')+':'+String(b.getMinutes()).padStart(2,'0'); it.eindTijd = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); it.totDatum = prvIso(t); }
+  return it;
+}
+// alle telefoon-afspraken tussen twee datums (met een kleine voorraad, zodat een week maar één keer wordt opgevraagd)
+function prvTelTussen(van, tot){
+  if(!prvTelAan()) return [];
+  if(!(prvTelCache && prvTelCache.van <= van && prvTelCache.tot >= tot && Date.now() - prvTelCache.t < 5000)){
+    const v = prvDatum(van); v.setDate(v.getDate() - 21); v.setHours(0, 0, 0, 0);
+    const t = prvDatum(tot); t.setDate(t.getDate() + 22); t.setHours(0, 0, 0, 0);
+    let lijst = [];
+    try{ lijst = JSON.parse(prvTel().afspraken(String(v.getTime() - 86400000), String(t.getTime() + 86400000)) || '[]').map(prvTelNaarItem); }catch(e){ lijst = []; }
+    prvTelCache = {van:prvIso(v), tot:prvIso(t), t:Date.now(), lijst:lijst};
+  }
+  return prvTelCache.lijst.filter(a=>a.datum <= tot && (a.totDatum || a.datum) >= van);
+}
+function prvSorteer(l){ return l.sort((a,b)=>(a.datum+(a.tijd||'00:00')).localeCompare(b.datum+(b.tijd||'00:00'))); }
+function prvAfsprakenOp(iso){
+  const eigen = agenda.filter(a=>a.datum === iso);
+  const tel = prvTelTussen(iso, iso).map(a=>a.datum === iso ? a : Object.assign({}, a, {doorloop:true}));
+  return eigen.concat(tel).sort((a,b)=>((a.tijd || '00:00').localeCompare(b.tijd || '00:00')));
+}
+function prvAfsprakenTussen(van, tot){ return prvSorteer(agenda.filter(a=>a.datum >= van && a.datum <= tot).concat(prvTelTussen(van, tot).filter(a=>a.datum >= van))); }
+function prvAfspraakRij(a, metDatum){
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'prv-afspraak'+(a.tel ? ' tel' : '');
+  const tijd = a.tijd ? njEsc(a.tijd) : 'hele dag';
+  const sub = [a.plek, a.notitie].filter(Boolean).join(' · ');
+  b.innerHTML = '<span class="prv-tijd">'+tijd+(metDatum ? '<small>'+njEsc(PRV_DAGKORT[prvDatum(a.datum).getDay()]+' '+prvDatum(a.datum).getDate()+' '+PRV_MAANDEN[prvDatum(a.datum).getMonth()].slice(0,3))+'</small>' : (a.tijd && a.eindTijd ? '<small>tot '+njEsc(a.eindTijd)+'</small>' : ''))+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(a.titel)+'</span>'+(sub ? '<span class="nj-rij-sub">'+njEsc(sub)+'</span>' : '')+
+    (a.tel ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(a.kleur || '#6D28D9')+'"></i>'+njEsc(a.kalenderNaam || 'Telefoon-agenda')+(a.herhaalt ? ' · herhaalt' : '')+'</span>' : '')+'</span>';
+  b.onclick = ()=>prvGa(a.tel ? {mode:'p_afspraak', tel:a} : {mode:'p_afspraak', id:a.id});
+  return b;
+}
+function prvTelJson(titel, datum, tijd, eindTijd, notitie, kalender){
+  const [y, m, d] = datum.split('-').map(Number);
+  let begin, eind, heleDag = !tijd;
+  if(heleDag){ begin = Date.UTC(y, m-1, d); eind = begin + 86400000; }
+  else {
+    const [hh, mm] = tijd.split(':').map(Number);
+    begin = new Date(y, m-1, d, hh, mm).getTime();
+    if(eindTijd){ const [eh, em] = eindTijd.split(':').map(Number); eind = new Date(y, m-1, d, eh, em).getTime(); }
+    if(!eindTijd || eind <= begin) eind = begin + 3600000;
+  }
+  const o = {titel:titel, notitie:notitie, begin:begin, eind:eind, heleDag:heleDag};
+  if(kalender) o.kalender = String(kalender);
+  return JSON.stringify(o);
+}
+function prvAfspraak(wrap, kop){
+  const telA = view.tel || null;
+  const a = telA || (view.id ? agenda.find(x=>x.id === view.id) : null);
+  const koppel = prvTelAan();
+  const nieuwOpTel = !a && koppel;
+  kop('Privé · Agenda', a ? 'Afspraak' : 'Nieuwe afspraak');
+  if(telA && telA.herhaalt){
+    const k = document.createElement('section');
+    k.className = 'nj-kaart prv-form';
+    k.innerHTML = '<b class="prv-afspraak-titel">'+njEsc(telA.titel)+'</b><span class="prv-uitleg">'+njEsc(prvHoofd(prvDagLang(telA.datum)))+(telA.tijd ? ' · '+njEsc(telA.tijd)+(telA.eindTijd ? '–'+njEsc(telA.eindTijd) : '') : ' · hele dag')+'</span>'+
+      (telA.plek ? '<span class="prv-uitleg">'+njEsc(telA.plek)+'</span>' : '')+(telA.notitie ? '<span class="prv-uitleg">'+njEsc(telA.notitie)+'</span>' : '')+
+      '<div class="prv-info">'+njIco('info', 18, 2.2)+'<span>Dit is een afspraak die steeds terugkomt ('+njEsc(telA.kalenderNaam || 'telefoon-agenda')+'). Wijzig of verwijder hem in je agenda-app, zodat de hele reeks goed blijft.</span></div>';
+    wrap.appendChild(k);
+    return;
+  }
+  const kals = koppel ? prvTelKalenders().filter(x=>x.schrijfbaar) : [];
+  const stdKal = koppel ? prvTelStandaardKalender() : null;
+  const k = document.createElement('section');
+  k.className = 'nj-kaart prv-form';
+  k.innerHTML = prvVeld('Wat', '<input id="prvAgTitel" type="text" placeholder="Bijv. tandarts" value="'+njEsc(a ? a.titel : '')+'">')+
+    prvVeld('Datum', '<input id="prvAgDatum" type="date" value="'+njEsc(a ? a.datum : (view.datum || vandaagIso()))+'">')+
+    '<div class="prv-duo">'+prvVeld('Van (leeg = hele dag)', '<input id="prvAgTijd" type="time" value="'+njEsc(a && a.tijd ? a.tijd : '')+'">')+
+    prvVeld('Tot (mag leeg)', '<input id="prvAgEind" type="time" value="'+njEsc(a && a.eindTijd ? a.eindTijd : '')+'">')+'</div>'+
+    prvVeld('Notitie (mag leeg)', '<textarea id="prvAgNotitie" rows="3">'+njEsc(a && a.notitie ? a.notitie : '')+'</textarea>')+
+    (nieuwOpTel && kals.length ? prvVeld('In welke agenda', '<select id="prvAgKal">'+kals.map(x=>'<option value="'+njEsc(x.id)+'"'+(stdKal && x.id === stdKal.id ? ' selected' : '')+'>'+njEsc(x.naam+(x.account && x.account !== x.naam ? ' · '+x.account : ''))+'</option>').join('')+'</select>') : '')+
+    (telA ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(telA.kleur || '#6D28D9')+'"></i>Staat in je telefoon-agenda: '+njEsc(telA.kalenderNaam || '')+'</span>' : (a && koppel ? '<span class="prv-agenda-bron">Staat alleen in de app</span>' : ''));
+  wrap.appendChild(k);
+  const opslaan = document.createElement('button');
+  opslaan.type = 'button';
+  opslaan.className = 'nj-knop-primair prv-knop';
+  opslaan.textContent = a ? 'Opslaan' : 'Toevoegen';
+  opslaan.onclick = ()=>{
+    const titel = document.getElementById('prvAgTitel').value.trim();
+    const datum = document.getElementById('prvAgDatum').value;
+    if(!titel){ toast('Vul in wat het is', true); return; }
+    if(!datum){ toast('Kies een datum', true); return; }
+    const tijd = document.getElementById('prvAgTijd').value, eindTijd = tijd ? document.getElementById('prvAgEind').value : '', notitie = document.getElementById('prvAgNotitie').value.trim();
+    if(telA){
+      if(!prvTel().wijzig(String(telA.eventId), prvTelJson(titel, datum, tijd, eindTijd, notitie, null))){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
+    } else if(nieuwOpTel){
+      const sel = document.getElementById('prvAgKal');
+      const kal = sel ? sel.value : (stdKal && stdKal.id);
+      if(!kal){ toast('Geen agenda gevonden om in op te slaan', true); return; }
+      const id = prvTel().maak(prvTelJson(titel, datum, tijd, eindTijd, notitie, kal));
+      if(!id){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
+      if(kal !== prvInstel.agendaKalender){ prvInstel.agendaKalender = kal; prvBewaarInstel(); }
+    } else if(a){ a.titel = titel; a.datum = datum; a.tijd = tijd; a.eindTijd = eindTijd; a.notitie = notitie; saveAgenda(); }
+    else { agenda.push({id:'a'+Date.now(), titel:titel, datum:datum, tijd:tijd, eindTijd:eindTijd, notitie:notitie}); saveAgenda(); }
+    prvTelVergeet();
+    prvAgendaDag = datum;
+    toast(a ? 'Afspraak opgeslagen' : (nieuwOpTel ? 'Afspraak in je telefoon-agenda gezet' : 'Afspraak toegevoegd'));
+    prvGa({mode:'p_agenda'});
+  };
+  wrap.appendChild(opslaan);
+  if(a){
+    const weg = document.createElement('button');
+    weg.type = 'button';
+    weg.className = 'nj-knop-rand prv-knop-weg';
+    weg.textContent = 'Afspraak verwijderen';
+    weg.onclick = ()=>{
+      if(!confirm('Afspraak "'+a.titel+'" verwijderen?'+(telA ? '\n\nHij gaat ook uit je telefoon-agenda.' : ''))) return;
+      if(telA){ if(!prvTel().verwijder(String(telA.eventId))){ toast('Verwijderen lukte niet', true); return; } prvTelVergeet(); }
+      else { agenda = agenda.filter(x=>x.id !== a.id); saveAgenda(); }
+      toast('Afspraak verwijderd'); prvGa({mode:'p_agenda'});
+    };
+    wrap.appendChild(weg);
+  }
+  const ti = document.getElementById('prvAgTijd'), ei = document.getElementById('prvAgEind');
+  // 'Tot' schuift mee als je 'Van' verandert (zoals in een agenda-app)
+  const min = t=>{ const [h, m] = t.split(':').map(Number); return h*60 + m; };
+  const tijdUit = n=>{ n = Math.max(0, Math.min(23*60+59, n)); return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0'); };
+  let oudVan = ti.value;
+  const eindAan = ()=>{
+    ei.disabled = !ti.value;
+    if(!ti.value){ ei.value = ''; oudVan = ''; return; }
+    if(oudVan && ei.value){ const duur = min(ei.value) - min(oudVan); if(duur > 0) ei.value = tijdUit(min(ti.value) + duur); }
+    if(ei.value && min(ei.value) <= min(ti.value)) ei.value = tijdUit(min(ti.value) + 60);
+    oudVan = ti.value;
+  };
+  ti.onchange = eindAan; ti.oninput = eindAan; ei.disabled = !ti.value;
+  if(!a) setTimeout(()=>{ const i = document.getElementById('prvAgTitel'); if(i) i.focus(); }, 60);
+}
+
+// koppelen aan/uit
+function prvTelKoppel(aan){
+  if(!aan){ prvInstel.agendaKoppel = false; prvBewaarInstel(); prvTelVergeet(); toast('Koppeling met je telefoon-agenda staat uit'); render(); return; }
+  if(!prvTel()){ toast('Dit kan alleen in de nieuwste app op je telefoon', true); return; }
+  const klaar = ()=>{
+    prvInstel.agendaKoppel = true;
+    const k = prvTelStandaardKalender();
+    if(k) prvInstel.agendaKalender = k.id;
+    prvBewaarInstel(); prvTelVergeet();
+    toast('Gekoppeld met je telefoon-agenda');
+    render();
+  };
+  if(prvTelToegang()){ klaar(); return; }
+  const na = e=>{
+    window.removeEventListener('looplijstAgendaToegang', na);
+    if(e && e.detail) klaar();
+    else toast('Geen toestemming voor je agenda. Je kunt het aanzetten bij Instellingen → Apps → Looplijst → Machtigingen.', true);
+  };
+  window.addEventListener('looplijstAgendaToegang', na);
+  try{ prvTel().vraagToegang(); }catch(e){ window.removeEventListener('looplijstAgendaToegang', na); toast('Toestemming vragen lukte niet', true); }
+}
+function prvTelInstelSectie(wrap){
+  const sec = prvSectie(wrap, 'Telefoon-agenda');
+  const l = document.createElement('div'); l.className = 'nj-lijst';
+  if(!prvTel()){
+    const r = document.createElement('div');
+    r.className = 'prv-instel-rij';
+    r.innerHTML = '<span class="nj-rij-tekst"><span class="nj-rij-titel">Koppelen met je telefoon-agenda</span><span class="nj-rij-sub prv-wrap">Afspraken uit OneCalendar / Google Agenda in Privé, en andersom. Dit kan alleen in de nieuwste app (APK) op je telefoon.</span></span>';
+    l.appendChild(r);
+    l.appendChild(prvActieRij('inladen', 'Nieuwste app downloaden', 'github.com · Looplijst.apk', ()=>{ window.open('https://github.com/collinsluik956454-ship-it/Index/releases/latest', '_blank'); }));
+    sec.appendChild(l);
+    return;
+  }
+  const aan = prvTelAan();
+  l.appendChild(prvSchakelRij('Koppelen met telefoon-agenda', aan ? 'Je afspraken uit je telefoon staan in Privé, en wat je hier toevoegt komt in je telefoon-agenda' : 'Twee kanten op, ook met OneCalendar', aan, ()=>prvTelKoppel(!aan)));
+  if(aan){
+    const kals = prvTelKalenders().filter(x=>x.schrijfbaar);
+    const std = prvTelStandaardKalender();
+    const r = document.createElement('div');
+    r.className = 'prv-instel-rij prv-instel-select';
+    r.innerHTML = '<span class="nj-rij-tekst"><span class="nj-rij-titel">Nieuwe afspraken in</span><span class="nj-rij-sub prv-wrap">Kies de agenda die OneCalendar ook laat zien (meestal je Google-agenda)</span>'+
+      '<select aria-label="Nieuwe afspraken in">'+kals.map(x=>'<option value="'+njEsc(x.id)+'"'+(std && x.id === std.id ? ' selected' : '')+'>'+njEsc(x.naam+(x.account && x.account !== x.naam ? ' · '+x.account : ''))+'</option>').join('')+'</select></span>';
+    r.querySelector('select').onchange = e=>{ prvInstel.agendaKalender = e.target.value; prvBewaarInstel(); toast('Nieuwe afspraken komen in '+e.target.selectedOptions[0].textContent); };
+    l.appendChild(r);
+    if(agenda.length){
+      l.appendChild(prvActieRij('kalender', agenda.length+' afspra'+(agenda.length===1?'ak':'ken')+' uit de app overzetten', 'Naar je telefoon-agenda, dan staan ze ook in OneCalendar', ()=>{
+        const kal = prvTelStandaardKalender();
+        if(!kal){ toast('Geen agenda gevonden om in op te slaan', true); return; }
+        if(!confirm(agenda.length+' afspra'+(agenda.length===1?'ak':'ken')+' naar "'+kal.naam+'" zetten?')) return;
+        let ok = 0;
+        agenda = agenda.filter(a=>{ const id = prvTel().maak(prvTelJson(a.titel, a.datum, a.tijd || '', a.eindTijd || '', a.notitie || '', kal.id)); if(id){ ok++; return false; } return true; });
+        saveAgenda(); prvTelVergeet();
+        toast(ok+' afspra'+(ok===1?'ak':'ken')+' overgezet'+(agenda.length ? ', '+agenda.length+' niet gelukt' : ''));
+        render();
+      }));
+    }
+  }
+  sec.appendChild(l);
+}
+// bovenin de agenda: tip om te koppelen (alleen in de app, zolang het nog niet gekoppeld is)
+function prvTelTip(wrap){
+  if(!prvTel() || prvTelAan() || prvInstel.agendaTipWeg) return;
+  const d = document.createElement('div');
+  d.className = 'prv-tel-tip';
+  d.innerHTML = '<span class="prv-tegel-ic">'+njIco('kalender', 20)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">Koppel je telefoon-agenda</span><span class="nj-rij-sub prv-wrap">Dan zie je hier ook je afspraken uit OneCalendar</span></span>'+
+    '<button type="button" class="nj-chip prv-chip" data-a="ja">Koppelen</button><button type="button" class="nj-ib prv-tip-x" aria-label="Tip weghalen">'+njIco('kruis', 16, 2.4)+'</button>';
+  d.querySelector('[data-a="ja"]').onclick = ()=>prvTelKoppel(true);
+  d.querySelector('.prv-tip-x').onclick = ()=>{ prvInstel.agendaTipWeg = true; prvBewaarInstel(); d.remove(); };
+  wrap.appendChild(d);
+}
+// terug in de app: afspraken opnieuw ophalen (misschien heb je in OneCalendar iets veranderd)
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) return;
+  prvTelVergeet();
+  if(prvTelAan() && (view.mode === 'p_agenda' || view.mode === 'p_overzicht')) render();
+});
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
 var NJ_SEG_KLEUREN = {

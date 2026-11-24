@@ -13,5 +13,12 @@ filters = """<intent-filter>
         </activity>"""
 assert '</activity>' in s
 s = s.replace('</activity>', filters, 1)
+# telefoon-agenda lezen en schrijven (koppeling Privé-agenda)
+rechten = '''    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+'''
+if 'READ_CALENDAR' not in s:
+    assert '<application' in s
+    s = s.replace('<application', rechten + '    <application', 1)
 open(p, 'w', encoding='utf-8').write(s)
 print('manifest aangepast')
