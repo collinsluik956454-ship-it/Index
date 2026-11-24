@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.9');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.10');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -2101,7 +2101,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.9';
+const APP_VERSION = '2026-11-24.10';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -3945,15 +3945,33 @@ async function prvDeel(titel, tekst){
 // ----- PRIVÉ deel 3: agenda, gekoppeld aan de telefoon-agenda (twee kanten op) -----
 // In de Android-app is er window.LooplijstAgenda (MainActivity): die leest en schrijft de agenda van de telefoon
 // (Google-agenda e.d.; OneCalendar laat die ook zien). Zonder koppeling blijven afspraken in de app zelf.
+// Koppeling en gekozen agenda horen bij DEZE telefoon (elke telefoon heeft eigen agenda's / e-mail),
+// dus die staan in een sleutel zonder looplijst_v23_ en gaan niet mee met synchroniseren.
+const STORAGE_PRIVE_TOESTEL = 'looplijst_prive_toestel';
+var prvToestel = {};
+try{ prvToestel = JSON.parse(localStorage.getItem(STORAGE_PRIVE_TOESTEL)) || {}; }catch(e){ prvToestel = {}; }
+function prvBewaarToestel(){ try{ localStorage.setItem(STORAGE_PRIVE_TOESTEL, JSON.stringify(prvToestel)); }catch(e){} }
+// oude instellingen (die wel synchroniseerden) één keer overnemen, alleen als deze telefoon zelf toestemming gaf
+(function(){
+  if(!('agendaKoppel' in prvInstel || 'agendaKalender' in prvInstel || 'agendaKalenderZelf' in prvInstel || 'agendaTipWeg' in prvInstel)) return;
+  let toegang = false;
+  try{ toegang = !!(window.LooplijstAgenda && window.LooplijstAgenda.toegang()); }catch(e){}
+  if(prvToestel.koppel === undefined && prvInstel.agendaKoppel && toegang){
+    prvToestel.koppel = true;
+    if(prvInstel.agendaKalender){ prvToestel.kalender = prvInstel.agendaKalender; if(prvInstel.agendaKalenderZelf) prvToestel.kalenderZelf = true; }
+  }
+  delete prvInstel.agendaKoppel; delete prvInstel.agendaKalender; delete prvInstel.agendaKalenderZelf; delete prvInstel.agendaTipWeg;
+  prvBewaarInstel(); prvBewaarToestel();
+})();
 function prvTel(){ return window.LooplijstAgenda || null; }
 function prvTelToegang(){ try{ return !!(prvTel() && prvTel().toegang()); }catch(e){ return false; } }
-function prvTelAan(){ return !!(prvInstel.agendaKoppel && prvTelToegang()); }
+function prvTelAan(){ return !!(prvToestel.koppel && prvTelToegang()); }
 function prvTelKalenders(){ try{ return JSON.parse(prvTel().kalenders() || '[]'); }catch(e){ return []; } }
 function prvTelStandaardKalender(){
   const k = prvTelKalenders().filter(x=>x.schrijfbaar);
-  const gekozen = k.find(x=>x.id === prvInstel.agendaKalender);
+  const gekozen = k.find(x=>x.id === prvToestel.kalender);
   // een agenda die alleen op de telefoon staat alleen houden als je die zelf hebt gekozen
-  if(gekozen && (prvInstel.agendaKalenderZelf || prvKalSoort(gekozen) !== 'telefoon')) return gekozen;
+  if(gekozen && (prvToestel.kalenderZelf || prvKalSoort(gekozen) !== 'telefoon')) return gekozen;
   const online = k.filter(x=>prvKalSoort(x) !== 'telefoon');
   return online.find(x=>x.hoofd && prvKalSoort(x) === 'Google') || online.find(x=>prvKalSoort(x) === 'Google') || online.find(x=>prvKalSoort(x) === 'Outlook') || online.find(x=>x.hoofd) || online[0] || k[0] || null;
 }
@@ -4090,7 +4108,7 @@ function prvAfspraak(wrap, kop){
       if(!kal){ toast('Geen agenda gevonden om in op te slaan', true); return; }
       const id = prvTel().maak(prvTelJson(titel, datum, tijd, eindTijd, notitie, kal));
       if(!id){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
-      if(kal !== prvInstel.agendaKalender || (stdKal && kal !== stdKal.id)){ prvInstel.agendaKalender = kal; if(stdKal && kal !== stdKal.id) prvInstel.agendaKalenderZelf = true; prvBewaarInstel(); }
+      if(kal !== prvToestel.kalender || (stdKal && kal !== stdKal.id)){ prvToestel.kalender = kal; if(stdKal && kal !== stdKal.id) prvToestel.kalenderZelf = true; prvBewaarToestel(); }
       const kk = prvTelKalenders().find(x=>x.id === kal);
       view.gezetIn = kk ? kk.naam+(prvKalSoort(kk) === 'telefoon' ? ' (alleen op deze telefoon)' : ' ('+prvKalSoort(kk)+')') : '';
     } else if(a){ a.titel = titel; a.datum = datum; a.tijd = tijd; a.eindTijd = eindTijd; a.notitie = notitie; saveAgenda(); }
@@ -4132,13 +4150,13 @@ function prvAfspraak(wrap, kop){
 
 // koppelen aan/uit
 function prvTelKoppel(aan){
-  if(!aan){ prvInstel.agendaKoppel = false; prvBewaarInstel(); prvTelVergeet(); toast('Koppeling met je telefoon-agenda staat uit'); render(); return; }
+  if(!aan){ prvToestel.koppel = false; prvBewaarToestel(); prvTelVergeet(); toast('Koppeling met je telefoon-agenda staat uit'); render(); return; }
   if(!prvTel()){ toast('Dit kan alleen in de nieuwste app op je telefoon', true); return; }
   const klaar = ()=>{
-    prvInstel.agendaKoppel = true;
+    prvToestel.koppel = true;
     const k = prvTelStandaardKalender();
-    if(k) prvInstel.agendaKalender = k.id;
-    prvBewaarInstel(); prvTelVergeet();
+    if(k) prvToestel.kalender = k.id;
+    prvBewaarToestel(); prvTelVergeet();
     toast('Gekoppeld met je telefoon-agenda');
     render();
   };
@@ -4172,7 +4190,7 @@ function prvTelInstelSectie(wrap){
     r.className = 'prv-instel-rij prv-instel-select';
     r.innerHTML = '<span class="nj-rij-tekst"><span class="nj-rij-titel">Nieuwe afspraken in</span><span class="nj-rij-sub prv-wrap">Kies de agenda die OneCalendar ook laat zien (meestal je Google-agenda)</span>'+
       '<select aria-label="Nieuwe afspraken in">'+kals.map(x=>'<option value="'+njEsc(x.id)+'"'+(std && x.id === std.id ? ' selected' : '')+'>'+njEsc(prvKalLabel(x))+'</option>').join('')+'</select></span>';
-    r.querySelector('select').onchange = e=>{ prvInstel.agendaKalender = e.target.value; prvInstel.agendaKalenderZelf = true; prvBewaarInstel(); toast('Nieuwe afspraken komen in '+e.target.selectedOptions[0].textContent); render(); };
+    r.querySelector('select').onchange = e=>{ prvToestel.kalender = e.target.value; prvToestel.kalenderZelf = true; prvBewaarToestel(); toast('Nieuwe afspraken komen in '+e.target.selectedOptions[0].textContent); render(); };
     if(std && prvKalSoort(std) === 'telefoon'){
       const w = document.createElement('div');
       w.className = 'prv-info prv-let';
@@ -4201,13 +4219,13 @@ function prvTelInstelSectie(wrap){
 }
 // bovenin de agenda: tip om te koppelen (alleen in de app, zolang het nog niet gekoppeld is)
 function prvTelTip(wrap){
-  if(!prvTel() || prvTelAan() || prvInstel.agendaTipWeg) return;
+  if(!prvTel() || prvTelAan() || prvToestel.tipWeg) return;
   const d = document.createElement('div');
   d.className = 'prv-tel-tip';
   d.innerHTML = '<span class="prv-tegel-ic">'+njIco('kalender', 20)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">Koppel je telefoon-agenda</span><span class="nj-rij-sub prv-wrap">Dan zie je hier ook je afspraken uit OneCalendar</span></span>'+
     '<button type="button" class="nj-chip prv-chip" data-a="ja">Koppelen</button><button type="button" class="nj-ib prv-tip-x" aria-label="Tip weghalen">'+njIco('kruis', 16, 2.4)+'</button>';
   d.querySelector('[data-a="ja"]').onclick = ()=>prvTelKoppel(true);
-  d.querySelector('.prv-tip-x').onclick = ()=>{ prvInstel.agendaTipWeg = true; prvBewaarInstel(); d.remove(); };
+  d.querySelector('.prv-tip-x').onclick = ()=>{ prvToestel.tipWeg = true; prvBewaarToestel(); d.remove(); };
   wrap.appendChild(d);
 }
 // terug in de app: afspraken opnieuw ophalen (misschien heb je in OneCalendar iets veranderd)
