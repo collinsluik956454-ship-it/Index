@@ -90,7 +90,8 @@ public class MainActivity extends BridgeActivity {
                 CalendarContract.Calendars.CALENDAR_COLOR,
                 CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL,
                 CalendarContract.Calendars.VISIBLE,
-                CalendarContract.Calendars.IS_PRIMARY
+                CalendarContract.Calendars.IS_PRIMARY,
+                CalendarContract.Calendars.SYNC_EVENTS
             };
             Cursor c = null;
             try {
@@ -105,6 +106,7 @@ public class MainActivity extends BridgeActivity {
                     o.put("schrijfbaar", c.getInt(5) >= CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR);
                     o.put("zichtbaar", c.getInt(6) == 1);
                     o.put("hoofd", !c.isNull(7) && c.getInt(7) == 1);
+                    o.put("synct", !c.isNull(8) && c.getInt(8) == 1);
                     uit.put(o);
                 }
             } catch (Exception e) {
@@ -204,6 +206,79 @@ public class MainActivity extends BridgeActivity {
                 if (c != null) c.close();
             }
             return -1;
+        }
+
+        // Controle: bestaan deze afspraken nog en zijn ze al naar Google/Outlook gestuurd?
+        @JavascriptInterface
+        public String controle(String ids) {
+            JSONArray uit = new JSONArray();
+            if (!heeftAgenda() || ids == null) return uit.toString();
+            for (String id : ids.split(",")) {
+                if (id.trim().length() == 0) continue;
+                Cursor c = null;
+                try {
+                    JSONObject o = new JSONObject();
+                    o.put("id", id.trim());
+                    c = getContentResolver().query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, Long.parseLong(id.trim())),
+                        new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.CALENDAR_ID, CalendarContract.Events.DIRTY,
+                            CalendarContract.Events._SYNC_ID, CalendarContract.Events.DELETED, CalendarContract.Events.DTSTART}, null, null, null);
+                    if (c != null && c.moveToFirst()) {
+                        o.put("bestaat", true);
+                        o.put("titel", c.getString(0) == null ? "" : c.getString(0));
+                        o.put("kalender", String.valueOf(c.getLong(1)));
+                        o.put("nogTeVersturen", !c.isNull(2) && c.getInt(2) == 1);
+                        o.put("online", !c.isNull(3) && c.getString(3).length() > 0);
+                        o.put("verwijderd", !c.isNull(4) && c.getInt(4) == 1);
+                        o.put("begin", c.getLong(5));
+                    } else {
+                        o.put("bestaat", false);
+                    }
+                    uit.put(o);
+                } catch (Exception e) {
+                    // overslaan
+                } finally {
+                    if (c != null) c.close();
+                }
+            }
+            return uit.toString();
+        }
+
+        // Staat synchroniseren van de agenda aan voor de accounts op deze telefoon?
+        @JavascriptInterface
+        public String accounts() {
+            JSONArray uit = new JSONArray();
+            if (!heeftAgenda()) return uit.toString();
+            Cursor c = null;
+            boolean hoofd = true;
+            try { hoofd = ContentResolver.getMasterSyncAutomatically(); } catch (Exception e) { }
+            try {
+                c = getContentResolver().query(CalendarContract.Calendars.CONTENT_URI,
+                    new String[]{CalendarContract.Calendars.ACCOUNT_NAME, CalendarContract.Calendars.ACCOUNT_TYPE}, null, null, null);
+                java.util.HashSet<String> gehad = new java.util.HashSet<String>();
+                while (c != null && c.moveToNext()) {
+                    String naam = c.getString(0), soort = c.getString(1);
+                    if (naam == null || soort == null || !gehad.add(soort + "|" + naam)) continue;
+                    JSONObject o = new JSONObject();
+                    o.put("naam", naam);
+                    o.put("soort", soort);
+                    o.put("hoofdschakelaar", hoofd);
+                    if (!CalendarContract.ACCOUNT_TYPE_LOCAL.equals(soort)) {
+                        try {
+                            Account a = new Account(naam, soort);
+                            o.put("automatisch", ContentResolver.getSyncAutomatically(a, CalendarContract.AUTHORITY));
+                            o.put("bezig", ContentResolver.isSyncActive(a, CalendarContract.AUTHORITY));
+                        } catch (Exception e) {
+                            o.put("onbekend", true);
+                        }
+                    }
+                    uit.put(o);
+                }
+            } catch (Exception e) {
+                // leeg
+            } finally {
+                if (c != null) c.close();
+            }
+            return uit.toString();
         }
 
         @JavascriptInterface

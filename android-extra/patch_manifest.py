@@ -16,6 +16,7 @@ s = s.replace('</activity>', filters, 1)
 # telefoon-agenda lezen en schrijven (koppeling Privé-agenda)
 rechten = '''    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
 '''
 if 'READ_CALENDAR' not in s:
     assert '<application' in s

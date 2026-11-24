@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.11');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.12');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1825,6 +1825,18 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-taak-snel .nj-chip{min-height:34px;font-size:12.5px}
 .prv-klaar-kop{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:0 6px 0 4px;border:none;background:none;color:var(--nj-label);
   font-family:inherit;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+
+/* koppeling controleren */
+.prv-controle{display:flex;flex-direction:column;gap:0;padding:4px 14px}
+.prv-controle-rij{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--nj-lijn2)}
+.prv-controle-rij:last-child{border-bottom:none}
+.prv-controle-rij .nj-rij-titel{font-size:14.5px}
+.prv-controle-ic{width:24px;height:24px;border-radius:99px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+.prv-controle-rij.ok .prv-controle-ic{background:#DCFCE7;color:#15803D}
+.prv-controle-rij.fout .prv-controle-ic{background:#FEE2E2;color:#B42318}
+.prv-controle-rij.info .prv-controle-ic{background:#EDE9FE;color:#6D28D9}
+.prv-controle-rij.fout .nj-rij-sub{color:#9A3412}
+.prv-controle-rij .prv-chip{align-self:center}
 </style>
 <script>
 // Offline service worker
@@ -2101,7 +2113,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.11';
+const APP_VERSION = '2026-11-24.12';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2727,7 +2739,7 @@ try{ prvNotities = JSON.parse(localStorage.getItem(STORAGE_NOTITIES)) || []; }ca
 function prvBewaarNotities(){ try{ localStorage.setItem(STORAGE_NOTITIES, JSON.stringify(prvNotities)); }catch(e){} }
 function prvAan(){ return !!(prvInstel && prvInstel.aan); }
 var PRV_HUBS = ['p_overzicht','p_agenda','p_huishoud','p_notities','p_instel'];
-var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities'};
+var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel'};
 function prvTerug(){
   if(view.mode === 'p_spaar' && view.bewerk && view.id !== 'nieuw'){ prvGa({mode:'p_spaar', id:view.id}); return; }
   prvGa({mode: PRV_OUDER[view.mode] || 'p_overzicht'});
@@ -3031,6 +3043,7 @@ function njRenderPrive(){
   if(m === 'p_potjes'){ kop('Privé · Huishoudboekje', 'Potjes'); return prvPotjes(wrap); }
   if(m === 'p_vastelasten'){ return prvVasteLasten(wrap, kop); }
   if(m === 'p_spaar'){ return prvSpaar(wrap, kop); }
+  if(m === 'p_agendacontrole'){ return prvAgendaControle(wrap, kop); }
   if(m === 'p_notities'){ kop('Privé', 'Notities'); return prvNotitieLijst(wrap); }
   if(m === 'p_notitie'){ return prvNotitie(wrap, kop); }
   if(m === 'p_instel'){ kop('Privé', 'Meer'); return prvInstellingen(wrap); }
@@ -4212,6 +4225,7 @@ function prvTelInstelSectie(wrap){
     r.innerHTML = '<span class="nj-rij-tekst"><span class="nj-rij-titel">Koppelen met je telefoon-agenda</span><span class="nj-rij-sub prv-wrap">Afspraken uit OneCalendar / Google Agenda in Privé, en andersom. Dit kan alleen in de nieuwste app (APK) op je telefoon.</span></span>';
     l.appendChild(r);
     l.appendChild(prvActieRij('inladen', 'Nieuwste app downloaden', 'github.com · Looplijst.apk', ()=>{ window.open('https://github.com/collinsluik956454-ship-it/Index/releases/latest', '_blank'); }));
+    l.appendChild(prvActieRij('zoek', 'Koppeling controleren', 'Zie wat er op deze telefoon niet goed gaat', ()=>prvGa({mode:'p_agendacontrole'})));
     sec.appendChild(l);
     return;
   }
@@ -4241,6 +4255,7 @@ function prvTelInstelSectie(wrap){
     inf.innerHTML = '<div class="prv-info">'+njIco('info', 18, 2.2)+'<span>Afspraken die je in Privé maakt, komen op elke gekoppelde telefoon in de agenda, ook op je andere telefoon met een ander e-mailadres. Wijzig of verwijder je zo\'n afspraak (in Privé of in OneCalendar), dan gebeurt dat op beide telefoons.</span></div>';
     l.appendChild(inf);
   }
+  l.appendChild(prvActieRij('zoek', 'Koppeling controleren', 'Komt een afspraak niet in OneCalendar? Kijk hier wat er mis is', ()=>prvGa({mode:'p_agendacontrole'})));
   sec.appendChild(l);
 }
 // bovenin de agenda: tip om te koppelen (alleen in de app, zolang het nog niet gekoppeld is)
@@ -4605,6 +4620,99 @@ function prvTakenOverzicht(wrap){
   });
   l.querySelectorAll('.prv-item-weg').forEach(b=>{ b.innerHTML = njIco('pijl', 16, 2.4); b.setAttribute('aria-label', 'Naar de takenlijst'); });
   sec.appendChild(l);
+}
+
+// ----- PRIVÉ deel 5: koppeling controleren (per telefoon, om te zien waar het misgaat) -----
+function prvTelJsonVan(naam, ...args){ try{ const t = prvTel(); if(!t || typeof t[naam] !== 'function') return null; return JSON.parse(t[naam](...args) || 'null'); }catch(e){ return null; } }
+function prvControleRij(ok, titel, sub, knop){
+  const r = document.createElement('div');
+  r.className = 'prv-controle-rij '+(ok === true ? 'ok' : ok === false ? 'fout' : 'info');
+  r.innerHTML = '<span class="prv-controle-ic">'+(ok === true ? njIco('check', 16, 3) : ok === false ? njIco('kruis', 16, 3) : njIco('info', 16, 2.4))+'</span>'+
+    '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(titel)+'</span>'+(sub ? '<span class="nj-rij-sub prv-wrap">'+njEsc(sub)+'</span>' : '')+'</span>';
+  if(knop){ const b = document.createElement('button'); b.type = 'button'; b.className = 'nj-chip prv-chip'; b.textContent = knop.tekst; b.onclick = knop.doe; r.appendChild(b); }
+  return r;
+}
+function prvAgendaControle(wrap, kop){
+  kop('Privé · Meer', 'Koppeling controleren');
+  const uitleg = document.createElement('p');
+  uitleg.className = 'prv-uitleg';
+  uitleg.textContent = 'Doe dit op de telefoon waar het niet goed gaat. Een rood kruisje laat zien wat er mis is. Je kunt van dit scherm een schermafbeelding sturen.';
+  wrap.appendChild(uitleg);
+  const brug = !!prvTel(), toegang = prvTelToegang(), aan = prvTelAan();
+  // 1. deze telefoon
+  const s1 = prvSectie(wrap, 'Deze telefoon');
+  const k1 = document.createElement('div'); k1.className = 'nj-kaart prv-controle';
+  k1.appendChild(prvControleRij(brug, brug ? 'App kan de agenda koppelen' : 'Deze app-versie kan nog niet koppelen', brug ? 'Versie '+APP_VERSION : 'Installeer de nieuwste APK op deze telefoon',
+    brug ? null : {tekst:'Download', doe:()=>window.open('https://github.com/collinsluik956454-ship-it/Index/releases/latest', '_blank')}));
+  if(brug){
+    k1.appendChild(prvControleRij(toegang, toegang ? 'Toestemming voor de agenda' : 'Geen toestemming voor de agenda', toegang ? '' : 'Tik op Toestaan, of: Instellingen → Apps → Looplijst → Machtigingen → Agenda',
+      toegang ? null : {tekst:'Toestaan', doe:()=>prvTelKoppel(true)}));
+    k1.appendChild(prvControleRij(aan, aan ? 'Koppeling staat aan' : 'Koppeling staat uit op deze telefoon', aan ? '' : 'Elke telefoon moet apart gekoppeld worden',
+      aan ? null : {tekst:'Koppelen', doe:()=>prvTelKoppel(true)}));
+  }
+  s1.appendChild(k1);
+  if(!aan){ return; }
+  // 2. agenda's en Google/Outlook
+  const kals = prvTelKalenders();
+  const std = prvTelStandaardKalender();
+  const s2 = prvSectie(wrap, 'Agenda\'s en accounts');
+  const k2 = document.createElement('div'); k2.className = 'nj-kaart prv-controle';
+  k2.appendChild(prvControleRij(std && prvKalSoort(std) !== 'telefoon' ? true : false, 'Nieuwe afspraken in: '+(std ? prvKalLabel(std) : 'geen agenda gevonden'),
+    std && prvKalSoort(std) === 'telefoon' ? 'Deze agenda staat alleen op de telefoon; OneCalendar ziet hem niet. Kies bij Meer je Google-agenda.' : (std && std.synct === false ? 'Let op: deze agenda wordt op de telefoon niet gesynchroniseerd' : 'Dit moet het e-mailadres zijn dat je in OneCalendar op deze telefoon ziet')));
+  const accounts = prvTelJsonVan('accounts');
+  if(accounts === null){
+    k2.appendChild(prvControleRij(null, 'Meer details zie je met de nieuwste APK', 'Dan zie je ook of Google de agenda van deze telefoon bijwerkt'));
+  } else {
+    if(accounts.length && accounts[0].hoofdschakelaar === false) k2.appendChild(prvControleRij(false, 'Automatisch synchroniseren staat uit op deze telefoon', 'Zet het aan: Instellingen → Accounts en back-up → Accounts beheren → Gegevens automatisch synchroniseren'));
+    accounts.filter(a=>!/local/i.test(a.soort)).forEach(a=>{
+      const soort = prvKalSoort({soort:a.soort});
+      const goed = a.automatisch !== false;
+      k2.appendChild(prvControleRij(a.onbekend ? null : goed, a.naam+' · '+soort, a.onbekend ? 'Kon niet nagaan of de agenda synchroniseert' :
+        goed ? 'Agenda synchroniseren staat aan'+(a.bezig ? ' (nu bezig)' : '') : 'Agenda synchroniseren staat UIT. Zet het aan: Instellingen → Accounts → '+a.naam+' → Account synchroniseren → Agenda'));
+    });
+  }
+  k2.appendChild(prvControleRij(null, 'Alle agenda\'s op deze telefoon', kals.map(x=>prvKalLabel(x)+(x.schrijfbaar ? '' : ' (alleen lezen)')).join(' • ') || 'Geen'));
+  s2.appendChild(k2);
+  // 3. afspraken uit Privé
+  const sp = prvToestel.spiegel || {};
+  const v = vandaagIso();
+  const grens = new Date(); grens.setDate(grens.getDate() - 30);
+  const komend = agenda.filter(a=>a.datum >= prvIso(grens)).sort((a,b)=>(a.datum+(a.tijd||'')).localeCompare(b.datum+(b.tijd||'')));
+  const s3 = prvSectie(wrap, 'Afspraken uit Privé');
+  const k3 = document.createElement('div'); k3.className = 'nj-kaart prv-controle';
+  let laatst = ''; try{ laatst = localStorage.getItem('looplijst_sync_laatst') || ''; }catch(e){}
+  const status = window.__syncStatus || '';
+  k3.appendChild(prvControleRij(/mislukt|niet gevonden/i.test(status) ? false : null, 'Synchroniseren met je andere telefoon', (status || (laatst ? 'Laatst om '+laatst : 'Nog niet gesynchroniseerd'))+' · '+agenda.length+' afspra'+(agenda.length === 1 ? 'ak' : 'ken')+' in Privé'));
+  const ids = komend.map(a=>sp[a.id] && sp[a.id].e).filter(Boolean);
+  const ctrl = ids.length ? prvTelJsonVan('controle', ids.join(',')) : [];
+  const perId = {}; (ctrl || []).forEach(c=>{ perId[c.id] = c; });
+  komend.slice(0, 12).forEach(a=>{
+    const m = sp[a.id];
+    const wanneer = prvHoofd(prvDagLang(a.datum))+(a.tijd ? ' · '+a.tijd : '');
+    if(!m){ k3.appendChild(prvControleRij(false, a.titel, wanneer+' · staat nog niet in de agenda van deze telefoon', {tekst:'Nu zetten', doe:()=>{ prvSpiegel(true); render(); }})); return; }
+    const c = perId[String(m.e)];
+    const kal = kals.find(x=>x.id === (c && c.kalender) || x.id === m.k);
+    const kalTekst = kal ? 'in '+prvKalLabel(kal) : 'in de telefoon-agenda';
+    if(ctrl === null){ k3.appendChild(prvControleRij(true, a.titel, wanneer+' · '+kalTekst)); return; }
+    if(!c || !c.bestaat || c.verwijderd){ k3.appendChild(prvControleRij(false, a.titel, wanneer+' · niet meer gevonden in de agenda van deze telefoon')); return; }
+    if(c.online) k3.appendChild(prvControleRij(true, a.titel, wanneer+' · '+kalTekst+' · naar '+(kal ? prvKalSoort(kal) : 'online')+' verstuurd'));
+    else k3.appendChild(prvControleRij(false, a.titel, wanneer+' · '+kalTekst+' · nog NIET naar '+(kal ? prvKalSoort(kal) : 'online')+' verstuurd, dus OneCalendar ziet hem nog niet'));
+  });
+  if(!komend.length) k3.appendChild(prvControleRij(null, 'Geen afspraken uit Privé', 'Maak in Privé → Agenda een afspraak en kijk dan opnieuw'));
+  s3.appendChild(k3);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nj-knop-primair prv-knop';
+  b.innerHTML = njIco('ververs', 18, 2.4)+'<span>Nu bijwerken en opnieuw kijken</span>';
+  b.onclick = ()=>{
+    try{ if(window.__syncNu) window.__syncNu(); }catch(e){}
+    prvSpiegel(true);
+    try{ if(prvTel().synchroniseer) prvTel().synchroniseer(); }catch(e){}
+    prvTelLaatsteSync = Date.now();
+    toast('Bezig met bijwerken…');
+    setTimeout(()=>{ prvTelVergeet(); if(view.mode === 'p_agendacontrole') render(); }, 4000);
+  };
+  wrap.appendChild(b);
 }
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
