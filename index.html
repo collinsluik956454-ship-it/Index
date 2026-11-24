@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.20');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.21');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1921,6 +1921,14 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-afspraak-rij{flex-wrap:wrap}
 .prv-afspraak-rij .prv-bank-knoppen{width:100%;justify-content:flex-end;padding-bottom:4px}
 .prv-punt-tip{width:100%;font-family:inherit;text-align:left;cursor:pointer;color:var(--nj-ink)}
+
+/* elke rekening los */
+.prv-wie-groep{margin-bottom:10px}
+.prv-rek-rij{padding-left:24px;min-height:64px;background:var(--nj-kaart)}
+.prv-rek-rij .prv-ico{width:32px;height:32px}
+.prv-rek-rij.aan{background:#F5F3FF;box-shadow:inset 3px 0 0 #6D28D9}
+.prv-rek-filter{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;max-width:100%}
+.prv-rek-filter span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 <script>
 // Offline service worker
@@ -2200,7 +2208,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.20';
+const APP_VERSION = '2026-11-24.21';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -3291,7 +3299,7 @@ function prvHuishoud(wrap, kop){
   const t = prvTotalen(prvTransGefilterd(ms));
   const k = document.createElement('section');
   k.className = 'nj-kaart prv-saldo';
-  k.innerHTML = '<span class="prv-saldo-lbl">Over deze maand'+(prvWie ? ' · '+njEsc(prvWieNaam(prvWie)) : '')+'</span><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b>'+
+  k.innerHTML = '<span class="prv-saldo-lbl">Over deze maand'+(prvRek && prvRekeningen[prvRek] ? ' · '+njEsc(prvRekeningen[prvRek].naam) : prvWie ? ' · '+njEsc(prvWieNaam(prvWie)) : '')+'</span><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b>'+
     '<div class="prv-duo"><div class="prv-mini"><small>Inkomsten</small><b>'+prvEuro(t.inkomsten)+'</b></div><div class="prv-mini"><small>Uitgaven</small><b>'+prvEuro(t.uitgaven)+'</b></div></div>';
   wrap.appendChild(k);
   prvVastKaart(wrap, ms);
@@ -5126,7 +5134,8 @@ function prvTransWie(t){
   return t.wie || 'samen';
 }
 var prvWie = null;   // filter in het huishoudboekje: null = iedereen, 'samen' of een persoon-id
-function prvTransGefilterd(ms){ return transactiesVoorMaand(ms).filter(t=>!prvWie || prvTransWie(t) === prvWie); }
+var prvRek = null;   // of alleen één rekening (IBAN)
+function prvTransGefilterd(ms){ return transactiesVoorMaand(ms).filter(t=>prvRek ? t.rek === prvRek : (!prvWie || prvTransWie(t) === prvWie)); }
 function prvTotalen(lijst){ let i = 0, u = 0; lijst.forEach(t=>{ if(t.type === 'inkomst') i += t.bedrag; else u += t.bedrag; }); return {inkomsten:i, uitgaven:u, saldo:i - u}; }
 function prvWieNaam(w){ if(w === 'samen') return 'Samen'; const p = (typeof prsData !== 'undefined' && prsData) ? prsData.lijst.find(x=>x.id === w) : null; return p ? p.naam : 'Samen'; }
 function prvWieKeuzes(){ const l = (prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : []); l.push({id:'samen', naam:'Samen', kleur:'#6D28D9'}); return l; }
@@ -5260,13 +5269,22 @@ function prvWieChips(wrap){
   [{id:null, naam:'Iedereen'}].concat(keuzes).forEach(k=>{
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'nj-chip'+(prvWie === k.id ? ' aan' : '');
-    b.setAttribute('aria-pressed', prvWie === k.id ? 'true' : 'false');
+    b.className = 'nj-chip'+(prvWie === k.id && !prvRek ? ' aan' : '');
+    b.setAttribute('aria-pressed', prvWie === k.id && !prvRek ? 'true' : 'false');
     b.innerHTML = (k.kleur && k.id !== 'samen' ? '<i class="prv-wie-stip" style="background:'+njEsc(k.kleur)+'"></i>' : '')+njEsc(k.naam);
-    b.onclick = ()=>{ prvWie = k.id; render(); };
+    b.onclick = ()=>{ prvWie = k.id; prvRek = null; render(); };
     d.appendChild(b);
   });
   wrap.appendChild(d);
+  if(prvRek && prvRekeningen[prvRek]){
+    const f = document.createElement('button');
+    f.type = 'button';
+    f.className = 'nj-chip aan prv-rek-filter';
+    f.innerHTML = njIco('geld', 14)+'<span>Alleen '+njEsc(prvRekeningen[prvRek].naam)+'</span>'+njIco('kruis', 14, 2.6);
+    f.setAttribute('aria-label', 'Filter op '+prvRekeningen[prvRek].naam+' weghalen');
+    f.onclick = ()=>{ prvRek = null; render(); };
+    wrap.appendChild(f);
+  }
 }
 // per persoon: wat komt er binnen, wat gaat eruit, wat staat er op de rekeningen
 function prvPerPersoon(wrap, ms){
@@ -5274,30 +5292,46 @@ function prvPerPersoon(wrap, ms){
   const rek = Object.keys(prvRekeningen);
   if(keuzes.length < 2 && !rek.length) return;
   const sec = prvSectie(wrap, prvWie ? 'Rekeningen' : 'Wie heeft wat');
-  const l = document.createElement('div'); l.className = 'nj-lijst';
   const alle = transactiesVoorMaand(ms);
+  const rekRij = iban=>{
+    const rr = prvRekeningen[iban];
+    const t = prvTotalen(alle.filter(x=>x.rek === iban));
+    const r = document.createElement('button');
+    r.type = 'button';
+    r.className = 'nj-rij prv-rek-rij'+(prvRek === iban ? ' aan' : '');
+    r.setAttribute('aria-pressed', prvRek === iban ? 'true' : 'false');
+    const heeftSaldo = typeof rr.saldo === 'number';
+    r.innerHTML = '<span class="nj-ico prv-ico">'+njIco('geld', 18)+'</span>'+
+      '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(rr.naam)+'</span><span class="nj-rij-sub prv-wrap">'+njEsc((rr.bank || 'Bank')+' · '+prvIbanKort(iban))+'</span>'+
+      '<span class="nj-rij-sub prv-wrap">Deze maand +'+prvEuro(t.inkomsten)+' / −'+prvEuro(t.uitgaven)+'</span></span>'+
+      '<span class="prv-wie-stand"><small>'+(heeftSaldo ? 'saldo'+(rr.saldoDatum ? ' '+prvDatum(rr.saldoDatum).getDate()+' '+PRV_MAANDEN[prvDatum(rr.saldoDatum).getMonth()].slice(0, 3) : '') : 'saldo onbekend')+'</small><b class="'+(heeftSaldo && rr.saldo < 0 ? 'min' : '')+'">'+(heeftSaldo ? prvEuro(rr.saldo) : '—')+'</b></span>';
+    r.onclick = ()=>{ prvRek = prvRek === iban ? null : iban; render(); };
+    return r;
+  };
   (prvWie ? keuzes.filter(k=>k.id === prvWie) : keuzes).forEach(k=>{
     const t = prvTotalen(alle.filter(x=>prvTransWie(x) === k.id));
     const mijn = rek.filter(i=>(prvRekeningen[i].persoon || 'samen') === k.id);
     const opRek = mijn.filter(i=>typeof prvRekeningen[i].saldo === 'number');
     const stand = opRek.reduce((a, i)=>a + prvRekeningen[i].saldo, 0);
     if(!t.inkomsten && !t.uitgaven && !mijn.length) return;
+    const l = document.createElement('div'); l.className = 'nj-lijst prv-wie-groep';
     const r = document.createElement('button');
     r.type = 'button';
     r.className = 'nj-rij prv-wie-rij';
     r.innerHTML = (k.id === 'samen' ? '<span class="nj-ico prv-ico">'+njIco('home', 18)+'</span>' : prsAvatar({naam:k.naam, kleur:k.kleur}, 38))+
-      '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(k.naam)+'</span><span class="nj-rij-sub prv-wrap">Deze maand +'+prvEuro(t.inkomsten).replace('€ ', '€ ')+' / −'+prvEuro(t.uitgaven)+(mijn.length ? ' · '+mijn.length+' rekening'+(mijn.length === 1 ? '' : 'en') : '')+'</span></span>'+
-      (opRek.length ? '<span class="prv-wie-stand"><small>op de rekening</small><b class="'+(stand < 0 ? 'min' : '')+'">'+prvEuro(stand)+'</b></span>' : '<span class="prv-wie-stand"><small>over</small><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b></span>');
-    r.onclick = ()=>{ if(prvWie !== k.id){ prvWie = k.id; render(); } else prvGa({mode:'p_rekeningen'}); };
+      '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(k.naam)+'</span><span class="nj-rij-sub prv-wrap">Deze maand +'+prvEuro(t.inkomsten)+' / −'+prvEuro(t.uitgaven)+'</span></span>'+
+      (opRek.length ? '<span class="prv-wie-stand"><small>'+(mijn.length > 1 ? 'samen op '+mijn.length+' rekeningen' : 'op de rekening')+'</small><b class="'+(stand < 0 ? 'min' : '')+'">'+prvEuro(stand)+'</b></span>' : '<span class="prv-wie-stand"><small>over</small><b class="'+(t.saldo < 0 ? 'min' : '')+'">'+prvEuro(t.saldo)+'</b></span>');
+    r.onclick = ()=>{ prvRek = null; prvWie = prvWie === k.id ? null : k.id; render(); };
     l.appendChild(r);
+    mijn.forEach(i=>l.appendChild(rekRij(i)));
+    sec.appendChild(l);
   });
-  if(!l.children.length) return sec.remove();
-  sec.appendChild(l);
+  if(!sec.querySelector('.nj-lijst')) return sec.remove();
   if(rek.length){
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'nj-knop-rand prv-knop-rand';
-    b.innerHTML = njIco('geld', 18)+'<span>Rekeningen ('+rek.length+')</span>';
+    b.innerHTML = njIco('schakel', 18)+'<span>Rekeningen beheren</span>';
     b.onclick = ()=>prvGa({mode:'p_rekeningen'});
     sec.appendChild(b);
   }
