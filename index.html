@@ -9,6 +9,7 @@
   toepassen(); try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){ try{t=localStorage.getItem(k)||'auto';}catch(e){} toepassen(); }); }catch(e){}
   window.__zetThema=function(n){ t=n; try{ localStorage.setItem(k,n); }catch(e){} toepassen(); };
   window.__thema=function(){ return t; };
+  try{ var kc=JSON.parse(localStorage.getItem('looplijst_kleur_cache')); if(kc){ for(var kk in kc){ if(/^--(werk|prv)/.test(kk)) document.documentElement.style.setProperty(kk, kc[kk]); } } }catch(e){}
 })();
 </script>
 
@@ -18,7 +19,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.24');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.25');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -988,24 +989,24 @@ body{display:flex;flex-direction:column}
 
 /* ===================== NIEUW JASJE (2026-11): rustig & strak, tabbalk onderin ===================== */
 html[data-thema="licht"]{
-  --bg:#F4F6F9; --bg2:#EEF2F7; --surface:#FFFFFF; --accent:#0B63CE; --accent2:#2F80ED;
+  --bg:#F4F6F9; --bg2:#EEF2F7; --surface:#FFFFFF; --accent:var(--werk); --accent2:#2F80ED;
   --ink:#0E1A2B; --ink2:#2B3A4F; --muted:#5A6A7E; --line:#E2E7EE;
   --nj-bg:#F4F6F9; --nj-hdr-ink:#0E1A2B; --nj-hdr-muted:#5A6A7E; --nj-knop:#E6EBF2; --nj-knop-ink:#0E1A2B;
-  --nj-label:#5A6A7E; --nj-balk-spoor:#E6EBF2; --nj-balk:#0B63CE;
-  --nj-tab:#FFFFFF; --nj-tab-lijn:#E2E7EE; --nj-tab-ink:#5A6A7E; --nj-tab-aan:#0B63CE; --nj-tab-pil:#E8F0FB;
-  --nj-banner:#E8F0FB; --nj-banner-ink:#0E1A2B; --nj-ok:#15803D; --nj-let:#B45309;
+  --nj-label:#5A6A7E; --nj-balk-spoor:#E6EBF2; --nj-balk:var(--werk);
+  --nj-tab:#FFFFFF; --nj-tab-lijn:#E2E7EE; --nj-tab-ink:#5A6A7E; --nj-tab-aan:var(--werk); --nj-tab-pil:var(--werk-zacht);
+  --nj-banner:var(--werk-zacht); --nj-banner-ink:#0E1A2B; --nj-ok:#15803D; --nj-let:#B45309;
 }
 html[data-thema="donker"]{
   --bg:#0B1220; --bg2:#0F1829;
   --nj-bg:#0B1220; --nj-hdr-ink:#E8EEF7; --nj-hdr-muted:#9AA8BC; --nj-knop:#1B2638; --nj-knop-ink:#E8EEF7;
-  --nj-label:#9AA8BC; --nj-balk-spoor:#1B2638; --nj-balk:#6CB0FF;
-  --nj-tab:#111A2B; --nj-tab-lijn:#223049; --nj-tab-ink:#9AA8BC; --nj-tab-aan:#6CB0FF; --nj-tab-pil:#1B2A44;
+  --nj-label:#9AA8BC; --nj-balk-spoor:#1B2638; --nj-balk:var(--werk-licht);
+  --nj-tab:#111A2B; --nj-tab-lijn:#223049; --nj-tab-ink:#9AA8BC; --nj-tab-aan:var(--werk-licht); --nj-tab-pil:var(--werk-pil);
   --nj-banner:#16213A; --nj-banner-ink:#E8EEF7; --nj-ok:#4ADE80; --nj-let:#FBBF24;
 }
 /* kaarten zijn in beide thema's licht (de bestaande schermen rekenen daarop) */
 html[data-thema]{
   --nj-kaart:#FFFFFF; --nj-ink:#0E1A2B; --nj-muted:#5A6A7E; --nj-lijn:#E2E7EE; --nj-lijn2:#EDF1F5;
-  --nj-accent:#0B63CE; --nj-accent-zacht:#E8F0FB;
+  --nj-accent:var(--werk); --nj-accent-zacht:var(--werk-zacht);
 }
 html[data-thema] body{background:var(--nj-bg)}
 html[data-thema] main{background:var(--nj-bg);width:100%;box-sizing:border-box}
@@ -1148,7 +1149,7 @@ html[data-thema] .sheet .nj-sheet-groep button.action{background:none;border:non
   font-size:15px;font-weight:600;color:#0E1A2B;gap:12px}
 html[data-thema] .sheet .nj-sheet-groep button.action:last-child{border-bottom:none}
 html[data-thema] .sheet .nj-sheet-groep button.action:active{background:#F1F4F8}
-html[data-thema] .sheet button.action .ic{width:38px;height:38px;border-radius:11px;background:#E8F0FB;color:#0B63CE;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+html[data-thema] .sheet button.action .ic{width:38px;height:38px;border-radius:11px;background:var(--nj-accent-zacht);color:var(--nj-accent);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 html[data-thema] .sheet button.action.danger{color:#B42318}
 html[data-thema] .sheet button.action.danger .ic{background:#FDECEC;color:#B42318}
 html[data-thema] .sheet .info{color:#5A6A7E;padding:10px 4px 0}
@@ -1235,7 +1236,7 @@ html[data-thema="donker"] .nj-bus-uitleg{color:#9AA8BC}
 .fooi-sheet.nj-bus-modus .fooi-actions button{min-height:46px;border-radius:12px}
 .fooi-sheet.nj-bus-modus #fooiTelBtn{margin:0 !important}
 .fooi-sheet.nj-bus-modus .fooi-scan,.fooi-sheet.nj-bus-modus .fooi-undo{margin:0;border-radius:12px}
-.fooi-sheet.nj-bus-modus .fooi-scan{background:#fff;color:#0B63CE;border:1px solid #D5DDE8}
+.fooi-sheet.nj-bus-modus .fooi-scan{background:#fff;color:var(--nj-accent);border:1px solid #D5DDE8}
 .fooi-sheet.nj-bus-modus .nj-bus-volg{display:grid;grid-template-columns:1fr 2fr;gap:10px;position:sticky;bottom:0;margin-top:auto;background:#F4F6F9;
   padding:10px 0;padding-bottom:max(14px, env(safe-area-inset-bottom))}
 .nj-bus-volg button{min-height:56px;border-radius:14px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -1244,7 +1245,7 @@ html[data-thema="donker"] .nj-bus-uitleg{color:#9AA8BC}
 
 /* ----- Lijsten in alle schermen in de nieuwe stijl ----- */
 html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radius:16px}
-.ringbox svg circle:nth-child(2){stroke:#0B63CE}
+.ringbox svg circle:nth-child(2){stroke:var(--nj-accent)}
 .navrow.complete .ringbox svg circle:nth-child(2){stroke:#15803D}
 /* ----- Looplijst / Per krant: tegels met huisnummers ----- */
 .nj-adres{height:auto;min-height:100px;padding:22px 6px 10px;gap:6px;justify-content:flex-start}
@@ -1274,11 +1275,11 @@ html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radiu
 .nj-vrij{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid #EDF1F5;background:#fff}
 .nj-vrij.n2{padding-left:20px;background:#FAFBFC}
 .nj-vrij.n3{padding-left:34px;background:#F5F7FA}
-.nj-vpijl{width:40px;height:40px;flex:0 0 auto;border:1px solid #D5DDE8;border-radius:11px;background:#fff;color:#0B63CE;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.nj-vpijl{width:40px;height:40px;flex:0 0 auto;border:1px solid #D5DDE8;border-radius:11px;background:#fff;color:var(--nj-accent);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
 .nj-vpijl:disabled{opacity:.3;cursor:default}
-.nj-vpijl:active{background:#E8F0FB}
+.nj-vpijl:active{background:var(--nj-accent-zacht)}
 .nj-vnaam{flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:48px;border:none;background:none;font-family:inherit;text-align:left;color:#0E1A2B;padding:0 2px;cursor:pointer}
-.nj-vpos{min-width:24px;height:24px;border-radius:12px;background:#E8F0FB;color:#0B63CE;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0 4px}
+.nj-vpos{min-width:24px;height:24px;border-radius:12px;background:var(--nj-accent-zacht);color:var(--nj-accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0 4px}
 .nj-vtekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .nj-vtekst .t{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nj-vrij.n1 .nj-vtekst .t{font-size:16px;font-weight:800}
@@ -1289,7 +1290,7 @@ html[data-thema] main .row{border:1px solid #E2E7EE;box-shadow:none;border-radiu
 .nj-vpaneel-kop{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5A6A7E}
 .nj-chips{display:flex;flex-wrap:wrap;gap:6px}
 .nj-chip{min-height:38px;border:1px solid #D5DDE8;border-radius:99px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:13px;font-weight:700;padding:0 12px;cursor:pointer}
-.nj-chip.aan{background:#0B63CE;border-color:#0B63CE;color:#fff}
+.nj-chip.aan{background:var(--nj-accent);border-color:var(--nj-accent);color:#fff}
 .nj-vvoorbeeld{font-size:12.5px;color:#2B3A4F;font-weight:600;line-height:1.5}
 .nj-vrand{display:flex;gap:8px;flex-wrap:wrap}
 .nj-vrand button{min-height:38px;border:1px solid #D5DDE8;border-radius:10px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:12.5px;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:4px;cursor:pointer}
@@ -1321,7 +1322,7 @@ html[data-thema] body.nj-ll-start #dateBanner{display:none !important}
 .nj-kleg{font-size:11.5px;color:#5A6A7E;line-height:1.4}
 .nj-rchips{display:flex;flex-wrap:wrap;gap:6px}
 .nj-rchip{min-height:40px;border:1px solid #D5DDE8;border-radius:12px;background:#F7F9FB;color:#0E1A2B;font-family:inherit;font-size:13px;font-weight:700;padding:0 12px;display:flex;align-items:center;gap:6px;cursor:pointer}
-.nj-rchip span{font-weight:800;color:#0B63CE}
+.nj-rchip span{font-weight:800;color:var(--nj-accent)}
 .nj-rchip:active{transform:scale(.97)}
 .nj-rchip.klaar{background:#E7F6EC;border-color:#BFE6CB;color:#15803D}
 .nj-rchip.vink{background:#fff;border-style:dashed;color:#5A6A7E}
@@ -1353,7 +1354,7 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-seg-nr.af{background:#15803D;border-color:#15803D;color:#fff}
 .nj-seg-nr.gekleurd{border-width:2px}
 .nj-seg-nr.nieuw{border-style:dashed;border-color:#B45309}
-.nj-seg-nr.gekozen{outline:3px solid #0B63CE;outline-offset:1px}
+.nj-seg-nr.gekozen{outline:3px solid var(--nj-accent);outline-offset:1px}
 .nj-seg-kaart{height:52vh;min-height:300px;border-radius:16px;overflow:hidden;border:1px solid #E2E7EE;background:#E9EDE4;position:relative;z-index:0}
 .nj-seg-leeg{height:100%;display:flex;align-items:center;justify-content:center;color:#5A6A7E;font-size:14px;padding:20px;text-align:center}
 .nj-seg-geo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--nj-hdr-muted)}
@@ -1394,13 +1395,13 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-doel.gehaald .nj-doel-balk i{background:#166534}
 .nj-doel-sub{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:#5A6A7E}
 .nj-doel-sub b{color:#0E1A2B}
-.nj-doel-wijzig{color:#0B63CE;font-weight:700;flex:0 0 auto}
+.nj-doel-wijzig{color:var(--nj-accent);font-weight:700;flex:0 0 auto}
 .nj-groen-t{display:inline-flex;align-items:center;gap:4px;color:#166534;font-weight:700}
-.nj-doel-leeg{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;min-height:46px;padding:0 12px;border:1.5px dashed #D5DDE8;border-radius:12px;background:none;font-family:inherit;font-size:14px;font-weight:700;color:#0B63CE;cursor:pointer}
+.nj-doel-leeg{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;min-height:46px;padding:0 12px;border:1.5px dashed #D5DDE8;border-radius:12px;background:none;font-family:inherit;font-size:14px;font-weight:700;color:var(--nj-accent);cursor:pointer}
 .nj-doel-leeg span{flex:1;text-align:left}
 .nj-doel-bewerk{cursor:default}
 .nj-doel-bewerk label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#5A6A7E}
-.nj-doel-invoer{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 14px;border:1.5px solid #0B63CE;border-radius:12px;background:#fff}
+.nj-doel-invoer{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 14px;border:1.5px solid var(--nj-accent);border-radius:12px;background:#fff}
 .nj-doel-invoer span{font-size:20px;font-weight:800;color:#5A6A7E}
 .nj-doel-invoer input{flex:1;min-width:0;border:none;outline:none;font-family:inherit;font-size:22px;font-weight:800;color:#0E1A2B;background:transparent}
 .nj-doel-knoppen{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1442,7 +1443,7 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-dagfooi-teller button:active{background:#E6EBF2}
 .nj-dagfooi-teller input{height:42px;min-width:0;width:100%;box-sizing:border-box;border:1.5px solid #D5DDE8;border-radius:10px;text-align:center;font-family:inherit;font-size:18px;font-weight:800;color:#0E1A2B;background:#fff;-moz-appearance:textfield;appearance:textfield;padding:0}
 .nj-dagfooi-teller input::-webkit-outer-spin-button,.nj-dagfooi-teller input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.nj-dagfooi-teller input:focus{outline:none;border-color:#0B63CE}
+.nj-dagfooi-teller input:focus{outline:none;border-color:var(--nj-accent)}
 .nj-dagfooi-knoppen{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:6px}
 .nj-dagfooi-knoppen button{width:100%}
 .nj-dagfooi-knoppen [data-actie="wis"]{color:#B42318}
@@ -1451,7 +1452,7 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 /* ----- Segmenten: herkenning via looproute en kaart ----- */
 .nj-seg-hulp{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:#EEF3FA;font-size:13px;color:#0E1A2B}
 .nj-seg-hulp .nj-knop-rand{height:42px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
-.nj-seg-maps{display:inline-flex;align-items:center;gap:5px;color:#0B63CE}
+.nj-seg-maps{display:inline-flex;align-items:center;gap:5px;color:var(--nj-accent)}
 
 .nj-seg-logkop{display:flex;align-items:center;gap:10px;width:100%;padding:0;border:none;background:none;font-family:inherit;text-align:left;color:#0E1A2B;cursor:pointer}
 .nj-seg-logtekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -1466,14 +1467,14 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-bag.leeg{flex-direction:column;align-items:stretch;background:#fff;border:1px solid #E2E7EE;border-radius:16px;padding:14px;color:#5A6A7E;font-size:13px}
 .nj-bag.leeg b{font-size:15px;color:#0E1A2B}
 .nj-bag .nj-knop-primair{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;font-size:15px}
-.nj-bag-opnieuw{flex:0 0 auto;border:none;background:none;color:#0B63CE;font-family:inherit;font-size:13px;font-weight:700;padding:6px 4px;cursor:pointer}
+.nj-bag-opnieuw{flex:0 0 auto;border:none;background:none;color:var(--nj-accent);font-family:inherit;font-size:13px;font-weight:700;padding:6px 4px;cursor:pointer}
 
 /* ----- Segment: routestappen ----- */
 .nj-seg-route{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:#EEF3FA;color:#0E1A2B}
 .nj-seg-route b{font-size:13px}
 .nj-seg-route-stappen{display:flex;flex-wrap:wrap;gap:6px}
 .nj-seg-route-stap{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:99px;background:#fff;border:1px solid #D5DDE8;font-size:13px;font-weight:600}
-.nj-seg-route-stap i{font-style:normal;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#0B63CE;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.nj-seg-route-stap i{font-style:normal;min-width:22px;height:22px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:var(--nj-accent);color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
 .nj-seg-route-stap em{font-style:normal;font-weight:600;color:#5A6A7E}
 
 /* ----- Klachten in deze looplijst ----- */
@@ -1495,7 +1496,7 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .nj-klacht-seg{flex:0 0 auto;font-size:12px;font-weight:800;color:#3730A3;background:#EEF2FF;padding:3px 8px;border-radius:8px}
 .nj-klacht-ok{flex:0 0 auto;width:28px;height:28px;border-radius:99px;background:#E7F6EC;color:#15803D;display:flex;align-items:center;justify-content:center}
 .nj-klacht-rij .nj-chev{color:var(--nj-muted);display:flex}
-.nj-klacht-meer{margin-top:4px;min-height:44px;border:none;border-top:1px solid var(--nj-lijn2);background:none;font-family:inherit;font-size:14px;font-weight:700;color:#0B63CE;cursor:pointer}
+.nj-klacht-meer{margin-top:4px;min-height:44px;border:none;border-top:1px solid var(--nj-lijn2);background:none;font-family:inherit;font-size:14px;font-weight:700;color:var(--nj-accent);cursor:pointer}
 .nj-vlag .klacht{background:#B42318;color:#fff}
 .nj-bus.nj-heeft-klacht:not(.on){box-shadow:inset 0 0 0 2px #B42318}
 
@@ -1518,19 +1519,21 @@ html[data-thema="donker"] .nj-seg-schakel{background:#1B2638}
 .leaflet-tooltip.nj-klacht-tip::before{border-top-color:#B42318}
 
 /* ===================== PRIVÉ: startscherm, schakelaar Werk | Privé, privé-schermen ===================== */
+:root{--werk:#0B63CE;--werk-zacht:#E8F0FB;--werk-donker:#0A3E80;--werk-licht:#6CB0FF;--werk-pil:#1B2A44;
+  --prv:#6D28D9;--prv-zacht:#EDE9FE;--prv-donker:#4C1D95;--prv-licht:#C4B5FD;--prv-pil:#3B2A6B;--prv-bg:#F6F4FF;--prv-rand:#D9CCF8;--prv-schaduw:rgba(109,40,217,.3)}
 .prv-schakel{display:none}
 body.nj-schakel .prv-schakel{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:2px 0 6px;border-radius:14px;background:var(--nj-knop)}
 .prv-schakel button{min-height:40px;border:none;border-radius:11px;background:none;color:var(--nj-hdr-muted);font-family:inherit;font-size:14px;font-weight:700;
   display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
-.prv-schakel button.aan{background:#0B63CE;color:#fff;box-shadow:0 1px 3px rgba(14,26,43,.18)}
-.prv-schakel button[data-kant="prive"].aan{background:#6D28D9}
+.prv-schakel button.aan{background:var(--werk);color:#fff;box-shadow:0 1px 3px rgba(14,26,43,.18)}
+.prv-schakel button[data-kant="prive"].aan{background:var(--prv)}
 .prv-schakel button:active{transform:scale(.97)}
 html[data-thema] body.nj-schakel.nj-hub header{padding-top:10px}
 
-/* privé-kleuren: teal in plaats van blauw */
-html[data-thema] body.nj-prive{--nj-accent:#6D28D9;--nj-accent-zacht:#EDE9FE;--nj-tab-aan:#6D28D9;--nj-tab-pil:#EDE9FE;--nj-balk:#6D28D9}
-html[data-thema="donker"] body.nj-prive{--nj-tab-aan:#C4B5FD;--nj-tab-pil:#3B2A6B}
-body.nj-prive .nj-chip.aan{background:#6D28D9;border-color:#6D28D9}
+/* privé-kleuren (zelf te kiezen, zie Kleuren van de app) */
+html[data-thema] body.nj-prive{--nj-accent:var(--prv);--nj-accent-zacht:var(--prv-zacht);--nj-tab-aan:var(--prv);--nj-tab-pil:var(--prv-zacht);--nj-balk:var(--prv)}
+html[data-thema="donker"] body.nj-prive{--nj-tab-aan:var(--prv-licht);--nj-tab-pil:var(--prv-pil)}
+body.nj-prive .nj-chip.aan{background:var(--prv);border-color:var(--prv)}
 html[data-thema] body.nj-prive header .menu,
 html[data-thema] body.nj-prive header .progress-wrap,
 html[data-thema] body.nj-start header .progress-wrap{display:none}
@@ -1560,8 +1563,8 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-start{flex:1 0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:12px;padding-bottom:6vh}
 .prv-start-knop{min-height:min(300px, 52vh);min-width:0;position:relative;border:none;border-radius:22px;padding:18px 16px;color:#fff;font-family:inherit;text-align:left;cursor:pointer;
   display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:8px;box-shadow:0 3px 10px rgba(14,26,43,.10)}
-.prv-start-knop.werk{background:#0B63CE}
-.prv-start-knop.prive{background:#6D28D9}
+.prv-start-knop.werk{background:var(--werk)}
+.prv-start-knop.prive{background:var(--prv)}
 .prv-start-knop:active{transform:scale(.985);filter:brightness(.95)}
 .prv-start-knop b{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .prv-start-sub{font-size:14px;line-height:1.4;opacity:.92;overflow-wrap:anywhere;min-height:4.2em}
@@ -1572,18 +1575,18 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 
 /* algemene privé-onderdelen */
 .prv-pagina{gap:12px}
-.prv-leeg{background:var(--nj-kaart);border:1px dashed #D6CCF5;border-radius:16px;padding:18px 16px;font-size:14px;line-height:1.45;color:var(--nj-muted);text-align:center}
+.prv-leeg{background:var(--nj-kaart);border:1px dashed var(--prv-rand);border-radius:16px;padding:18px 16px;font-size:14px;line-height:1.45;color:var(--nj-muted);text-align:center}
 .prv-leeg-rij{padding:14px 16px;font-size:14px;color:var(--nj-muted)}
 .prv-uitleg{margin:0 4px;font-size:14px;line-height:1.45;color:var(--nj-label)}
 .prv-fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:44;min-height:52px;padding:0 20px;border:none;border-radius:16px;
-  background:#6D28D9;color:#fff;font-family:inherit;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 6px 16px rgba(109,40,217,.3)}
+  background:var(--prv);color:#fff;font-family:inherit;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 6px 16px var(--prv-schaduw)}
 .prv-fab:active{transform:scale(.97)}
 .prv-knop{width:100%}
 .prv-knop-rand{width:100%;color:var(--nj-ink)}
 .prv-knop-weg{width:100%;color:#B42318;border-color:#F3C3C3}
-.prv-ico{background:#EDE9FE;color:#6D28D9}
+.prv-ico{background:var(--prv-zacht);color:var(--prv)}
 .prv-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.prv-chip{flex:0 0 auto;border-color:#6D28D9;color:#6D28D9}
+.prv-chip{flex:0 0 auto;border-color:var(--prv);color:var(--prv)}
 
 /* overzicht */
 .prv-tegels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1594,7 +1597,7 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-tegel > span:last-child{display:flex;flex-direction:column;gap:2px;min-width:0}
 .prv-tegel b{font-size:15px;font-weight:800}
 .prv-tegel small{font-size:13px;color:var(--nj-muted);font-weight:600}
-.prv-tegel-ic{width:40px;height:40px;border-radius:12px;background:#EDE9FE;color:#6D28D9;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.prv-tegel-ic{width:40px;height:40px;border-radius:12px;background:var(--prv-zacht);color:var(--prv);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 
 /* agenda */
 .prv-week{display:flex;align-items:center;gap:4px;background:var(--nj-kaart);border:1px solid var(--nj-lijn);border-radius:18px;padding:8px 4px}
@@ -1604,19 +1607,19 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-dag small{font-size:11px;font-weight:700;color:var(--nj-muted)}
 .prv-dag b{font-size:17px;font-weight:800}
 .prv-dag i{display:flex;gap:3px;height:6px}
-.prv-dag i em{width:6px;height:6px;border-radius:99px;background:#6D28D9}
+.prv-dag i em{width:6px;height:6px;border-radius:99px;background:var(--prv)}
 .prv-dag i em.w{background:#9AA8BC}
-.prv-dag.vandaag b{color:#6D28D9}
-.prv-dag.aan{background:#6D28D9;color:#fff}
+.prv-dag.vandaag b{color:var(--prv)}
+.prv-dag.aan{background:var(--prv);color:#fff}
 .prv-dag.aan b{color:#fff}
-.prv-dag.aan small{color:#E9E3FF}
+.prv-dag.aan small{color:var(--prv-zacht)}
 .prv-dag.aan i em{background:#fff}
-.prv-dag.aan i em.w{background:#C4B5FD}
+.prv-dag.aan i em.w{background:var(--prv-licht)}
 .prv-afspraak{display:flex;align-items:flex-start;gap:12px;min-height:60px;padding:8px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;
   font-family:inherit;text-align:left;color:var(--nj-ink);cursor:pointer;width:100%}
 .prv-afspraak:last-child{border-bottom:none}
-.prv-afspraak:active{background:#F5F3FF}
-.prv-tijd{width:62px;flex:0 0 auto;display:flex;flex-direction:column;padding-top:3px;font-size:14px;font-weight:800;color:#6D28D9}
+.prv-afspraak:active{background:var(--prv-bg)}
+.prv-tijd{width:62px;flex:0 0 auto;display:flex;flex-direction:column;padding-top:3px;font-size:14px;font-weight:800;color:var(--prv)}
 .prv-tijd small{font-size:11px;font-weight:600;color:var(--nj-muted)}
 .prv-werkdag{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 14px;background:#EDF1F5;color:#3E4C5E;font-size:14px;font-weight:600;border-bottom:1px solid var(--nj-lijn2)}
 .prv-werkdag b{color:#0E1A2B}
@@ -1629,7 +1632,7 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-nieuw input, .prv-euro input{width:100%;box-sizing:border-box;min-height:48px;border:1px solid #CFD9E3;border-radius:12px;background:#fff;color:#0E1A2B;
   font-family:inherit;font-size:16px;padding:10px 12px}
 .prv-form textarea{min-height:90px;resize:vertical;line-height:1.45}
-.prv-form input:focus, .prv-form select:focus, .prv-form textarea:focus, .prv-nieuw input:focus, .prv-euro input:focus{outline:2px solid #6D28D9;outline-offset:1px;border-color:#6D28D9}
+.prv-form input:focus, .prv-form select:focus, .prv-form textarea:focus, .prv-nieuw input:focus, .prv-euro input:focus{outline:2px solid var(--prv);outline-offset:1px;border-color:var(--prv)}
 .prv-soort .nj-chip{min-height:42px;font-size:14px;padding:0 16px}
 
 /* huishoudboekje */
@@ -1638,9 +1641,9 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-maandnav .nj-chip:last-child{margin-left:auto}
 .prv-saldo{display:flex;flex-direction:column;gap:6px}
 .prv-saldo-lbl{font-size:13px;font-weight:600;color:var(--nj-muted)}
-.prv-saldo > b{font-size:34px;font-weight:800;letter-spacing:-.02em;color:#6D28D9;margin-bottom:6px}
+.prv-saldo > b{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--prv);margin-bottom:6px}
 .prv-saldo > b.min{color:#B42318}
-.prv-mini{background:#F5F3FF;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.prv-mini{background:var(--prv-bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .prv-mini small{font-size:12px;font-weight:700;color:var(--nj-muted)}
 .prv-mini b{font-size:17px;font-weight:800;color:var(--nj-ink)}
 .prv-potje{display:flex;flex-direction:column;gap:7px;padding:12px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;font-family:inherit;text-align:left;color:var(--nj-ink);cursor:pointer;width:100%}
@@ -1648,16 +1651,16 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-potje-kop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
 .prv-potje-kop b{font-weight:700}
 .prv-potje-kop span{font-size:13px;color:var(--nj-muted);font-weight:600;white-space:nowrap}
-.prv-balk{display:block;height:8px;border-radius:99px;background:#EDE9FE;overflow:hidden}
-.prv-balk i{display:block;height:100%;border-radius:99px;background:#6D28D9}
+.prv-balk{display:block;height:8px;border-radius:99px;background:var(--prv-zacht);overflow:hidden}
+.prv-balk i{display:block;height:100%;border-radius:99px;background:var(--prv)}
 .prv-balk i.over{background:#B45309}
 .prv-werk{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 14px;border-bottom:1px solid var(--nj-lijn2)}
 .prv-werk:last-child{border-bottom:none}
-.prv-uitapp{font-size:11px;font-weight:800;color:#0B63CE;background:#E8F0FB;padding:2px 7px;border-radius:6px}
+.prv-uitapp{font-size:11px;font-weight:800;color:var(--werk);background:var(--werk-zacht);padding:2px 7px;border-radius:6px}
 .prv-ok{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:#15803D;flex:0 0 auto}
 .prv-trans{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;font-family:inherit;text-align:left;color:var(--nj-ink);cursor:pointer;width:100%}
 .prv-trans:last-child{border-bottom:none}
-.prv-trans:active{background:#F5F3FF}
+.prv-trans:active{background:var(--prv-bg)}
 .prv-trans-dag{width:40px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;font-size:17px;font-weight:800;line-height:1.1}
 .prv-trans-dag small{font-size:11px;font-weight:600;color:var(--nj-muted)}
 .prv-trans > b{font-size:15px;font-weight:800;white-space:nowrap;flex:0 0 auto}
@@ -1681,21 +1684,21 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-item > span{flex:1;min-width:0;font-size:16px;color:var(--nj-ink);word-break:break-word}
 .prv-item.af > span{text-decoration:line-through;color:var(--nj-muted)}
 .prv-vink{width:30px;height:30px;border-radius:9px;border:2px solid #9AA8BC;background:#fff;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;flex:0 0 auto}
-.prv-item.af .prv-vink{background:#6D28D9;border-color:#6D28D9}
+.prv-item.af .prv-vink{background:var(--prv);border-color:var(--prv)}
 .prv-item-weg{width:40px;height:40px;border:none;background:none;color:#8A97A8;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;flex:0 0 auto}
 .prv-notitie-rij .nj-rij-sub{white-space:nowrap}
 
 /* instellingen */
-.prv-hoofd{border:2px solid #6D28D9;display:flex;flex-direction:column;gap:10px}
+.prv-hoofd{border:2px solid var(--prv);display:flex;flex-direction:column;gap:10px}
 .prv-instel-rij{display:flex;align-items:center;gap:12px;min-height:58px;padding:6px 14px;border-bottom:1px solid var(--nj-lijn2)}
 .prv-hoofd .prv-instel-rij{padding:0;border-bottom:none}
 .prv-instel-rij:last-child{border-bottom:none}
 .prv-wrap{white-space:normal !important}
 .prv-switch{width:54px;height:32px;border-radius:99px;border:none;background:#C9D2DD;position:relative;flex:0 0 auto;padding:0;cursor:pointer;transition:background .15s}
 .prv-switch i{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s}
-.prv-switch.aan{background:#6D28D9}
+.prv-switch.aan{background:var(--prv)}
 .prv-switch.aan i{left:25px}
-.prv-info{display:flex;gap:10px;align-items:flex-start;background:#EDE9FE;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;color:#4C1D95}
+.prv-info{display:flex;gap:10px;align-items:flex-start;background:var(--prv-zacht);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;color:var(--prv-donker)}
 .prv-info svg{flex:0 0 auto;margin-top:1px}
 .prv-rood .nj-rij-titel{color:#B42318}
 .prv-rood .prv-ico{background:#FBEAEA;color:#B42318}
@@ -1706,11 +1709,11 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-pin-kop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--nj-hdr-ink,#0E1A2B)}
 .prv-pin-kop b{font-size:22px;font-weight:800}
 .prv-pin-kop > span:last-child{font-size:14px;color:var(--nj-hdr-muted,#5A6A7E)}
-.prv-pin-ic{width:60px;height:60px;border-radius:18px;background:#6D28D9;color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.prv-pin-ic{width:60px;height:60px;border-radius:18px;background:var(--prv);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
 .prv-pin-dots{display:flex;gap:16px}
 .prv-pin-dots i{width:16px;height:16px;border-radius:99px;border:2px solid var(--nj-hdr-muted,#5A6A7E);box-sizing:border-box}
-.prv-pin-dots i.vol{background:#6D28D9;border-color:#6D28D9}
-html[data-thema="donker"] .prv-pin-dots i.vol{background:#C4B5FD;border-color:#C4B5FD}
+.prv-pin-dots i.vol{background:var(--prv);border-color:var(--prv)}
+html[data-thema="donker"] .prv-pin-dots i.vol{background:var(--prv-licht);border-color:var(--prv-licht)}
 .prv-pin-fout{min-height:20px;font-size:14px;font-weight:700;color:#DC2626}
 html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-pin.schud .prv-pin-dots{animation:prvSchud .35s}
@@ -1726,24 +1729,24 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 
 /* notities: vastzetten en delen */
 .prv-notitie-acties{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.prv-notitie-acties .aan{border-color:#6D28D9;background:#F5F3FF;color:#4C1D95}
-.prv-vast-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#6D28D9;background:#EDE9FE;padding:2px 7px;border-radius:6px}
+.prv-notitie-acties .aan{border-color:var(--prv);background:var(--prv-bg);color:var(--prv-donker)}
+.prv-vast-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--prv);background:var(--prv-zacht);padding:2px 7px;border-radius:6px}
 
 /* vaste lasten */
 .prv-vast-kaart{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border:1px solid var(--nj-lijn);border-radius:16px;background:var(--nj-kaart);color:var(--nj-ink);
   font-family:inherit;text-align:left;cursor:pointer;width:100%}
 .prv-vast-kaart:active{transform:scale(.99)}
-.prv-vast-kaart.leeg{border-style:dashed;border-color:#D6CCF5}
+.prv-vast-kaart.leeg{border-style:dashed;border-color:var(--prv-rand)}
 .prv-vast-open{display:flex;flex-direction:column;align-items:flex-end;flex:0 0 auto}
 .prv-vast-open small{font-size:11px;font-weight:700;color:var(--nj-muted)}
-.prv-vast-open b{font-size:17px;font-weight:800;color:#6D28D9}
+.prv-vast-open b{font-size:17px;font-weight:800;color:var(--prv)}
 .prv-vast-rij{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:60px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--nj-lijn2)}
 .prv-vast-rij:last-child{border-bottom:none}
 .prv-vast-rij > .nj-rij-tekst{min-width:140px}
 .prv-vast-rij > b{font-size:15px;font-weight:800;white-space:nowrap;color:var(--nj-ink)}
 .prv-vast-rij > b.plus{color:#15803D}
 .prv-vast-knoppen{display:flex;gap:6px;width:100%;justify-content:flex-end}
-.prv-vast-dag{width:34px;flex:0 0 auto;display:flex;align-items:baseline;justify-content:center;font-size:18px;font-weight:800;color:#6D28D9}
+.prv-vast-dag{width:34px;flex:0 0 auto;display:flex;align-items:baseline;justify-content:center;font-size:18px;font-weight:800;color:var(--prv)}
 .prv-vast-dag small{font-size:11px;font-weight:700}
 .prv-betaald{display:inline-flex;align-items:center;gap:3px;color:#15803D;font-weight:700}
 
@@ -1756,7 +1759,7 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-spaar-kop b{font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prv-spaar-kop span{font-size:13px;font-weight:700;color:var(--nj-muted)}
 .prv-spaar small{font-size:12px;font-weight:700;color:var(--nj-muted)}
-.prv-spaar.nieuw{flex-direction:row;align-items:center;justify-content:center;gap:8px;border-style:dashed;border-color:#C4B5FD;color:#6D28D9;font-size:14px;font-weight:700}
+.prv-spaar.nieuw{flex-direction:row;align-items:center;justify-content:center;gap:8px;border-style:dashed;border-color:var(--prv-licht);color:var(--prv);font-size:14px;font-weight:700}
 .prv-spaar.nieuw{grid-column:1/-1;min-height:52px}
 .prv-balk.groot{height:12px;margin:4px 0}
 
@@ -1776,7 +1779,7 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-import-rij.uit{opacity:.55}
 .prv-import-rij .prv-vink{background:#fff}
 .prv-import-rij.uit .prv-vink{background:#fff;border-color:#9AA8BC}
-.prv-import-rij:not(.uit) .prv-vink{background:#6D28D9;border-color:#6D28D9}
+.prv-import-rij:not(.uit) .prv-vink{background:var(--prv);border-color:var(--prv)}
 .prv-import-rij select{margin-top:4px;min-height:36px;max-width:100%;border:1px solid #D5DDE8;border-radius:10px;background:#F8FAFC;color:#0E1A2B;font-family:inherit;font-size:13px;font-weight:600;padding:4px 8px}
 .prv-import-rij > b{font-size:14px;font-weight:800;white-space:nowrap;flex:0 0 auto}
 .prv-import-rij > b.plus{color:#15803D}
@@ -1790,7 +1793,7 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-afspraak .nj-rij-titel{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .prv-afspraak .nj-rij-sub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .prv-afspraak-titel{font-size:19px;font-weight:800;color:var(--nj-ink)}
-.prv-tel-tip{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 12px;border:1px dashed #C4B5FD;border-radius:16px;background:var(--nj-kaart)}
+.prv-tel-tip{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 12px;border:1px dashed var(--prv-licht);border-radius:16px;background:var(--nj-kaart)}
 .prv-tel-tip .prv-tip-x{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;background:none;color:#8A97A8}
 .prv-instel-select .nj-rij-tekst{gap:6px}
 .prv-instel-select select{min-height:44px;border:1px solid #CFD9E3;border-radius:12px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:15px;padding:8px 10px;margin:2px 0 8px}
@@ -1808,18 +1811,18 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-keuze .nj-lijst{margin-bottom:4px}
 .prv-suggesties{display:flex;flex-direction:column;gap:6px}
 .prv-suggesties > small{font-size:12px;font-weight:700;color:var(--nj-muted)}
-.prv-sugg{display:inline-flex;align-items:center;gap:4px;background:#F5F3FF;border-color:#DDD6FE;color:#4C1D95}
+.prv-sugg{display:inline-flex;align-items:center;gap:4px;background:var(--prv-bg);border-color:var(--prv-rand);color:var(--prv-donker)}
 .prv-items.nj-kaart{padding:2px 6px 2px 14px;gap:0}
 .prv-items .prv-item:last-child{border-bottom:none}
 .prv-item-tekst{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .prv-item-tekst > span{font-size:16px;color:var(--nj-ink);word-break:break-word}
 .prv-item-tekst > small{font-size:12px;font-weight:700;color:var(--nj-muted)}
 .prv-item-tekst > small.laat{color:#B42318}
-.prv-item-tekst > small.nu{color:#6D28D9}
+.prv-item-tekst > small.nu{color:var(--prv)}
 .prv-item.af .prv-item-tekst > span{text-decoration:line-through;color:var(--nj-muted)}
 .prv-taak-nieuw{display:flex;flex-direction:column;gap:10px}
 .prv-taak-nieuw input[type="text"], .prv-taak-wanneer input{width:100%;box-sizing:border-box;min-height:48px;border:1px solid #CFD9E3;border-radius:12px;background:#fff;color:#0E1A2B;font-family:inherit;font-size:16px;padding:10px 12px}
-.prv-taak-nieuw input:focus{outline:2px solid #6D28D9;outline-offset:1px;border-color:#6D28D9}
+.prv-taak-nieuw input:focus{outline:2px solid var(--prv);outline-offset:1px;border-color:var(--prv)}
 .prv-taak-nieuw-rij{display:flex;gap:8px;align-items:flex-end}
 .prv-taak-wanneer{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .prv-taak-wanneer > span{font-size:12px;font-weight:700;color:var(--nj-muted)}
@@ -1836,7 +1839,7 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 .prv-controle-ic{width:24px;height:24px;border-radius:99px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
 .prv-controle-rij.ok .prv-controle-ic{background:#DCFCE7;color:#15803D}
 .prv-controle-rij.fout .prv-controle-ic{background:#FEE2E2;color:#B42318}
-.prv-controle-rij.info .prv-controle-ic{background:#EDE9FE;color:#6D28D9}
+.prv-controle-rij.info .prv-controle-ic{background:var(--prv-zacht);color:var(--prv)}
 .prv-controle-rij.fout .nj-rij-sub{color:#9A3412}
 .prv-controle-rij .prv-chip{align-self:center}
 
@@ -1879,7 +1882,7 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-wie-stand small{font-size:11px;font-weight:700;color:var(--nj-muted)}
 .prv-wie-stand b{font-size:16px;font-weight:800;color:var(--nj-ink)}
 .prv-wie-stand b.min{color:#B42318}
-.prv-bank-rij.aan{background:#F5F3FF}
+.prv-bank-rij.aan{background:var(--prv-bg)}
 .prv-rek-kaart{gap:10px}
 .prv-rek-kop{display:flex;align-items:flex-start;gap:10px}
 .prv-rek-naam{font-size:17px !important;font-weight:800;min-height:42px !important}
@@ -1908,10 +1911,10 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-score-pt{font-size:22px;font-weight:800;min-width:60px;text-align:right}
 .prv-score-pt small{font-size:12px;font-weight:700;color:var(--nj-muted)}
 .prv-scorebord.klein .prv-score-pt{font-size:17px}
-.prv-score-leider{margin:0;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#6D28D9}
+.prv-score-leider{margin:0;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--prv)}
 .prv-item > .prv-pt{flex:0 0 auto;min-width:0;text-decoration:none}
 .prv-item.af > .prv-pt{text-decoration:none;color:#15803D}
-.prv-pt{flex:0 0 auto;white-space:nowrap;font-size:12px;font-weight:800;color:#6D28D9;background:#EDE9FE;padding:3px 8px;border-radius:99px}
+.prv-pt{flex:0 0 auto;white-space:nowrap;font-size:12px;font-weight:800;color:var(--prv);background:var(--prv-zacht);padding:3px 8px;border-radius:99px}
 .prv-pt.af{color:#15803D;background:#DCFCE7}
 .prv-snel-kaart:only-child{grid-column:1/-1;min-height:72px}
 
@@ -1928,10 +1931,36 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-wie-groep{margin-bottom:10px}
 .prv-rek-rij{padding-left:24px;min-height:64px;background:var(--nj-kaart)}
 .prv-rek-rij .prv-ico{width:32px;height:32px}
-.prv-rek-rij.aan{background:#F5F3FF;box-shadow:inset 3px 0 0 #6D28D9}
+.prv-rek-rij.aan{background:var(--prv-bg);box-shadow:inset 3px 0 0 var(--prv)}
 .prv-rek-filter{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;max-width:100%}
 .prv-rek-filter span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prv-nw{white-space:nowrap}
+
+/* taken: herhalen met zelf aangevinkte dagen */
+.prv-herhaal{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:12px;border-radius:14px;background:var(--prv-bg);border:1px solid var(--prv-rand)}
+.prv-herhaal[hidden]{display:none}
+.prv-herhaal-kop{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--prv-donker)}
+.prv-weekdagen{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.prv-wd{min-width:0;aspect-ratio:1;max-height:48px;border:1.5px solid var(--prv-rand);border-radius:50%;background:#fff;color:#0E1A2B;font-family:inherit;font-size:14px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.prv-wd.aan{background:var(--prv);border-color:var(--prv);color:#fff}
+.prv-wd:active{transform:scale(.94)}
+.prv-herhaal-uitleg{font-size:13px;font-weight:700;color:var(--prv-donker)}
+
+/* kleuren van de app */
+.prv-kleur-groep{display:flex;flex-direction:column;gap:8px;background:#fff;border-radius:16px;padding:12px}
+.prv-kleur-kop{display:flex;flex-direction:column;gap:1px}
+.prv-kleur-kop b{font-size:16px;font-weight:800}
+.prv-kleur-kop span{font-size:12.5px;color:#5A6A7E;font-weight:600}
+.prv-kleuren{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:8px}
+.prv-kleur{width:100%;max-width:48px;aspect-ratio:1;justify-self:center;border-radius:50%;border:3px solid #fff;background:var(--k);box-shadow:0 0 0 1.5px #D5DDE8;color:#fff;
+  display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.prv-kleur.aan{box-shadow:0 0 0 2.5px var(--k)}
+.prv-kleur:active{transform:scale(.93)}
+.prv-kleur-voorbeeld{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prv-kleur-voorbeeld span{min-height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+.prv-kleur-voorbeeld .w{background:var(--werk)}
+.prv-kleur-voorbeeld .p{background:var(--prv)}
 </style>
 <script>
 // Offline service worker
@@ -2051,6 +2080,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
     <button class="action" id="themaBtn"><span class="ic" data-nj-ic="thema"></span><span>Thema: <b id="themaTxt">Auto</b></span></button>
     <button class="action" id="priveBtn"><span class="ic" data-nj-ic="slot"></span><span>Privé-gedeelte: <b id="priveTxt">Aan</b></span></button>
     <button class="action" id="prsBtn"><span class="ic" data-nj-ic="schakel"></span><span>Persoon: <b id="prsTxt">—</b> · wisselen</span></button>
+    <button class="action" id="kleurBtn"><span class="ic" data-nj-ic="thema"></span><span>Kleuren van de app</span></button>
     <button class="action" id="apiKeyBtn"><span class="ic" data-nj-ic="sleutel"></span><span>API-sleutel voor muntherkenning</span></button>
     <button class="action" id="forceUpdateBtn"><span class="ic" data-nj-ic="ververs"></span><span>Nieuwste versie ophalen (app verversen)</span></button>
   </div>
@@ -2211,7 +2241,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.24';
+const APP_VERSION = '2026-11-24.25';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -3652,6 +3682,8 @@ function prvInstellingen(wrap){
   const al = document.createElement('div'); al.className = 'nj-lijst';
   if(prsAan()) al.appendChild(prvActieRij('schakel', 'Personen en apparaten', 'Wie er is, pincodes en gekoppelde telefoons', ()=>prvGa({mode:'p_personen'})));
   else al.appendChild(prvActieRij('schakel', 'Inloggen met personen', 'Staat uit: iedereen ziet alles', ()=>{ prsData.aan = true; prsBewaar(); toast('Inloggen met personen staat aan'); prsZetIk(null); view = {mode:'persoon'}; render(); }));
+  const kz = prvKleurKeuze();
+  al.appendChild(prvActieRij('thema', 'Kleuren van de app', 'Werk: '+prvKleurNaam(kz.werk)+' · Privé: '+prvKleurNaam(kz.prive)+(prsAan() && prsIk() ? ' · alleen voor '+prsIk().naam : ''), ()=>prvKleurBlad()));
   al.appendChild(prvActieRij('thema', 'Thema, synchroniseren en meer', 'Het gewone Meer-menu van de app', ()=>openSheet()));
   as.appendChild(al);
 }
@@ -4220,7 +4252,7 @@ function prvAfspraakRij(a, metDatum){
   const sub = [a.plek, a.notitie].filter(Boolean).join(' · ');
   b.innerHTML = '<span class="prv-tijd">'+tijd+(metDatum ? '<small>'+njEsc(PRV_DAGKORT[prvDatum(a.datum).getDay()]+' '+prvDatum(a.datum).getDate()+' '+PRV_MAANDEN[prvDatum(a.datum).getMonth()].slice(0,3))+'</small>' : (a.tijd && a.eindTijd ? '<small>tot '+njEsc(a.eindTijd)+'</small>' : ''))+'</span>'+
     '<span class="nj-rij-tekst"><span class="nj-rij-titel">'+njEsc(a.titel)+'</span>'+(sub ? '<span class="nj-rij-sub">'+njEsc(sub)+'</span>' : '')+
-    (a.tel ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(a.kleur || '#6D28D9')+'"></i>'+njEsc(a.kalenderNaam || 'Telefoon-agenda')+(a.herhaalt ? ' · herhaalt' : '')+(a.spiegelId ? ' · uit Privé' : '')+'</span>' : '')+'</span>';
+    (a.tel ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(a.kleur || 'var(--prv)')+'"></i>'+njEsc(a.kalenderNaam || 'Telefoon-agenda')+(a.herhaalt ? ' · herhaalt' : '')+(a.spiegelId ? ' · uit Privé' : '')+'</span>' : '')+'</span>';
   b.onclick = ()=>prvGa(a.spiegelId ? {mode:'p_afspraak', id:a.spiegelId} : a.tel ? {mode:'p_afspraak', tel:a} : {mode:'p_afspraak', id:a.id});
   return b;
 }
@@ -4264,7 +4296,7 @@ function prvAfspraak(wrap, kop){
     prvVeld('Tot (mag leeg)', '<input id="prvAgEind" type="time" value="'+njEsc(a && a.eindTijd ? a.eindTijd : '')+'">')+'</div>'+
     prvVeld('Notitie (mag leeg)', '<textarea id="prvAgNotitie" rows="3">'+njEsc(a && a.notitie ? a.notitie : '')+'</textarea>')+
     (nieuwOpTel && kals.length ? prvVeld('In welke agenda', '<select id="prvAgKal">'+kals.map(x=>'<option value="'+njEsc(x.id)+'"'+(stdKal && x.id === stdKal.id ? ' selected' : '')+'>'+njEsc(prvKalLabel(x))+'</option>').join('')+'</select>') : '')+
-    (telA ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(telA.kleur || '#6D28D9')+'"></i>Staat alleen in je telefoon-agenda: '+njEsc(telA.kalenderNaam || '')+'</span>' :
+    (telA ? '<span class="prv-agenda-bron"><i style="background:'+njEsc(telA.kleur || 'var(--prv)')+'"></i>Staat alleen in je telefoon-agenda: '+njEsc(telA.kalenderNaam || '')+'</span>' :
       a ? '<span class="prv-agenda-bron">'+(spiegel ? 'Uit Privé: staat in je telefoon-agenda en op je andere telefoon' : 'Uit Privé: komt ook op je andere telefoon')+'</span>' : '');
   wrap.appendChild(k);
   const opslaan = document.createElement('button');
@@ -4899,6 +4931,7 @@ function prsZetIk(p){
   try{ if(p) localStorage.setItem(STORAGE_IK, p.id); else localStorage.removeItem(STORAGE_IK); }catch(e){}
   prvOpen = false;   // Privé opnieuw ontgrendelen voor de nieuwe persoon
   prsRegistreer();
+  prvKleurToepassen();   // ieder z'n eigen kleuren
 }
 function prsNaarStart(){
   view = prvAan() ? {mode:'start'} : {mode:'home', level:null, wijk:null, ronde:null, straat:null, krant:null};
@@ -5148,7 +5181,7 @@ var prvRek = null;   // of alleen één rekening (IBAN)
 function prvTransGefilterd(ms){ return transactiesVoorMaand(ms).filter(t=>prvRek ? t.rek === prvRek : (!prvWie || prvTransWie(t) === prvWie)); }
 function prvTotalen(lijst){ let i = 0, u = 0; lijst.forEach(t=>{ if(t.type === 'inkomst') i += t.bedrag; else u += t.bedrag; }); return {inkomsten:i, uitgaven:u, saldo:i - u}; }
 function prvWieNaam(w){ if(w === 'samen') return 'Samen'; const p = (typeof prsData !== 'undefined' && prsData) ? prsData.lijst.find(x=>x.id === w) : null; return p ? p.naam : 'Samen'; }
-function prvWieKeuzes(){ const l = (prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : []); l.push({id:'samen', naam:'Samen', kleur:'#6D28D9'}); return l; }
+function prvWieKeuzes(){ const l = (prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : []); l.push({id:'samen', naam:'Samen', kleur:'var(--prv)'}); return l; }
 
 // 1. bank kiezen, 2. bestand kiezen
 function prvKiesAfschrift(){ prvBankKeuze({}); }
@@ -5767,18 +5800,65 @@ function prvBankScherm(wrap, kop){
 // Elke taak heeft punten; wie hem afvinkt krijgt ze. Het puntenlogboek (n.log) blijft bewaard,
 // ook als je gedane taken weghaalt. Herhalende taken komen na afvinken vanzelf terug.
 const PRV_PUNTEN = [5, 10, 20, 50, 100];
-const PRV_HERHAAL = [['', 'Eén keer'], ['dag', 'Elke dag'], ['week', 'Elke week'], ['maand', 'Elke maand']];
+const PRV_HERHAAL = [['', 'Eén keer'], ['week', 'Dagen kiezen'], ['maand', 'Elke maand']];
 var prvScorePeriode = 'week';
 function prvTakenLijst(){ return prvHoofdLijst('taak') || prvMaakLijst('taak'); }
-function prvTaakVolgende(iso, herhaal){
-  const d = prvDatum(iso || vandaagIso());
-  if(herhaal === 'dag') d.setDate(d.getDate() + 1);
-  else if(herhaal === 'week') d.setDate(d.getDate() + 7);
-  else if(herhaal === 'maand') d.setMonth(d.getMonth() + 1);
-  let uit = prvIso(d);
-  // als de taak lang is blijven liggen: de volgende niet in het verleden zetten
-  while(uit < vandaagIso()){ const x = prvDatum(uit); if(herhaal === 'dag') x.setDate(x.getDate() + 1); else if(herhaal === 'week') x.setDate(x.getDate() + 7); else x.setMonth(x.getMonth() + 1); uit = prvIso(x); }
-  return uit;
+// Herhalen: 'dag' (oud), 'week' met zelf gekozen dagen (it.dagen: 0=zo … 6=za) en om de N weken (it.elke),
+// of 'maand'. it.begin = de week waarin het herhalen begon (voor "om de 2 weken").
+const PRV_WEEKDAGEN = [[1, 'ma'], [2, 'di'], [3, 'wo'], [4, 'do'], [5, 'vr'], [6, 'za'], [0, 'zo']];
+function prvTaakDagen(it){
+  if(!it || !it.herhaal) return [];
+  if(it.herhaal === 'dag') return [0, 1, 2, 3, 4, 5, 6];
+  if(it.herhaal === 'week'){
+    if(Array.isArray(it.dagen) && it.dagen.length) return it.dagen.slice();
+    return [prvDatum(it.datum || vandaagIso()).getDay()];
+  }
+  return [];
+}
+function prvWeekStart(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+function prvTaakPastOp(it, d){
+  const dagen = prvTaakDagen(it);
+  if(dagen.indexOf(d.getDay()) < 0) return false;
+  const elke = Math.max(1, parseInt(it.elke, 10) || 1);
+  if(elke === 1) return true;
+  const w0 = prvWeekStart(prvDatum(it.begin || it.datum || vandaagIso())), w = prvWeekStart(d);
+  const weken = Math.round((w - w0) / (7 * 86400000));
+  return ((weken % elke) + elke) % elke === 0;
+}
+// volgende keer na iso. Oude aanroep (iso, 'dag'/'week'/'maand') werkt ook; met it erbij tellen de gekozen dagen.
+function prvTaakVolgende(iso, herhaal, it){
+  it = Object.assign({herhaal:herhaal, datum:iso}, it || {});
+  const v = vandaagIso();
+  if(it.herhaal === 'maand'){
+    const d = prvDatum(iso || v); d.setMonth(d.getMonth() + 1);
+    let uit = prvIso(d);
+    while(uit < v){ const x = prvDatum(uit); x.setMonth(x.getMonth() + 1); uit = prvIso(x); }
+    return uit;
+  }
+  // dag/week: de eerstvolgende gekozen dag na deze keer, en niet in het verleden
+  const d = prvDatum(iso || v);
+  for(let i = 0; i < 800; i++){
+    d.setDate(d.getDate() + 1);
+    const x = prvIso(d);
+    if(x >= v && prvTaakPastOp(it, d)) return x;
+  }
+  const z = prvDatum(iso || v); z.setDate(z.getDate() + 7); return prvIso(z);
+}
+// "elke dag", "werkdagen", "elke ma en do", "om de 2 weken op za", "elke maand"
+function prvHerhaalTekst(it){
+  if(!it || !it.herhaal) return '';
+  if(it.herhaal === 'maand') return 'elke maand';
+  const dagen = prvTaakDagen(it), elke = Math.max(1, parseInt(it.elke, 10) || 1);
+  const namen = PRV_WEEKDAGEN.filter(([n])=>dagen.indexOf(n) >= 0).map(([, l])=>l);
+  const sleutel = PRV_WEEKDAGEN.filter(([n])=>dagen.indexOf(n) >= 0).map(([n])=>n).join('');
+  const wat = namen.length > 1 ? namen.slice(0, -1).join(', ')+' en '+namen[namen.length - 1] : (namen[0] || '');
+  if(elke === 1){
+    if(dagen.length === 7) return 'elke dag';
+    if(sleutel === '12345') return 'elke werkdag';
+    if(sleutel === '60') return 'elk weekend';
+    return 'elke '+wat;
+  }
+  return 'om de '+elke+' weken · '+(dagen.length === 7 ? 'hele week' : (sleutel === '12345' ? 'werkdagen' : (sleutel === '60' ? 'weekend' : wat)));
 }
 // punten spreek je samen af: wie een aantal kiest doet een voorstel, de ander geeft akkoord
 function prvPuntenSamen(){ return prsAan() && prsData.lijst.length > 1; }
@@ -5817,14 +5897,17 @@ function prvTaakAf(n, it, af){
     const p = wacht ? 0 : (it.punten || 0);
     n.log.push(Object.assign({id:it.id, reeks:prvReeks(it), t:it.t, p:p, door:it.door, op:it.klaarOp}, wacht ? {wacht:true} : {}));
     if(it.herhaal){
-      const nieuw = {id:'i'+Date.now()+Math.random().toString(36).slice(2, 5), reeks:prvReeks(it), t:it.t, af:false, punten:it.punten, herhaal:it.herhaal, datum:prvTaakVolgende(it.datum, it.herhaal)};
+      const nieuw = {id:'i'+Date.now()+Math.random().toString(36).slice(2, 5), reeks:prvReeks(it), t:it.t, af:false, punten:it.punten, herhaal:it.herhaal, datum:prvTaakVolgende(it.datum, it.herhaal, it)};
+      if(Array.isArray(it.dagen)) nieuw.dagen = it.dagen.slice();
+      if(it.elke) nieuw.elke = it.elke;
+      if(it.begin) nieuw.begin = it.begin;
       if(it.voorstel) nieuw.voorstel = Object.assign({}, it.voorstel);
       n.items.push(nieuw);
       it.volgende = nieuw.id;
     }
     n.gewijzigd = Date.now(); prvBewaarNotities();
     const wie = it.door ? prvWieNaam(it.door) : '';
-    if(wacht) toast('Gedaan! De punten tellen zodra jullie het aantal hebben afgesproken'); else toast(p ? '+'+p+' punten'+(wie ? ' voor '+wie : '')+(it.herhaal ? ' · komt terug op '+prvTaakDatumTekst(prvTaakVolgende(it.datum, it.herhaal)) : '') : 'Gedaan: '+it.t);
+    if(wacht) toast('Gedaan! De punten tellen zodra jullie het aantal hebben afgesproken'); else toast(p ? '+'+p+' punten'+(wie ? ' voor '+wie : '')+(it.herhaal ? ' · komt terug op '+prvTaakDatumTekst(prvTaakVolgende(it.datum, it.herhaal, it)) : '') : 'Gedaan: '+it.t);
   } else {
     it.af = false;
     const i = n.log.map(x=>x.id).lastIndexOf(it.id); if(i >= 0) n.log.splice(i, 1);
@@ -5847,7 +5930,7 @@ function prvScores(n, per){
 // scorebord
 function prvScorebord(wrap, n, klein){
   const scores = prvScores(n, prvScorePeriode);
-  const mensen = prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : [{id:'samen', naam:'Samen', kleur:'#6D28D9'}];
+  const mensen = prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : [{id:'samen', naam:'Samen', kleur:'var(--prv)'}];
   if(!prsAan() && !scores.samen && !Object.keys(scores).length && klein) return;
   const max = Math.max(1, ...mensen.map(m=>scores[m.id] || 0));
   const top = mensen.slice().sort((a,b)=>(scores[b.id] || 0) - (scores[a.id] || 0));
@@ -5887,7 +5970,7 @@ function prvTakenHub(wrap, kop){
   else {
     const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
     open.forEach(it=>{
-      const sub = [prvTaakDatumTekst(it.datum), it.herhaal ? (PRV_HERHAAL.find(h=>h[0] === it.herhaal) || ['', ''])[1].toLowerCase() : ''].filter(Boolean).join(' · ');
+      const sub = [prvTaakDatumTekst(it.datum), prvHerhaalTekst(it)].filter(Boolean).join(' · ');
       const rij = prvItemRij(it, ()=>{ prvTaakAf(n, it, true); render(); }, ()=>prvGa({mode:'p_taak', id:it.id}), sub, it.datum && it.datum < v ? 'laat' : (it.datum === v ? 'nu' : ''));
       const w = rij.querySelector('.prv-item-weg'); w.innerHTML = njIco('pijl', 16, 2.4); w.setAttribute('aria-label', it.t+' wijzigen');
       const pt = document.createElement('span');
@@ -5972,20 +6055,54 @@ function prvTaakBewerk(wrap, kop){
   if(view.id !== 'nieuw' && !it){ prvGa({mode:'p_taken'}); return; }
   kop('Privé · Taken', it ? 'Taak wijzigen' : 'Nieuwe taak');
   if(view.punten === undefined) view.punten = it ? ((it.voorstel && it.voorstel.p) || it.punten || 0) : 10;
-  if(view.herhaal === undefined) view.herhaal = it ? (it.herhaal || '') : '';
+  if(view.herhaal === undefined){
+    // oude 'elke dag' / 'elke week' worden hier dagen om aan te vinken
+    view.herhaal = it ? (it.herhaal === 'dag' ? 'week' : (it.herhaal || '')) : '';
+    view.dagen = it && it.herhaal ? prvTaakDagen(it) : [];
+    view.elke = it ? Math.max(1, parseInt(it.elke, 10) || 1) : 1;
+  }
+  if(view.herhaal === 'week' && !(view.dagen || []).length) view.dagen = [prvDatum((it && it.datum) || vandaagIso()).getDay()];
   const k = document.createElement('section');
   k.className = 'nj-kaart prv-form';
   k.innerHTML = prvVeld('Wat moet er gebeuren', '<input id="prvTkT" type="text" placeholder="Bijv. stofzuigen, vuilnis buiten zetten" value="'+njEsc(it ? it.t : '')+'">')+
     '<div class="prv-veld"><span>Hoeveel punten'+(prvPuntenSamen() ? ' (voorstel, de ander geeft akkoord)' : '')+'</span><div class="nj-chips prv-soort" role="group" aria-label="Punten">'+PRV_PUNTEN.map(p=>'<button type="button" class="nj-chip'+(view.punten === p ? ' aan' : '')+'" data-pt="'+p+'">'+p+'</button>').join('')+
       '<label class="prv-pt-eigen"><span class="prv-verborgen">Ander aantal punten</span><input id="prvTkP" type="number" inputmode="numeric" min="0" max="1000" placeholder="Anders" value="'+(PRV_PUNTEN.indexOf(view.punten) < 0 ? view.punten : '')+'"></label></div>'+
       (it && prvPuntenSamen() ? '<span class="prv-agenda-bron">'+(typeof it.punten === 'number' ? 'Afgesproken: '+it.punten+' punten' : 'Nog niet afgesproken')+(it.voorstel ? ' · voorstel '+it.voorstel.p+' van '+njEsc(prvWieNaam(it.voorstel.door)) : '')+'</span>' : '')+'</div>'+
-    '<div class="prv-veld"><span>Herhalen</span><div class="nj-chips prv-soort" role="group" aria-label="Herhalen">'+PRV_HERHAAL.map(([h, l])=>'<button type="button" class="nj-chip'+(view.herhaal === h ? ' aan' : '')+'" data-h="'+h+'">'+l+'</button>').join('')+'</div></div>'+
+    '<div class="prv-veld"><span>Herhalen</span><div class="nj-chips prv-soort" role="group" aria-label="Herhalen">'+PRV_HERHAAL.map(([h, l])=>'<button type="button" class="nj-chip'+(view.herhaal === h ? ' aan' : '')+'" data-h="'+h+'">'+l+'</button>').join('')+'</div>'+
+      '<div class="prv-herhaal" id="prvTkH"></div></div>'+
     prvVeld('Wanneer (mag leeg)', '<input id="prvTkD" type="date" value="'+njEsc(it ? (it.datum || '') : (view.datum || ''))+'">')+
     '<div class="nj-chips prv-taak-snel"><button type="button" class="nj-chip" data-d="0">Vandaag</button><button type="button" class="nj-chip" data-d="1">Morgen</button><button type="button" class="nj-chip" data-d="7">Over een week</button><button type="button" class="nj-chip" data-d="">Geen datum</button></div>';
   k.querySelectorAll('[data-pt]').forEach(b=>{ b.onclick = ()=>{ view.punten = parseInt(b.getAttribute('data-pt'), 10); k.querySelectorAll('[data-pt]').forEach(c=>c.classList.toggle('aan', c === b)); const e = document.getElementById('prvTkP'); if(e) e.value = ''; }; });
   const eigen = k.querySelector('#prvTkP');
   eigen.oninput = ()=>{ const p = parseInt(eigen.value, 10); if(p >= 0 && p <= 1000){ view.punten = p; k.querySelectorAll('[data-pt]').forEach(c=>c.classList.toggle('aan', parseInt(c.getAttribute('data-pt'), 10) === p)); } };
-  k.querySelectorAll('[data-h]').forEach(b=>{ b.onclick = ()=>{ view.herhaal = b.getAttribute('data-h'); k.querySelectorAll('[data-h]').forEach(c=>c.classList.toggle('aan', c === b)); const d = document.getElementById('prvTkD'); if(view.herhaal && !d.value) d.value = vandaagIso(); }; });
+  // dagen aanvinken en om de hoeveel weken
+  const tekenHerhaal = ()=>{
+    const h = k.querySelector('#prvTkH');
+    if(view.herhaal !== 'week'){ h.innerHTML = ''; h.hidden = true; return; }
+    h.hidden = false;
+    const dagen = view.dagen || [], sleutel = PRV_WEEKDAGEN.filter(([n])=>dagen.indexOf(n) >= 0).map(([n])=>n).join('');
+    h.innerHTML = '<span class="prv-herhaal-kop">Op welke dagen?</span>'+
+      '<div class="prv-weekdagen" role="group" aria-label="Dagen">'+PRV_WEEKDAGEN.map(([n, l])=>'<button type="button" class="prv-wd'+(dagen.indexOf(n) >= 0 ? ' aan' : '')+'" data-wd="'+n+'" aria-pressed="'+(dagen.indexOf(n) >= 0)+'">'+l+'</button>').join('')+'</div>'+
+      '<div class="nj-chips prv-taak-snel"><button type="button" class="nj-chip'+(sleutel === '1234560' ? ' aan' : '')+'" data-wds="1234560">Elke dag</button><button type="button" class="nj-chip'+(sleutel === '12345' ? ' aan' : '')+'" data-wds="12345">Werkdagen</button><button type="button" class="nj-chip'+(sleutel === '60' ? ' aan' : '')+'" data-wds="60">Weekend</button></div>'+
+      '<span class="prv-herhaal-kop">Hoe vaak?</span>'+
+      '<div class="nj-chips prv-taak-snel" role="group" aria-label="Hoe vaak">'+[1, 2, 3, 4].map(e=>'<button type="button" class="nj-chip'+(view.elke === e ? ' aan' : '')+'" data-elke="'+e+'">'+(e === 1 ? 'Elke week' : 'Om de '+e+' weken')+'</button>').join('')+'</div>'+
+      '<span class="prv-herhaal-uitleg">'+njEsc(prvHerhaalTekst({herhaal:'week', dagen:dagen, elke:view.elke}).replace(/^./, c=>c.toUpperCase()) || 'Vink minstens één dag aan')+'</span>';
+    h.querySelectorAll('[data-wd]').forEach(b=>{ b.onclick = ()=>{
+      const n = parseInt(b.getAttribute('data-wd'), 10), i = view.dagen.indexOf(n);
+      if(i >= 0){ if(view.dagen.length === 1){ toast('Minstens één dag aanvinken', true); return; } view.dagen.splice(i, 1); } else view.dagen.push(n);
+      tekenHerhaal();
+    }; });
+    h.querySelectorAll('[data-wds]').forEach(b=>{ b.onclick = ()=>{ view.dagen = b.getAttribute('data-wds').split('').map(Number); tekenHerhaal(); }; });
+    h.querySelectorAll('[data-elke]').forEach(b=>{ b.onclick = ()=>{ view.elke = parseInt(b.getAttribute('data-elke'), 10); tekenHerhaal(); }; });
+  };
+  k.querySelectorAll('[data-h]').forEach(b=>{ b.onclick = ()=>{
+    view.herhaal = b.getAttribute('data-h'); k.querySelectorAll('[data-h]').forEach(c=>c.classList.toggle('aan', c === b));
+    const d = document.getElementById('prvTkD');
+    if(view.herhaal === 'week' && !(view.dagen || []).length) view.dagen = [prvDatum(d.value || vandaagIso()).getDay()];
+    if(view.herhaal && !d.value) d.value = vandaagIso();
+    tekenHerhaal();
+  }; });
+  tekenHerhaal();
   k.querySelectorAll('[data-d]').forEach(b=>{ b.onclick = ()=>{ const v = b.getAttribute('data-d'), d = document.getElementById('prvTkD'); if(v === '') d.value = ''; else { const x = new Date(); x.setDate(x.getDate() + parseInt(v, 10)); d.value = prvIso(x); } }; });
   wrap.appendChild(k);
   const ok = document.createElement('button');
@@ -5996,9 +6113,15 @@ function prvTaakBewerk(wrap, kop){
     const t = document.getElementById('prvTkT').value.trim();
     if(!t){ toast('Typ eerst wat er moet gebeuren', true); return; }
     let datum = document.getElementById('prvTkD').value;
-    if(view.herhaal && !datum) datum = vandaagIso();
     const samen = prvPuntenSamen();
     const v = {t:t, herhaal:view.herhaal, datum:datum};
+    if(view.herhaal === 'week'){
+      v.dagen = (view.dagen || []).slice().sort(); v.elke = view.elke || 1;
+      // eerste keer: de gekozen datum, of anders de eerstvolgende aangevinkte dag vanaf vandaag
+      if(!datum){ const g = prvDatum(vandaagIso()); g.setDate(g.getDate() - 1); v.datum = prvTaakVolgende(prvIso(g), 'week', {dagen:v.dagen, elke:1}); }
+      v.begin = v.datum;
+    } else if(view.herhaal && !datum) v.datum = vandaagIso();
+    if(view.herhaal !== 'week'){ v.dagen = undefined; v.elke = undefined; v.begin = undefined; }
     let doel = it;
     if(it) Object.assign(it, v);
     else { n.items = n.items || []; doel = Object.assign({id:'i'+Date.now(), af:false, punten: samen ? null : view.punten}, v); n.items.push(doel); }
@@ -6062,8 +6185,8 @@ const SYNC_LIVE = {
   prive_vastelasten: ()=>{ prvVast = Object.assign({lijst:[], genegeerd:[]}, syncJson('prive_vastelasten', {})); },
   prive_rekeningen: ()=>{ prvRekeningen = syncJson('prive_rekeningen', {}); },
   prive_bankkoppel: ()=>{ ebData = Object.assign({sessies:[]}, syncJson('prive_bankkoppel', {})); },
-  prive_instel: ()=>{ Object.assign(prvInstel, syncJson('prive_instel', {})); },
-  personen: ()=>{ prsLaad(); },
+  prive_instel: ()=>{ Object.assign(prvInstel, syncJson('prive_instel', {})); prvKleurToepassen(); },
+  personen: ()=>{ prsLaad(); prvKleurToepassen(); },
 };
 // gegevens die de app elke keer zelf opnieuw leest: niets te doen
 const SYNC_VANZELF = new Set(['tijd', 'km', 'mutaties_log', 'klachten_log', 'kerst_doel', 'kerst_rondeperiodes', 'bonus_archief', 'jaararchief',
@@ -6102,6 +6225,104 @@ document.addEventListener('click', ()=>{ if(syncLater) setTimeout(()=>{ if(syncL
 window.addEventListener('pagehide', ()=>{
   try{ const m = document.getElementById('main'); sessionStorage.setItem('looplijst_view_bewaard', JSON.stringify({view:view, open:prvOpen, t:Date.now(), scroll: m ? m.scrollTop : 0})); }catch(e){}
 });
+
+// ===================== KLEUREN: Werk en Privé zelf kiezen, per persoon =====================
+// Iedere persoon kiest een kleur voor Werk en een voor Privé. Bewaard bij de persoon (gaat mee met
+// synchroniseren); zonder personen geldt één keuze voor het hele huishouden (prvInstel.kleuren).
+// De kleuren worden CSS-variabelen op <html>: --werk… en --prv…
+const PRV_KLEUREN = [
+  // [sleutel, naam, hoofd, zacht, donker (tekst), licht (donker thema), pil (donker thema)]
+  ['blauw', 'Blauw', '#0B63CE', '#E8F0FB', '#0A3E80', '#6CB0FF', '#1B2A44'],
+  ['paars', 'Paars', '#6D28D9', '#EDE9FE', '#4C1D95', '#C4B5FD', '#3B2A6B'],
+  ['indigo', 'Indigo', '#4338CA', '#E0E7FF', '#312E81', '#A5B4FC', '#262B5E'],
+  ['petrol', 'Petrol', '#0F766E', '#CCFBF1', '#134E4A', '#5EEAD4', '#133B38'],
+  ['groen', 'Groen', '#15803D', '#DCFCE7', '#14532D', '#86EFAC', '#173A26'],
+  ['oranje', 'Oranje', '#C2410C', '#FFEDD5', '#7C2D12', '#FDBA74', '#4A2A14'],
+  ['rood', 'Rood', '#B91C1C', '#FEE2E2', '#7F1D1D', '#FCA5A5', '#4A1D1D'],
+  ['roze', 'Roze', '#BE185D', '#FCE7F3', '#831843', '#F9A8D4', '#4A1B33'],
+  ['antraciet', 'Antraciet', '#334155', '#E2E8F0', '#0F172A', '#CBD5E1', '#2A3442'],
+];
+const PRV_KLEUR_STD = {werk:'blauw', prive:'paars'};
+function prvKleurRij(sleutel){ return PRV_KLEUREN.find(k=>k[0] === sleutel) || null; }
+// wiens kleuren: de ingelogde persoon, anders die van het huishouden
+function prvKleurVan(){ const ik = prsAan() ? prsIk() : null; return ik ? ik : null; }
+function prvKleurKeuze(){
+  const p = prvKleurVan();
+  const k = (p ? p.kleuren : prvInstel.kleuren) || {};
+  return {werk: prvKleurRij(k.werk) ? k.werk : PRV_KLEUR_STD.werk, prive: prvKleurRij(k.prive) ? k.prive : PRV_KLEUR_STD.prive};
+}
+function prvMeng(a, b, t){
+  const d = h=>[1, 3, 5].map(i=>parseInt(h.slice(i, i + 2), 16));
+  const x = d(a), y = d(b);
+  return '#'+x.map((v, i)=>Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function prvRgba(h, a){ return 'rgba('+[1, 3, 5].map(i=>parseInt(h.slice(i, i + 2), 16)).join(',')+','+a+')'; }
+function prvKleurVars(keuze){
+  keuze = keuze || prvKleurKeuze();
+  const w = prvKleurRij(keuze.werk), p = prvKleurRij(keuze.prive);
+  return {
+    '--werk': w[2], '--werk-zacht': w[3], '--werk-donker': w[4], '--werk-licht': w[5], '--werk-pil': w[6],
+    '--prv': p[2], '--prv-zacht': p[3], '--prv-donker': p[4], '--prv-licht': p[5], '--prv-pil': p[6],
+    '--prv-bg': prvMeng(p[3], '#FFFFFF', .5), '--prv-rand': prvMeng(p[3], p[2], .2), '--prv-schaduw': prvRgba(p[2], .3),
+  };
+}
+function prvKleurToepassen(){
+  try{
+    const v = prvKleurVars(), st = document.documentElement.style;
+    Object.keys(v).forEach(k=>st.setProperty(k, v[k]));
+    // onthouden op dit apparaat: bij het opstarten meteen de goede kleur (zie bovenin de pagina)
+    localStorage.setItem('looplijst_kleur_cache', JSON.stringify(v));
+  }catch(e){}
+}
+function prvKleurBewaar(soort, sleutel){
+  const p = prvKleurVan();
+  if(p){ p.kleuren = Object.assign({}, p.kleuren || {}, {[soort]: sleutel}); prsBewaar(); }
+  else { prvInstel.kleuren = Object.assign({}, prvInstel.kleuren || {}, {[soort]: sleutel}); prvBewaarInstel(); }
+  prvKleurToepassen();
+}
+function prvKleurNaam(sleutel){ const r = prvKleurRij(sleutel); return r ? r[1] : ''; }
+// keuzeblad: twee rijen kleurrondjes (Werk en Privé)
+function prvKleurBlad(){
+  const oud = document.getElementById('prvKleurBlad'); if(oud) oud.remove();
+  const p = prvKleurVan();
+  const bg = document.createElement('div');
+  bg.id = 'prvKleurBlad';
+  bg.className = 'prv-blad-bg';
+  const blad = document.createElement('div');
+  blad.className = 'prv-blad prv-kleur-blad';
+  blad.setAttribute('role', 'dialog');
+  blad.setAttribute('aria-modal', 'true');
+  blad.setAttribute('aria-label', 'Kleuren van de app');
+  let gewijzigd = false;
+  const sluit = ()=>{ bg.remove(); if(gewijzigd || syncLater) syncHerteken(); };
+  const teken = ()=>{
+    const keuze = prvKleurKeuze();
+    const rij = (soort, titel, sub)=>'<div class="prv-kleur-groep"><div class="prv-kleur-kop"><b>'+titel+'</b><span>'+sub+' · '+njEsc(prvKleurNaam(keuze[soort]))+'</span></div>'+
+      '<div class="prv-kleuren" role="radiogroup" aria-label="Kleur voor '+titel+'">'+PRV_KLEUREN.map(k=>{
+        const aan = keuze[soort] === k[0];
+        return '<button type="button" class="prv-kleur'+(aan ? ' aan' : '')+'" role="radio" aria-checked="'+aan+'" aria-label="'+k[1]+'" data-soort="'+soort+'" data-k="'+k[0]+'" style="--k:'+k[2]+';--kz:'+k[3]+'">'+(aan ? njIco('check', 18, 3) : '')+'</button>';
+      }).join('')+'</div></div>';
+    blad.innerHTML = '<div class="prv-blad-kop"><div><b>Kleuren van de app</b><span>'+(p ? 'Alleen voor '+njEsc(p.naam)+', op elk apparaat waar '+njEsc(p.naam)+' inlogt' : 'Voor deze app')+'</span></div>'+
+      '<button type="button" class="nj-ib prv-blad-x" aria-label="Sluiten">'+njIco('kruis', 18, 2.4)+'</button></div>'+
+      rij('werk', 'Werk', 'Looplijst, vergoeding, bijhouden')+
+      rij('prive', 'Privé', 'Agenda, huishoudboekje, notities, taken')+
+      '<div class="prv-kleur-voorbeeld" aria-hidden="true"><span class="w">Werk</span><span class="p">Privé</span></div>'+
+      '<button type="button" class="nj-knop-primair prv-knop prv-kleur-klaar">Klaar</button>';
+    blad.querySelector('.prv-blad-x').onclick = sluit;
+    blad.querySelector('.prv-kleur-klaar').onclick = sluit;
+    blad.querySelectorAll('.prv-kleur').forEach(b=>{ b.onclick = ()=>{ prvKleurBewaar(b.getAttribute('data-soort'), b.getAttribute('data-k')); gewijzigd = true; teken(); }; });
+  };
+  teken();
+  bg.appendChild(blad);
+  bg.onclick = e=>{ if(e.target === bg) sluit(); };
+  document.body.appendChild(bg);
+}
+// Meer-menu (werk): knop "Kleuren van de app"
+(function(){
+  const b = document.getElementById('kleurBtn');
+  if(b) b.onclick = ()=>{ closeSheet(); prvKleurBlad(); };
+})();
+prvKleurToepassen();
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
 var NJ_SEG_KLEUREN = {
@@ -9650,7 +9871,7 @@ function renderRoute(){
       const telSom = telSorted.reduce((x,p)=>x+tel[p], 0);
       const ringHTML = '<span class="nj-ring56"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">'+
         '<circle cx="28" cy="28" r="24" fill="none" stroke="'+(complete?'#15803D':'#E6EBF2')+'" stroke-width="5"/>'+
-        (!complete && c.done>0 ? '<circle cx="28" cy="28" r="24" fill="none" stroke="#0B63CE" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(omtrek*c.done/c.total).toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 28 28)"/>' : '')+
+        (!complete && c.done>0 ? '<circle cx="28" cy="28" r="24" fill="none" stroke="#0B63CE" style="stroke:var(--nj-accent)" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(omtrek*c.done/c.total).toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 28 28)"/>' : '')+
         '</svg><b>'+(complete ? '<span style="color:#15803D;display:flex">'+njIco('check', 22, 3)+'</span>' : wpct+'%')+'</b></span>';
       kaart.innerHTML =
         '<button type="button" class="nj-wijk-top">'+
@@ -10634,7 +10855,7 @@ function toonKerstPdfKeuze(startModus){
       : 'Nu: de volgorde die de app van je afvinken heeft geleerd')+'</div>';
   const kpVolgKnop = document.createElement('button');
   kpVolgKnop.type = 'button';
-  kpVolgKnop.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:12px;border:2px solid #0B63CE;background:#E8F0FB;color:#0B63CE;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer';
+  kpVolgKnop.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:12px;border:2px solid var(--nj-accent);background:var(--nj-accent-zacht);color:var(--nj-accent);font-weight:800;font-size:14px;font-family:inherit;cursor:pointer';
   kpVolgKnop.innerHTML = njIco('volgorde', 18)+' Volgorde per ronde aanpassen';
   kpVolgKnop.onclick = ()=>{
     document.body.removeChild(bg);
@@ -11818,7 +12039,7 @@ function bouwTijdEnAgendaSectie(container, deel){
   agHead.innerHTML = '<div style="font-size:15px;font-weight:800;color:#0E1A2B">Deze week</div>';
   const agToggle = document.createElement('button');
   agToggle.type = 'button';
-  agToggle.style.cssText = 'border:none;background:#E8F0FB;color:#0B63CE;font-size:12px;font-weight:800;padding:8px 12px;border-radius:99px;cursor:pointer;font-family:inherit';
+  agToggle.style.cssText = 'border:none;background:var(--nj-accent-zacht);color:var(--nj-accent);font-size:12px;font-weight:800;padding:8px 12px;border-radius:99px;cursor:pointer;font-family:inherit';
   agToggle.textContent = agendaToonAlleWeken ? 'Alleen deze week ▴' : 'Alle weken ▾';
   agToggle.onclick = ()=>{ agendaToonAlleWeken = !agendaToonAlleWeken; render(); };
   agHead.appendChild(agToggle);
@@ -11906,7 +12127,7 @@ function bouwTijdEnAgendaSectie(container, deel){
       const huidigDag = td2.huidig && new Date(td2.huidig.start).toDateString() === datumStr ? td2.huidig : null;
 
       const dagKnop = document.createElement('button');
-      const borderKleur = isVandaag ? '#0B63CE' : sessie || huidigDag ? '#bbf7d0' : '#E2E7EE';
+      const borderKleur = isVandaag ? 'var(--nj-accent)' : sessie || huidigDag ? '#bbf7d0' : '#E2E7EE';
       const bgKleur = isVandaag ? '#E8F0FB' : huidigDag ? '#fff9e6' : sessie ? '#f0faf4' : '#F7F9FB';
       dagKnop.style.cssText =
         'display:flex;flex-direction:column;align-items:center;padding:6px 3px;border-radius:10px;'+
@@ -11914,7 +12135,7 @@ function bouwTijdEnAgendaSectie(container, deel){
         (isVorigeW4 ? 'opacity:.65;' : '');
 
       const naamEl = document.createElement('div');
-      naamEl.style.cssText = 'font-size:10px;font-weight:800;color:'+(isVandaag?'#0B63CE':'#5A6A7E');
+      naamEl.style.cssText = 'font-size:10px;font-weight:800;color:'+(isVandaag?'var(--nj-accent)':'#5A6A7E');
       naamEl.textContent = dagNamen[i+1];
 
       const nrEl = document.createElement('div');
@@ -12026,7 +12247,7 @@ function renderHome(){
       '<div class="nj-ring">'+
         '<svg width="210" height="210" viewBox="0 0 210 210" role="img" aria-label="'+pct+' procent bezorgd">'+
           '<circle cx="105" cy="105" r="90" fill="none" stroke="#E6EBF2" stroke-width="16"/>'+
-          (boog > 0 ? '<circle cx="105" cy="105" r="90" fill="none" stroke="'+(allesKlaar?'#15803D':'#0B63CE')+'" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+boog.toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 105 105)"/>' : '')+
+          (boog > 0 ? '<circle cx="105" cy="105" r="90" fill="none" stroke="'+(allesKlaar?'#15803D':'#0B63CE')+'" style="stroke:'+(allesKlaar?'#15803D':'var(--nj-accent)')+'" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+boog.toFixed(1)+' '+omtrek.toFixed(1)+'" transform="rotate(-90 105 105)"/>' : '')+
         '</svg>'+
         '<div class="nj-ring-tekst"><span class="nj-groot">'+klaar+'</span><span class="nj-ring-sub">van '+totaal+' bezorgd</span><b class="nj-ring-pct'+(allesKlaar?' klaar':'')+'">'+(allesKlaar?'Alles bezorgd':pct+'%')+'</b></div>'+
       '</div>'+
