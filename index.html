@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.4');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.5');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1609,11 +1609,11 @@ body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
 .prv-dag.aan small{color:#E9E3FF}
 .prv-dag.aan i em{background:#fff}
 .prv-dag.aan i em.w{background:#C4B5FD}
-.prv-afspraak{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;
+.prv-afspraak{display:flex;align-items:flex-start;gap:12px;min-height:60px;padding:8px 14px;border:none;border-bottom:1px solid var(--nj-lijn2);background:none;
   font-family:inherit;text-align:left;color:var(--nj-ink);cursor:pointer;width:100%}
 .prv-afspraak:last-child{border-bottom:none}
 .prv-afspraak:active{background:#F5F3FF}
-.prv-tijd{width:62px;flex:0 0 auto;display:flex;flex-direction:column;font-size:14px;font-weight:800;color:#6D28D9}
+.prv-tijd{width:62px;flex:0 0 auto;display:flex;flex-direction:column;padding-top:3px;font-size:14px;font-weight:800;color:#6D28D9}
 .prv-tijd small{font-size:11px;font-weight:600;color:var(--nj-muted)}
 .prv-werkdag{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 14px;background:#EDF1F5;color:#3E4C5E;font-size:14px;font-weight:600;border-bottom:1px solid var(--nj-lijn2)}
 .prv-werkdag b{color:#0E1A2B}
@@ -1783,7 +1783,9 @@ html[data-thema="donker"] .prv-pin-fout{color:#FCA5A5}
 /* agenda: gekoppeld aan de telefoon-agenda */
 .prv-agenda-bron{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--nj-muted);margin-top:2px}
 .prv-agenda-bron i{width:9px;height:9px;border-radius:99px;flex:0 0 auto}
-.prv-afspraak .nj-rij-sub{white-space:normal}
+.prv-afspraak .nj-rij-tekst{padding-top:2px}
+.prv-afspraak .nj-rij-titel{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.prv-afspraak .nj-rij-sub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .prv-afspraak-titel{font-size:19px;font-weight:800;color:var(--nj-ink)}
 .prv-tel-tip{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 12px;border:1px dashed #C4B5FD;border-radius:16px;background:var(--nj-kaart)}
 .prv-tel-tip .prv-tip-x{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;background:none;color:#8A97A8}
@@ -2066,7 +2068,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.4';
+const APP_VERSION = '2026-11-24.5';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   kruis:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
@@ -3916,8 +3918,21 @@ function prvTelStandaardKalender(){
 }
 var prvTelCache = null;
 function prvTelVergeet(){ prvTelCache = null; }
+// omschrijving die eigenlijk een hele e-mail is (Outlook-uitnodiging): alleen de tekst eruit halen
+function prvTekstUitHtml(s){
+  s = String(s || '');
+  if(!/<\/?[a-z!][^>]*>/i.test(s)) return s.trim();
+  try{
+    const doc = new DOMParser().parseFromString(s, 'text/html');
+    doc.querySelectorAll('style,script,head,title,meta').forEach(x=>x.remove());
+    return (doc.body ? doc.body.textContent : '').replace(/\s+/g, ' ').trim();
+  }catch(e){ return s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); }
+}
+// geannuleerde afspraken en uitnodigingen die je hebt afgewezen niet tonen
+const PRV_GEANNULEERD = /^\s*(canceled|cancelled|geannuleerd|afgezegd|abgesagt)\b[^:]{0,20}:/i;
 function prvTelNaarItem(e){
-  const it = {id:'t'+e.id+'_'+e.begin, tel:true, eventId:e.id, titel:e.titel || '(geen titel)', notitie:e.notitie || '', plek:e.plek || '', kleur:e.kleur, kalender:e.kalender, kalenderNaam:e.kalenderNaam, herhaalt:!!e.herhaalt, heleDag:!!e.heleDag, begin:e.begin, eind:e.eind};
+  if(e.status === 2 || e.zelf === 2 || PRV_GEANNULEERD.test(e.titel || '')) return null;
+  const it = {id:'t'+e.id+'_'+e.begin, tel:true, eventId:e.id, titel:e.titel || '(geen titel)', notitie:prvTekstUitHtml(e.notitie), notitieRuw:e.notitie || '', plek:e.plek || '', kleur:e.kleur, kalender:e.kalender, kalenderNaam:e.kalenderNaam, herhaalt:!!e.herhaalt, heleDag:!!e.heleDag, begin:e.begin, eind:e.eind};
   if(e.heleDag){ it.datum = new Date(e.begin).toISOString().slice(0, 10); it.tijd = ''; it.eindTijd = ''; it.totDatum = new Date(Math.max(e.begin, e.eind - 86400000)).toISOString().slice(0, 10); }
   else { const b = new Date(e.begin), t = new Date(e.eind); it.datum = prvIso(b); it.tijd = String(b.getHours()).padStart(2,'0')+':'+String(b.getMinutes()).padStart(2,'0'); it.eindTijd = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); it.totDatum = prvIso(t); }
   return it;
@@ -3929,7 +3944,7 @@ function prvTelTussen(van, tot){
     const v = prvDatum(van); v.setDate(v.getDate() - 21); v.setHours(0, 0, 0, 0);
     const t = prvDatum(tot); t.setDate(t.getDate() + 22); t.setHours(0, 0, 0, 0);
     let lijst = [];
-    try{ lijst = JSON.parse(prvTel().afspraken(String(v.getTime() - 86400000), String(t.getTime() + 86400000)) || '[]').map(prvTelNaarItem); }catch(e){ lijst = []; }
+    try{ lijst = JSON.parse(prvTel().afspraken(String(v.getTime() - 86400000), String(t.getTime() + 86400000)) || '[]').map(prvTelNaarItem).filter(Boolean); }catch(e){ lijst = []; }
     prvTelCache = {van:prvIso(v), tot:prvIso(t), t:Date.now(), lijst:lijst};
   }
   return prvTelCache.lijst.filter(a=>a.datum <= tot && (a.totDatum || a.datum) >= van);
@@ -4005,7 +4020,7 @@ function prvAfspraak(wrap, kop){
     if(!datum){ toast('Kies een datum', true); return; }
     const tijd = document.getElementById('prvAgTijd').value, eindTijd = tijd ? document.getElementById('prvAgEind').value : '', notitie = document.getElementById('prvAgNotitie').value.trim();
     if(telA){
-      if(!prvTel().wijzig(String(telA.eventId), prvTelJson(titel, datum, tijd, eindTijd, notitie, null))){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
+      if(!prvTel().wijzig(String(telA.eventId), prvTelJson(titel, datum, tijd, eindTijd, notitie === telA.notitie ? telA.notitieRuw : notitie, null))){ toast('Opslaan in je telefoon-agenda lukte niet', true); return; }
     } else if(nieuwOpTel){
       const sel = document.getElementById('prvAgKal');
       const kal = sel ? sel.value : (stdKal && stdKal.id);

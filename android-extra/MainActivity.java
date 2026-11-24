@@ -133,7 +133,9 @@ public class MainActivity extends BridgeActivity {
                     CalendarContract.Instances.CALENDAR_ID,
                     CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
                     CalendarContract.Instances.DISPLAY_COLOR,
-                    CalendarContract.Instances.RRULE
+                    CalendarContract.Instances.RRULE,
+                    CalendarContract.Instances.STATUS,
+                    CalendarContract.Instances.SELF_ATTENDEE_STATUS
                 };
                 c = getContentResolver().query(b.build(), kol, CalendarContract.Instances.VISIBLE + "=1", null, CalendarContract.Instances.BEGIN + " ASC");
                 while (c != null && c.moveToNext()) {
@@ -149,6 +151,8 @@ public class MainActivity extends BridgeActivity {
                     o.put("kalenderNaam", c.getString(8) == null ? "" : c.getString(8));
                     o.put("kleur", String.format("#%06X", 0xFFFFFF & c.getInt(9)));
                     o.put("herhaalt", c.getString(10) != null && c.getString(10).length() > 0);
+                    o.put("status", c.isNull(11) ? -1 : c.getInt(11));
+                    o.put("zelf", c.isNull(12) ? -1 : c.getInt(12));
                     uit.put(o);
                 }
             } catch (Exception e) {
@@ -163,7 +167,7 @@ public class MainActivity extends BridgeActivity {
             ContentValues v = new ContentValues();
             boolean heleDag = o.optBoolean("heleDag", false);
             v.put(CalendarContract.Events.TITLE, o.optString("titel", ""));
-            v.put(CalendarContract.Events.DESCRIPTION, o.optString("notitie", ""));
+            if (nieuw || o.has("notitie")) v.put(CalendarContract.Events.DESCRIPTION, o.optString("notitie", ""));
             v.put(CalendarContract.Events.DTSTART, o.getLong("begin"));
             v.put(CalendarContract.Events.DTEND, o.getLong("eind"));
             v.put(CalendarContract.Events.ALL_DAY, heleDag ? 1 : 0);
