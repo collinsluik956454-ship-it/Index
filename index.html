@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.17');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.18');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1892,6 +1892,26 @@ html[data-thema] body.nj-persoon header .menu{display:none}
 .prv-kopieer{font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all}
 .prv-auto-knop{margin-top:-4px}
 .prv-auto-knop span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* taken met punten */
+.prv-scorebord{display:flex;flex-direction:column;gap:12px}
+.prv-scorebord.klein{cursor:pointer;gap:8px;padding:12px 14px}
+.prv-score-kop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.prv-score-kop b{font-size:17px;font-weight:800}
+.prv-score-kop .nj-chip{min-height:34px;font-size:12.5px}
+.prv-score-rijen{display:flex;flex-direction:column;gap:10px}
+.prv-score-rij{display:flex;align-items:center;gap:10px}
+.prv-score-midden{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.prv-score-naam{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.prv-score-pt{font-size:22px;font-weight:800;min-width:60px;text-align:right}
+.prv-score-pt small{font-size:12px;font-weight:700;color:var(--nj-muted)}
+.prv-scorebord.klein .prv-score-pt{font-size:17px}
+.prv-score-leider{margin:0;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#6D28D9}
+.prv-item > .prv-pt{flex:0 0 auto;min-width:0;text-decoration:none}
+.prv-item.af > .prv-pt{text-decoration:none;color:#15803D}
+.prv-pt{flex:0 0 auto;white-space:nowrap;font-size:12px;font-weight:800;color:#6D28D9;background:#EDE9FE;padding:3px 8px;border-radius:99px}
+.prv-pt.af{color:#15803D;background:#DCFCE7}
+.prv-snel-kaart:only-child{grid-column:1/-1;min-height:72px}
 </style>
 <script>
 // Offline service worker
@@ -1981,6 +2001,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 <nav class="tabbar prv-tabbar" id="tabbarPrive" aria-label="Privé">
   <button type="button" data-ptab="p_overzicht"><span class="nj-tab-ic" data-nj-ic="home" data-nj-s="22"></span>Overzicht</button>
   <button type="button" data-ptab="p_agenda"><span class="nj-tab-ic" data-nj-ic="kalender" data-nj-s="22"></span>Agenda</button>
+  <button type="button" data-ptab="p_taken"><span class="nj-tab-ic" data-nj-ic="lijst" data-nj-s="22"></span>Taken</button>
   <button type="button" data-ptab="p_huishoud"><span class="nj-tab-ic" data-nj-ic="geld" data-nj-s="22"></span>Huishoud</button>
   <button type="button" data-ptab="p_notities"><span class="nj-tab-ic" data-nj-ic="notitie" data-nj-s="22"></span>Notities</button>
   <button type="button" data-ptab="p_instel"><span class="nj-tab-ic" data-nj-ic="meer" data-nj-s="22"></span>Meer</button>
@@ -2170,7 +2191,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.17';
+const APP_VERSION = '2026-11-24.18';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -2788,15 +2809,15 @@ document.querySelectorAll('#tabbar [data-tab]').forEach(function(b){
 const STORAGE_PRIVE = 'looplijst_v23_prive_instel';
 const STORAGE_PRIVE_PIN = 'looplijst_v23_prive_pin';
 const STORAGE_NOTITIES = 'looplijst_v23_prive_notities';
-var prvInstel = {aan:true, agenda:true, huishoud:true, notities:true, bezorgdagen:true};
+var prvInstel = {aan:true, agenda:true, huishoud:true, notities:true, taken:true, bezorgdagen:true};
 try{ Object.assign(prvInstel, JSON.parse(localStorage.getItem(STORAGE_PRIVE)) || {}); }catch(e){}
 function prvBewaarInstel(){ try{ localStorage.setItem(STORAGE_PRIVE, JSON.stringify(prvInstel)); }catch(e){} }
 var prvNotities = [];
 try{ prvNotities = JSON.parse(localStorage.getItem(STORAGE_NOTITIES)) || []; }catch(e){ prvNotities = []; }
 function prvBewaarNotities(){ try{ localStorage.setItem(STORAGE_NOTITIES, JSON.stringify(prvNotities)); }catch(e){} }
 function prvAan(){ return !!(prvInstel && prvInstel.aan); }
-var PRV_HUBS = ['p_overzicht','p_agenda','p_huishoud','p_notities','p_instel'];
-var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel', p_rekeningen:'p_huishoud', p_bank:'p_huishoud'};
+var PRV_HUBS = ['p_overzicht','p_agenda','p_taken','p_huishoud','p_notities','p_instel'];
+var PRV_OUDER = {p_afspraak:'p_agenda', p_bedrag:'p_huishoud', p_potjes:'p_huishoud', p_vastelasten:'p_huishoud', p_spaar:'p_huishoud', p_notitie:'p_notities', p_agendacontrole:'p_instel', p_personen:'p_instel', p_rekeningen:'p_huishoud', p_bank:'p_huishoud', p_taak:'p_taken'};
 function prvTerug(){
   if(view.mode === 'p_spaar' && view.bewerk && view.id !== 'nieuw'){ prvGa({mode:'p_spaar', id:view.id}); return; }
   prvGa({mode: PRV_OUDER[view.mode] || 'p_overzicht'});
@@ -2826,6 +2847,7 @@ function prvGeldigeHub(m){
   if(m === 'p_agenda' && !prvInstel.agenda) return 'p_overzicht';
   if(m === 'p_huishoud' && !prvInstel.huishoud) return 'p_overzicht';
   if(m === 'p_notities' && !prvInstel.notities) return 'p_overzicht';
+  if(m === 'p_taken' && !prvInstel.taken) return 'p_overzicht';
   return njIsPriveHub(m) ? m : 'p_overzicht';
 }
 function njGaPrive(doel){
@@ -3037,7 +3059,7 @@ function prvZetChrome(m){
   let n = 0;
   document.querySelectorAll('#tabbarPrive [data-ptab]').forEach(b=>{
     const t = b.getAttribute('data-ptab');
-    const zicht = !((t === 'p_agenda' && !prvInstel.agenda) || (t === 'p_huishoud' && !prvInstel.huishoud) || (t === 'p_notities' && !prvInstel.notities));
+    const zicht = !((t === 'p_agenda' && !prvInstel.agenda) || (t === 'p_huishoud' && !prvInstel.huishoud) || (t === 'p_notities' && !prvInstel.notities) || (t === 'p_taken' && !prvInstel.taken));
     b.hidden = !zicht; if(zicht) n++;
     b.classList.toggle('on', t === hub);
     if(t === hub) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -3108,6 +3130,8 @@ function njRenderPrive(){
   if(m === 'p_personen'){ return prsBeheer(wrap, kop); }
   if(m === 'p_rekeningen'){ return prvRekeningenScherm(wrap, kop); }
   if(m === 'p_bank'){ return prvBankScherm(wrap, kop); }
+  if(m === 'p_taken'){ return prvTakenHub(wrap, kop); }
+  if(m === 'p_taak'){ return prvTaakBewerk(wrap, kop); }
   if(m === 'p_notities'){ kop('Privé', 'Notities'); return prvNotitieLijst(wrap); }
   if(m === 'p_notitie'){ return prvNotitie(wrap, kop); }
   if(m === 'p_instel'){ kop('Privé', 'Meer'); return prvInstellingen(wrap); }
@@ -3150,10 +3174,10 @@ function prvOverzicht(wrap){
     b.onclick = ()=>prvGa({mode:'p_agenda'});
     sec.appendChild(b);
   }
-  if(prvInstel.notities) prvTakenOverzicht(wrap);
+  if(prvInstel.taken) prvTakenOverzicht(wrap);
   if(prvInstel.notities){
     const sec = prvSectie(wrap, 'Notities');
-    const lijst = prvNotitiesGesorteerd().slice(0, 4);
+    const lijst = prvNotitiesGesorteerd().filter(n=>n.soort !== 'taak').slice(0, 4);
     if(!lijst.length) sec.appendChild(prvLeeg('Nog geen notities'));
     else { const l = document.createElement('div'); l.className = 'nj-lijst'; lijst.forEach(n=>l.appendChild(prvNotitieRij(n))); sec.appendChild(l); }
     const b = document.createElement('button');
@@ -3572,7 +3596,7 @@ function prvInstellingen(wrap){
 
   const on = prvSectie(wrap, 'Onderdelen');
   const ol = document.createElement('div'); ol.className = 'nj-lijst prv-lijst-pad';
-  [['agenda', 'Agenda'], ['huishoud', 'Huishoudboekje'], ['notities', 'Notities']].forEach(([k, t])=>{
+  [['agenda', 'Agenda'], ['taken', 'Taken (met punten)'], ['huishoud', 'Huishoudboekje'], ['notities', 'Notities']].forEach(([k, t])=>{
     ol.appendChild(prvSchakelRij(t, '', !!prvInstel[k], ()=>{ prvInstel[k] = !prvInstel[k]; prvBewaarInstel(); render(); }));
   });
   ol.appendChild(prvSchakelRij('Bezorgdagen in de agenda', 'Maandag t/m zaterdag als bezorgdag', !!prvInstel.bezorgdagen, ()=>{ prvInstel.bezorgdagen = !prvInstel.bezorgdagen; prvBewaarInstel(); render(); }));
@@ -4446,7 +4470,7 @@ function prvMaakLijst(soort, titel){
   prvNotities.push(n); prvBewaarNotities();
   return n;
 }
-function prvOpenLijst(soort){ const n = prvHoofdLijst(soort) || prvMaakLijst(soort); prvGa({mode:'p_notitie', id:n.id}); }
+function prvOpenLijst(soort){ if(soort === 'taak'){ prvGa({mode:'p_taken'}); return; } const n = prvHoofdLijst(soort) || prvMaakLijst(soort); prvGa({mode:'p_notitie', id:n.id}); }
 function prvTaakDatumTekst(iso){
   if(!iso) return '';
   const v = vandaagIso();
@@ -4497,10 +4521,6 @@ function prvNieuwKeuze(){
     const n = prvHoofdLijst('boodschap') ? prvMaakLijst('boodschap', 'Boodschappen '+(prvNotities.filter(x=>x.soort === 'boodschap').length + 1)) : prvMaakLijst('boodschap');
     prvGa({mode:'p_notitie', id:n.id, nieuw:true});
   });
-  keuze('lijst', 'Takenlijst', prvHoofdLijst('taak') ? 'Een extra takenlijst' : 'Klusjes en dingen die je niet mag vergeten, met datum', ()=>{
-    const n = prvHoofdLijst('taak') ? prvMaakLijst('taak', 'Taken '+(prvNotities.filter(x=>x.soort === 'taak').length + 1)) : prvMaakLijst('taak');
-    prvGa({mode:'p_notitie', id:n.id, nieuw:true});
-  });
   bg.appendChild(blad);
   blad.querySelector('.prv-blad-x').onclick = ()=>bg.remove();
   bg.onclick = e=>{ if(e.target === bg) bg.remove(); };
@@ -4511,7 +4531,7 @@ function prvNieuwKeuze(){
 function prvSnelLijsten(wrap){
   const d = document.createElement('div');
   d.className = 'prv-snel';
-  [['boodschap', 'mandje'], ['taak', 'lijst']].forEach(([soort, ic])=>{
+  [['boodschap', 'mandje']].forEach(([soort, ic])=>{
     const n = prvHoofdLijst(soort);
     const b = document.createElement('button');
     b.type = 'button';
@@ -4630,6 +4650,7 @@ function prvBoodschappen(wrap, kop, n){
 
 // ---- taken ----
 function prvTaken(wrap, kop, n){
+  if(n === prvHoofdLijst('taak')){ prvGa({mode:'p_taken'}); return; }
   kop('Privé · Notities', n.titel || 'Taken');
   n.items = n.items || [];
   const bewaar = ()=>{ n.gewijzigd = Date.now(); prvBewaarNotities(); };
@@ -4662,7 +4683,7 @@ function prvTaken(wrap, kop, n){
     const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
     open.forEach(it=>{
       const sub = prvTaakDatumTekst(it.datum);
-      l.appendChild(prvItemRij(it, ()=>{ it.af = true; it.klaarOp = Date.now(); bewaar(); toast('Gedaan: '+it.t); render(); }, ()=>{ n.items = n.items.filter(x=>x !== it); bewaar(); render(); },
+      l.appendChild(prvItemRij(it, ()=>{ prvTaakAf(n, it, true); render(); }, ()=>{ n.items = n.items.filter(x=>x !== it); bewaar(); render(); },
         sub, it.datum && it.datum < v ? 'laat' : (it.datum === v ? 'nu' : '')));
     });
     s1.appendChild(l);
@@ -4679,7 +4700,7 @@ function prvTaken(wrap, kop, n){
     s2.appendChild(kn);
     if(prvKlaarOpen){
       const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
-      klaar.forEach(it=>l.appendChild(prvItemRij(it, ()=>{ it.af = false; bewaar(); render(); }, ()=>{ n.items = n.items.filter(x=>x !== it); bewaar(); render(); }, prvTaakDatumTekst(it.datum).replace(/^te laat · /, ''))));
+      klaar.forEach(it=>l.appendChild(prvItemRij(it, ()=>{ prvTaakAf(n, it, false); render(); }, ()=>{ n.items = n.items.filter(x=>x !== it); bewaar(); render(); }, prvTaakDatumTekst(it.datum).replace(/^te laat · /, ''))));
       s2.appendChild(l);
       const weg = document.createElement('button');
       weg.type = 'button';
@@ -4696,16 +4717,19 @@ function prvTaken(wrap, kop, n){
 // op het Overzicht: taken voor vandaag (en te laat), direct af te vinken
 function prvTakenOverzicht(wrap){
   const lijst = prvTakenNu();
-  if(!lijst.length) return;
+  const hl0 = prvHoofdLijst('taak');
+  if(!lijst.length){ if(hl0 && (hl0.log || []).length && prsAan()) prvScorebord(wrap, hl0, true); return; }
   const sec = prvSectie(wrap, 'Taken voor vandaag');
   const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
   lijst.slice(0, 6).forEach(({n, i})=>{
     const sub = prvTaakDatumTekst(i.datum);
-    l.appendChild(prvItemRij(i, ()=>{ i.af = true; i.klaarOp = Date.now(); n.gewijzigd = Date.now(); prvBewaarNotities(); toast('Gedaan: '+i.t); render(); },
-      ()=>{ prvGa({mode:'p_notitie', id:n.id}); }, sub, i.datum < vandaagIso() ? 'laat' : 'nu'));
+    l.appendChild(prvItemRij(i, ()=>{ prvTaakAf(n, i, true); render(); },
+      ()=>{ prvGa(n === prvHoofdLijst('taak') ? {mode:'p_taken'} : {mode:'p_notitie', id:n.id}); }, sub, i.datum < vandaagIso() ? 'laat' : 'nu'));
   });
   l.querySelectorAll('.prv-item-weg').forEach(b=>{ b.innerHTML = njIco('pijl', 16, 2.4); b.setAttribute('aria-label', 'Naar de takenlijst'); });
   sec.appendChild(l);
+  const hl = prvHoofdLijst('taak');
+  if(hl && (hl.log || []).length && prsAan()) prvScorebord(wrap, hl, true);
 }
 
 // ----- PRIVÉ deel 5: koppeling controleren (per telefoon, om te zien waar het misgaat) -----
@@ -5675,6 +5699,196 @@ function prvBankScherm(wrap, kop){
   kop2.textContent = 'Redirect URL kopiëren';
   kop2.onclick = ()=>{ try{ navigator.clipboard.writeText(EB_TERUG).then(()=>toast('Gekopieerd')); }catch(e){ toast(EB_TERUG); } };
   s4.appendChild(kop2);
+}
+
+// ----- PRIVÉ deel 9: Taken als eigen onderdeel, met punten en een wedstrijdje -----
+// De takenlijst is de gedeelde lijst met soort 'taak' (gaat mee met synchroniseren).
+// Elke taak heeft punten; wie hem afvinkt krijgt ze. Het puntenlogboek (n.log) blijft bewaard,
+// ook als je gedane taken weghaalt. Herhalende taken komen na afvinken vanzelf terug.
+const PRV_PUNTEN = [5, 10, 20, 50, 100];
+const PRV_HERHAAL = [['', 'Eén keer'], ['dag', 'Elke dag'], ['week', 'Elke week'], ['maand', 'Elke maand']];
+var prvScorePeriode = 'week';
+function prvTakenLijst(){ return prvHoofdLijst('taak') || prvMaakLijst('taak'); }
+function prvTaakVolgende(iso, herhaal){
+  const d = prvDatum(iso || vandaagIso());
+  if(herhaal === 'dag') d.setDate(d.getDate() + 1);
+  else if(herhaal === 'week') d.setDate(d.getDate() + 7);
+  else if(herhaal === 'maand') d.setMonth(d.getMonth() + 1);
+  let uit = prvIso(d);
+  // als de taak lang is blijven liggen: de volgende niet in het verleden zetten
+  while(uit < vandaagIso()){ const x = prvDatum(uit); if(herhaal === 'dag') x.setDate(x.getDate() + 1); else if(herhaal === 'week') x.setDate(x.getDate() + 7); else x.setMonth(x.getMonth() + 1); uit = prvIso(x); }
+  return uit;
+}
+function prvIkId(){ const ik = prsAan() ? prsIk() : null; return ik ? ik.id : ''; }
+// taak afvinken of terugzetten (overal hetzelfde: Taken, Overzicht, oude takenlijsten)
+function prvTaakAf(n, it, af){
+  n.items = n.items || []; n.log = n.log || [];
+  if(af){
+    it.af = true; it.klaarOp = Date.now(); it.door = prvIkId();
+    const p = it.punten || 0;
+    n.log.push({id:it.id, t:it.t, p:p, door:it.door, op:it.klaarOp});
+    if(it.herhaal){
+      const nieuw = {id:'i'+Date.now()+Math.random().toString(36).slice(2, 5), t:it.t, af:false, punten:it.punten, herhaal:it.herhaal, datum:prvTaakVolgende(it.datum, it.herhaal)};
+      n.items.push(nieuw);
+      it.volgende = nieuw.id;
+    }
+    n.gewijzigd = Date.now(); prvBewaarNotities();
+    const wie = it.door ? prvWieNaam(it.door) : '';
+    toast(p ? '+'+p+' punten'+(wie ? ' voor '+wie : '')+(it.herhaal ? ' · komt terug op '+prvTaakDatumTekst(prvTaakVolgende(it.datum, it.herhaal)) : '') : 'Gedaan: '+it.t);
+  } else {
+    it.af = false;
+    const i = n.log.map(x=>x.id).lastIndexOf(it.id); if(i >= 0) n.log.splice(i, 1);
+    if(it.volgende){ n.items = n.items.filter(x=>!(x.id === it.volgende && !x.af)); delete it.volgende; }
+    delete it.door; delete it.klaarOp;
+    n.gewijzigd = Date.now(); prvBewaarNotities();
+  }
+}
+function prvPeriodeStart(per){
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if(per === 'week'){ d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
+  if(per === 'maand'){ d.setDate(1); return d.getTime(); }
+  return 0;
+}
+function prvScores(n, per){
+  const van = prvPeriodeStart(per), tot = {};
+  (n.log || []).forEach(x=>{ if(x.op >= van){ const w = x.door || 'samen'; tot[w] = (tot[w] || 0) + (x.p || 0); } });
+  return tot;
+}
+// scorebord
+function prvScorebord(wrap, n, klein){
+  const scores = prvScores(n, prvScorePeriode);
+  const mensen = prsAan() ? prsData.lijst.map(p=>({id:p.id, naam:p.naam, kleur:p.kleur})) : [{id:'samen', naam:'Samen', kleur:'#6D28D9'}];
+  if(!prsAan() && !scores.samen && !Object.keys(scores).length && klein) return;
+  const max = Math.max(1, ...mensen.map(m=>scores[m.id] || 0));
+  const top = mensen.slice().sort((a,b)=>(scores[b.id] || 0) - (scores[a.id] || 0));
+  const leider = top.length > 1 && (scores[top[0].id] || 0) > (scores[top[1].id] || 0) ? top[0] : null;
+  const k = document.createElement('section');
+  k.className = 'nj-kaart prv-scorebord';
+  k.innerHTML = '<div class="prv-score-kop"><b>'+(klein ? 'Stand '+(prvScorePeriode === 'week' ? 'deze week' : prvScorePeriode === 'maand' ? 'deze maand' : 'totaal') : 'Wie wint er?')+'</b>'+
+    (klein ? '' : '<span class="nj-chips" role="group" aria-label="Periode">'+[['week', 'Week'], ['maand', 'Maand'], ['alles', 'Totaal']].map(([p, l])=>'<button type="button" class="nj-chip'+(prvScorePeriode === p ? ' aan' : '')+'" data-p="'+p+'">'+l+'</button>').join('')+'</span>')+'</div>'+
+    '<div class="prv-score-rijen"></div>'+
+    (leider ? '<p class="prv-score-leider">'+njIco('bonus', 16, 2.2)+' '+njEsc(leider.naam)+' staat voor met '+((scores[top[0].id] || 0) - (scores[top[1].id] || 0))+' punten</p>' :
+      (mensen.length > 1 && (scores[top[0].id] || 0) > 0 ? '<p class="prv-score-leider">Gelijkspel!</p>' : (klein ? '' : '<p class="prv-score-leider">Vink een taak af en verdien punten.</p>')));
+  const r = k.querySelector('.prv-score-rijen');
+  mensen.forEach(m=>{
+    const s = scores[m.id] || 0;
+    const rij = document.createElement('div');
+    rij.className = 'prv-score-rij';
+    rij.innerHTML = (prsAan() ? prsAvatar(m, 34) : '<span class="nj-ico prv-ico">'+njIco('bonus', 18)+'</span>')+
+      '<span class="prv-score-midden"><span class="prv-score-naam">'+njEsc(m.naam)+(leider && leider.id === m.id ? ' <span class="prv-vast-tag">voorop</span>' : '')+'</span><span class="prv-balk"><i style="width:'+Math.round(s / max * 100)+'%;background:'+njEsc(m.kleur)+'"></i></span></span>'+
+      '<b class="prv-score-pt">'+s+'<small> pt</small></b>';
+    r.appendChild(rij);
+  });
+  k.querySelectorAll('[data-p]').forEach(b=>{ b.onclick = ()=>{ prvScorePeriode = b.getAttribute('data-p'); render(); }; });
+  if(klein){ k.classList.add('klein'); k.onclick = ()=>prvGa({mode:'p_taken'}); k.setAttribute('role', 'button'); k.tabIndex = 0; }
+  wrap.appendChild(k);
+}
+// pagina Taken
+function prvTakenHub(wrap, kop){
+  const n = prvTakenLijst();
+  n.items = n.items || [];
+  kop('Privé', 'Taken');
+  prvScorebord(wrap, n, false);
+  const v = vandaagIso();
+  const open = n.items.filter(i=>!i.af).sort((a,b)=>(a.datum || '9999').localeCompare(b.datum || '9999') || ((b.punten || 0) - (a.punten || 0)));
+  const s1 = prvSectie(wrap, 'Te doen'+(open.length ? ' ('+open.length+')' : ''));
+  if(!open.length) s1.appendChild(prvLeeg(n.items.length ? 'Alles gedaan!' : 'Nog geen taken. Tik op "Taak" om er een te maken en geef hem punten.'));
+  else {
+    const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
+    open.forEach(it=>{
+      const sub = [prvTaakDatumTekst(it.datum), it.herhaal ? (PRV_HERHAAL.find(h=>h[0] === it.herhaal) || ['', ''])[1].toLowerCase() : ''].filter(Boolean).join(' · ');
+      const rij = prvItemRij(it, ()=>{ prvTaakAf(n, it, true); render(); }, ()=>prvGa({mode:'p_taak', id:it.id}), sub, it.datum && it.datum < v ? 'laat' : (it.datum === v ? 'nu' : ''));
+      const w = rij.querySelector('.prv-item-weg'); w.innerHTML = njIco('pijl', 16, 2.4); w.setAttribute('aria-label', it.t+' wijzigen');
+      const pt = document.createElement('span'); pt.className = 'prv-pt'; pt.textContent = (it.punten || 0)+' pt';
+      rij.insertBefore(pt, w);
+      rij.querySelector('.prv-item-tekst').onclick = ()=>prvGa({mode:'p_taak', id:it.id});
+      l.appendChild(rij);
+    });
+    s1.appendChild(l);
+  }
+  // gedaan (met wie het deed)
+  const klaar = n.items.filter(i=>i.af).sort((a,b)=>(b.klaarOp || 0) - (a.klaarOp || 0));
+  if(klaar.length){
+    const s2 = prvSectie(wrap, '');
+    const kn = document.createElement('button');
+    kn.type = 'button';
+    kn.className = 'prv-klaar-kop';
+    kn.setAttribute('aria-expanded', prvKlaarOpen ? 'true' : 'false');
+    kn.innerHTML = '<span>Gedaan ('+klaar.length+')</span>'+njIco(prvKlaarOpen ? 'op' : 'neer', 18, 2.4);
+    kn.onclick = ()=>{ prvKlaarOpen = !prvKlaarOpen; render(); };
+    s2.appendChild(kn);
+    if(prvKlaarOpen){
+      const l = document.createElement('div'); l.className = 'nj-kaart prv-items';
+      klaar.slice(0, 40).forEach(it=>{
+        const wanneer = it.klaarOp ? new Date(it.klaarOp) : null;
+        const sub = [(it.door ? prvWieNaam(it.door) : ''), wanneer ? PRV_DAGKORT[wanneer.getDay()]+' '+wanneer.getDate()+' '+PRV_MAANDEN[wanneer.getMonth()].slice(0, 3) : ''].filter(Boolean).join(' · ');
+        const rij = prvItemRij(it, ()=>{ prvTaakAf(n, it, false); render(); }, ()=>{ n.items = n.items.filter(x=>x !== it); prvBewaarNotities(); render(); }, sub);
+        const pt = document.createElement('span'); pt.className = 'prv-pt af'; pt.textContent = '+'+(it.punten || 0);
+        rij.insertBefore(pt, rij.querySelector('.prv-item-weg'));
+        l.appendChild(rij);
+      });
+      s2.appendChild(l);
+      const weg = document.createElement('button');
+      weg.type = 'button';
+      weg.className = 'nj-knop-rand prv-knop-rand';
+      weg.textContent = 'Gedane taken opruimen (punten blijven staan)';
+      weg.onclick = ()=>{ n.items = n.items.filter(i=>!i.af); prvBewaarNotities(); render(); };
+      s2.appendChild(weg);
+    }
+  }
+  const deel = document.createElement('button');
+  deel.type = 'button';
+  deel.className = 'nj-knop-rand prv-knop-rand';
+  deel.innerHTML = njIco('deel', 18, 2.2)+'<span>Takenlijst delen</span>';
+  deel.onclick = ()=>{ if(!open.length){ toast('Er staat niets open', true); return; } prvDeel('Taken', prvNotitieTekst(n)); };
+  wrap.appendChild(deel);
+  prvFab('Taak', ()=>prvGa({mode:'p_taak', id:'nieuw'}));
+}
+// een taak maken of wijzigen
+function prvTaakBewerk(wrap, kop){
+  const n = prvTakenLijst();
+  const it = view.id === 'nieuw' ? null : (n.items || []).find(x=>x.id === view.id);
+  if(view.id !== 'nieuw' && !it){ prvGa({mode:'p_taken'}); return; }
+  kop('Privé · Taken', it ? 'Taak wijzigen' : 'Nieuwe taak');
+  if(view.punten === undefined) view.punten = it ? (it.punten || 0) : 10;
+  if(view.herhaal === undefined) view.herhaal = it ? (it.herhaal || '') : '';
+  const k = document.createElement('section');
+  k.className = 'nj-kaart prv-form';
+  k.innerHTML = prvVeld('Wat moet er gebeuren', '<input id="prvTkT" type="text" placeholder="Bijv. stofzuigen, vuilnis buiten zetten" value="'+njEsc(it ? it.t : '')+'">')+
+    '<div class="prv-veld"><span>Hoeveel punten</span><div class="nj-chips prv-soort" role="group" aria-label="Punten">'+PRV_PUNTEN.map(p=>'<button type="button" class="nj-chip'+(view.punten === p ? ' aan' : '')+'" data-pt="'+p+'">'+p+'</button>').join('')+'</div></div>'+
+    '<div class="prv-veld"><span>Herhalen</span><div class="nj-chips prv-soort" role="group" aria-label="Herhalen">'+PRV_HERHAAL.map(([h, l])=>'<button type="button" class="nj-chip'+(view.herhaal === h ? ' aan' : '')+'" data-h="'+h+'">'+l+'</button>').join('')+'</div></div>'+
+    prvVeld('Wanneer (mag leeg)', '<input id="prvTkD" type="date" value="'+njEsc(it ? (it.datum || '') : (view.datum || ''))+'">')+
+    '<div class="nj-chips prv-taak-snel"><button type="button" class="nj-chip" data-d="0">Vandaag</button><button type="button" class="nj-chip" data-d="1">Morgen</button><button type="button" class="nj-chip" data-d="7">Over een week</button><button type="button" class="nj-chip" data-d="">Geen datum</button></div>';
+  k.querySelectorAll('[data-pt]').forEach(b=>{ b.onclick = ()=>{ view.punten = parseInt(b.getAttribute('data-pt'), 10); k.querySelectorAll('[data-pt]').forEach(c=>c.classList.toggle('aan', c === b)); }; });
+  k.querySelectorAll('[data-h]').forEach(b=>{ b.onclick = ()=>{ view.herhaal = b.getAttribute('data-h'); k.querySelectorAll('[data-h]').forEach(c=>c.classList.toggle('aan', c === b)); const d = document.getElementById('prvTkD'); if(view.herhaal && !d.value) d.value = vandaagIso(); }; });
+  k.querySelectorAll('[data-d]').forEach(b=>{ b.onclick = ()=>{ const v = b.getAttribute('data-d'), d = document.getElementById('prvTkD'); if(v === '') d.value = ''; else { const x = new Date(); x.setDate(x.getDate() + parseInt(v, 10)); d.value = prvIso(x); } }; });
+  wrap.appendChild(k);
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.className = 'nj-knop-primair prv-knop';
+  ok.textContent = it ? 'Opslaan' : 'Toevoegen';
+  ok.onclick = ()=>{
+    const t = document.getElementById('prvTkT').value.trim();
+    if(!t){ toast('Typ eerst wat er moet gebeuren', true); return; }
+    let datum = document.getElementById('prvTkD').value;
+    if(view.herhaal && !datum) datum = vandaagIso();
+    const v = {t:t, punten:view.punten, herhaal:view.herhaal, datum:datum};
+    if(it) Object.assign(it, v);
+    else { n.items = n.items || []; n.items.push(Object.assign({id:'i'+Date.now(), af:false}, v)); }
+    n.gewijzigd = Date.now(); prvBewaarNotities();
+    toast(it ? 'Taak opgeslagen' : 'Taak toegevoegd ('+view.punten+' punten)');
+    prvGa({mode:'p_taken'});
+  };
+  wrap.appendChild(ok);
+  if(it){
+    const weg = document.createElement('button');
+    weg.type = 'button';
+    weg.className = 'nj-knop-rand prv-knop-weg';
+    weg.textContent = 'Taak verwijderen';
+    weg.onclick = ()=>{ if(!confirm('Taak "'+it.t+'" verwijderen?')) return; n.items = n.items.filter(x=>x !== it); prvBewaarNotities(); toast('Taak verwijderd'); prvGa({mode:'p_taken'}); };
+    wrap.appendChild(weg);
+  }
+  if(!it) setTimeout(()=>{ const i = document.getElementById('prvTkT'); if(i) i.focus(); }, 60);
 }
 
 // ===================== SEGMENTEN: lijst, kaart met vlakken, bijwerken vanuit de looplijst =====================
