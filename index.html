@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.16');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.17');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -2170,7 +2170,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.16';
+const APP_VERSION = '2026-11-24.17';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -5372,6 +5372,22 @@ async function ebVerzoek(methode, pad, data){
 function ebOpen(url){ const brug = window.LooplijstBank; if(brug && typeof brug.open === 'function') brug.open(url); else window.open(url, '_blank'); }
 
 // --- banken ophalen, koppelen, terugkomen van de bank ---
+// gegevens van je app bij Enable Banking: Sandbox of Production, actief, redirect URL
+var ebApp = null;
+async function ebAppInfo(opnieuw){ if(ebApp && !opnieuw) return ebApp; ebApp = await ebVerzoek('GET', '/application'); return ebApp; }
+function ebAppControle(doel){
+  doel.innerHTML = '<div class="prv-controle-rij info"><span class="prv-controle-ic">'+njIco('info', 16, 2.4)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">App bij Enable Banking controleren…</span></span></div>';
+  ebAppInfo(true).then(a=>{
+    const prod = String(a.environment || '').toUpperCase() === 'PRODUCTION';
+    const urls = a.redirect_urls || [];
+    const terug = urls.some(u=>String(u).replace(/\/$/, '') === EB_TERUG);
+    doel.innerHTML = '';
+    doel.appendChild(prvControleRij(prod, prod ? 'Production: echte banken' : 'Sandbox: alleen test-banken, geen echte rekeningen',
+      prod ? (a.name ? 'App "'+a.name+'"' : '') : 'Maak bij Enable Banking een nieuwe app aan met Environment "Production", zet hem aan met "Activate by linking accounts" en zet hier de nieuwe .pem (eerst "Sleutel weghalen").'));
+    if(prod) doel.appendChild(prvControleRij(!!a.active, a.active ? 'App is actief' : 'App is nog niet actief', a.active ? 'Alleen de rekeningen die je in het controlepaneel hebt gekoppeld zijn bereikbaar' : 'Klik bij Enable Banking bij je app op "Activate by linking accounts" en koppel je eigen rekeningen'));
+    doel.appendChild(prvControleRij(terug, terug ? 'Redirect URL staat goed' : 'Redirect URL ontbreekt', terug ? '' : 'Voeg bij je app (drie puntjes → Edit) deze toe: '+EB_TERUG));
+  }).catch(e=>{ doel.innerHTML = ''; doel.appendChild(prvControleRij(false, 'Controleren lukte niet', e.message)); });
+}
 async function ebBankenLijst(land){
   land = land || 'NL';
   if(ebBanken[land]) return ebBanken[land];
@@ -5535,7 +5551,7 @@ function prvBankScherm(wrap, kop){
   if(ebKlaar()){
     k1.innerHTML = '<div class="prv-controle-rij ok"><span class="prv-controle-ic">'+njIco('check', 16, 3)+'</span><span class="nj-rij-tekst"><span class="nj-rij-titel">Sleutel ingesteld</span><span class="nj-rij-sub prv-wrap">Application ID '+njEsc(ebSleutel.appId.slice(0, 8))+'… · staat alleen op deze telefoon</span></span></div>'+
       '<div class="prv-duo"><button type="button" class="nj-knop-rand prv-knop-rand" data-a="test">Verbinding testen</button><button type="button" class="nj-knop-rand prv-knop-weg" data-a="weg">Sleutel weghalen</button></div>';
-    k1.querySelector('[data-a="test"]').onclick = async ()=>{ try{ ebBanken = {}; const l = await ebBankenLijst('NL'); toast('Verbinding goed: '+l.length+' Nederlandse banken'); }catch(e){ toast(e.message, true); } };
+    k1.querySelector('[data-a="test"]').onclick = async ()=>{ try{ ebBanken = {}; ebApp = null; const l = await ebBankenLijst('NL'); toast('Verbinding goed: '+l.length+' Nederlandse banken'); render(); }catch(e){ toast(e.message, true); } };
     k1.querySelector('[data-a="weg"]').onclick = ()=>{ if(!confirm('Sleutel van deze telefoon weghalen? Gekoppelde banken blijven, maar deze telefoon haalt dan niets meer op.')) return; ebSleutel = {}; ebSleutelObj = null; ebBanken = {}; ebBewaarSleutel(); render(); };
   } else {
     k1.innerHTML = prvVeld('Application ID', '<input id="ebAppId" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">')+
@@ -5569,6 +5585,12 @@ function prvBankScherm(wrap, kop){
     };
   }
   s1.appendChild(k1);
+  if(ebKlaar() && brug){
+    const ctl = document.createElement('div');
+    ctl.className = 'nj-kaart prv-controle';
+    s1.appendChild(ctl);
+    ebAppControle(ctl);
+  }
   // 2. gekoppelde banken
   const s2 = prvSectie(wrap, '2 · Gekoppelde banken');
   const sessies = ebData.sessies || [];
