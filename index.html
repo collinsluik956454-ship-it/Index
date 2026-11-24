@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.1');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.2');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1544,6 +1544,12 @@ body.nj-ptabs #tabbarPrive{display:grid;position:fixed;left:0;right:0;bottom:0;z
 body.nj-ptabs main{padding-bottom:calc(170px + env(safe-area-inset-bottom))}
 body.nj-ptabs .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 
+/* vegen tussen Werk en Privé */
+@keyframes prvInR{from{transform:translateX(48px);opacity:.25}to{transform:none;opacity:1}}
+@keyframes prvInL{from{transform:translateX(-48px);opacity:.25}to{transform:none;opacity:1}}
+main.prv-in-rechts > *:not(.prv-fab){animation:prvInR .24s ease-out}
+main.prv-in-links > *:not(.prv-fab){animation:prvInL .24s ease-out}
+@media (prefers-reduced-motion: reduce){ main.prv-in-rechts > *, main.prv-in-links > *{animation:none} }
 /* startscherm: alleen Werk en Privé */
 html[data-thema] body.nj-start header{padding-top:12px;padding-bottom:0}
 html[data-thema] body.nj-start header .titles{visibility:hidden}
@@ -1990,7 +1996,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.1';
+const APP_VERSION = '2026-11-24.2';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   slot:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -2759,6 +2765,47 @@ document.addEventListener('visibilitychange', ()=>{
   // na een half uur weg weer het startscherm, maar nooit midden in de looplijst of het bezorgen
   if(weg > 30*60*1000 && (view.mode === 'home' || njIsHub(view.mode) || njIsPriveHub(view.mode))){ view = {mode:'start'}; render(); }
 });
+// Vegen tussen Werk en Privé (zoals de schakelaar): naar links = Privé, naar rechts = Werk.
+// Alleen op de hoofdschermen, en niet als je begint op iets dat zelf opzij schuift (weekstrook, kaart, invoer).
+(function(){
+  let sx = 0, sy = 0, st = 0, actief = false;
+  function magVegen(doel){
+    if(!prvAan()) return false;
+    const m = view.mode;
+    if(!(m === 'home' || njIsHub(m) || njIsPriveHub(m))) return false;
+    if(document.getElementById('prvPin')) return false;
+    const sh = document.getElementById('sheet'); if(sh && sh.classList.contains('show')) return false;
+    for(let e = doel; e && e !== document.body && e.nodeType === 1; e = e.parentElement){
+      if(e.matches('input,textarea,select,.leaflet-container,.tabbar,[data-geen-veeg]')) return false;
+      if(e.scrollWidth > e.clientWidth + 2){ const ox = getComputedStyle(e).overflowX; if(ox === 'auto' || ox === 'scroll') return false; }
+    }
+    return true;
+  }
+  document.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1){ actief = false; return; }
+    const t = e.touches[0];
+    actief = magVegen(e.target); sx = t.clientX; sy = t.clientY; st = Date.now();
+  }, {passive:true});
+  document.addEventListener('touchmove', e=>{ if(actief && e.touches.length !== 1) actief = false; }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(!actief) return;
+    actief = false;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if(Date.now() - st > 800 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    const prive = njIsPrive(view.mode), voor = view.mode;
+    if(dx < 0 && !prive) njGaPrive();
+    else if(dx > 0 && prive) njGaWerk();
+    else return;
+    if(view.mode !== voor) prvSchuifIn(dx < 0 ? 'prv-in-rechts' : 'prv-in-links');
+  }, {passive:true});
+})();
+function prvSchuifIn(kl){
+  const main = document.getElementById('main');
+  if(!main) return;
+  main.classList.remove('prv-in-rechts', 'prv-in-links'); void main.offsetWidth;
+  main.classList.add(kl);
+  setTimeout(()=>main.classList.remove(kl), 320);
+}
 // Meer → Privé-gedeelte aan/uit
 (function(){
   const b = document.getElementById('priveBtn');
@@ -2814,7 +2861,11 @@ function prvZetChrome(m){
   const pt = document.getElementById('priveTxt'); if(pt) pt.textContent = prvAan() ? 'Aan' : 'Uit';
 }
 document.querySelectorAll('#prvSchakel [data-kant]').forEach(b=>{
-  b.onclick = ()=>{ if(b.getAttribute('data-kant') === 'prive'){ if(!njIsPrive(view.mode)) njGaPrive(); } else if(njIsPrive(view.mode)) njGaWerk(); };
+  b.onclick = ()=>{
+    const voor = view.mode, naarPrive = b.getAttribute('data-kant') === 'prive';
+    if(naarPrive){ if(!njIsPrive(view.mode)) njGaPrive(); } else if(njIsPrive(view.mode)) njGaWerk();
+    if(view.mode !== voor) prvSchuifIn(naarPrive ? 'prv-in-rechts' : 'prv-in-links');
+  };
 });
 document.querySelectorAll('#tabbarPrive [data-ptab]').forEach(b=>{
   b.onclick = ()=>prvGa({mode: b.getAttribute('data-ptab')});
