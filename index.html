@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.7');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.8');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -1555,16 +1555,17 @@ html[data-thema] body.nj-start header{padding-top:12px;padding-bottom:0}
 html[data-thema] body.nj-start header .titles{visibility:hidden}
 html[data-thema] body.nj-start header .menu{display:flex;align-items:center;justify-content:center}
 body.nj-start main{display:flex;flex-direction:column;padding-bottom:16px}
-.prv-start{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-bottom:6vh}
-.prv-start-knop{flex:0 0 auto;min-height:164px;position:relative;border:none;border-radius:22px;padding:20px;color:#fff;font-family:inherit;text-align:left;cursor:pointer;
+.prv-start{flex:1 0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:center;gap:12px;padding-bottom:6vh}
+.prv-start-knop{min-height:min(300px, 52vh);min-width:0;position:relative;border:none;border-radius:22px;padding:18px 16px;color:#fff;font-family:inherit;text-align:left;cursor:pointer;
   display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:8px;box-shadow:0 3px 10px rgba(14,26,43,.10)}
 .prv-start-knop.werk{background:#0B63CE}
 .prv-start-knop.prive{background:#6D28D9}
 .prv-start-knop:active{transform:scale(.985);filter:brightness(.95)}
 .prv-start-knop b{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
-.prv-start-sub{font-size:14px;line-height:1.4;opacity:.92}
-.prv-start-ic{position:absolute;top:20px;left:20px;width:50px;height:50px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
-.prv-start-pijl{position:absolute;top:25px;right:20px;width:40px;height:40px;border-radius:99px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.prv-start-sub{font-size:14px;line-height:1.4;opacity:.92;overflow-wrap:anywhere;min-height:4.2em}
+.prv-start-knop .prv-start-slot{position:absolute;top:80px;left:16px}
+.prv-start-ic{position:absolute;top:18px;left:16px;width:50px;height:50px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.prv-start-pijl{position:absolute;top:23px;right:14px;width:40px;height:40px;border-radius:99px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
 .prv-start-slot{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:rgba(255,255,255,.18);padding:5px 10px;border-radius:99px}
 
 /* algemene privé-onderdelen */
@@ -2069,7 +2070,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.7';
+const APP_VERSION = '2026-11-24.8';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   kruis:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
