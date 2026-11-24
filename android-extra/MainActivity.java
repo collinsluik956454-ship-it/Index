@@ -1,6 +1,8 @@
 package nl.collin.looplijst;
 
 import android.Manifest;
+import android.accounts.Account;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -163,6 +165,66 @@ public class MainActivity extends BridgeActivity {
             return uit.toString();
         }
 
+        // Een afspraak meteen naar Google/Outlook laten doorsturen (anders ziet OneCalendar hem pas later)
+        private void stuurDoor(long kalenderId) {
+            Cursor c = null;
+            try {
+                c = getContentResolver().query(CalendarContract.Calendars.CONTENT_URI,
+                    new String[]{CalendarContract.Calendars.ACCOUNT_NAME, CalendarContract.Calendars.ACCOUNT_TYPE},
+                    CalendarContract.Calendars._ID + "=?", new String[]{String.valueOf(kalenderId)}, null);
+                if (c != null && c.moveToFirst()) stuurAccountDoor(c.getString(0), c.getString(1));
+            } catch (Exception e) {
+                // niet erg: de telefoon synchroniseert later vanzelf
+            } finally {
+                if (c != null) c.close();
+            }
+        }
+
+        private void stuurAccountDoor(String naam, String soort) {
+            if (naam == null || soort == null || CalendarContract.ACCOUNT_TYPE_LOCAL.equals(soort)) return;
+            try {
+                Bundle extra = new Bundle();
+                extra.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                extra.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                ContentResolver.requestSync(new Account(naam, soort), CalendarContract.AUTHORITY, extra);
+            } catch (Exception e) {
+                // genegeerd
+            }
+        }
+
+        private long kalenderVan(String eventId) {
+            Cursor c = null;
+            try {
+                c = getContentResolver().query(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, Long.parseLong(eventId)),
+                    new String[]{CalendarContract.Events.CALENDAR_ID}, null, null, null);
+                if (c != null && c.moveToFirst()) return c.getLong(0);
+            } catch (Exception e) {
+                // genegeerd
+            } finally {
+                if (c != null) c.close();
+            }
+            return -1;
+        }
+
+        @JavascriptInterface
+        public void synchroniseer() {
+            if (!heeftAgenda()) return;
+            Cursor c = null;
+            try {
+                c = getContentResolver().query(CalendarContract.Calendars.CONTENT_URI,
+                    new String[]{CalendarContract.Calendars.ACCOUNT_NAME, CalendarContract.Calendars.ACCOUNT_TYPE}, null, null, null);
+                java.util.HashSet<String> gehad = new java.util.HashSet<String>();
+                while (c != null && c.moveToNext()) {
+                    String sleutel = c.getString(1) + "|" + c.getString(0);
+                    if (gehad.add(sleutel)) stuurAccountDoor(c.getString(0), c.getString(1));
+                }
+            } catch (Exception e) {
+                // genegeerd
+            } finally {
+                if (c != null) c.close();
+            }
+        }
+
         private ContentValues waarden(JSONObject o, boolean nieuw) throws Exception {
             ContentValues v = new ContentValues();
             boolean heleDag = o.optBoolean("heleDag", false);
@@ -180,7 +242,9 @@ public class MainActivity extends BridgeActivity {
         public String maak(String json) {
             if (!heeftAgenda()) return "";
             try {
-                Uri u = getContentResolver().insert(CalendarContract.Events.CONTENT_URI, waarden(new JSONObject(json), true));
+                JSONObject o = new JSONObject(json);
+                Uri u = getContentResolver().insert(CalendarContract.Events.CONTENT_URI, waarden(o, true));
+                if (u != null) stuurDoor(Long.parseLong(o.getString("kalender")));
                 return u == null ? "" : u.getLastPathSegment();
             } catch (Exception e) {
                 return "";
@@ -192,7 +256,9 @@ public class MainActivity extends BridgeActivity {
             if (!heeftAgenda()) return false;
             try {
                 Uri u = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, Long.parseLong(id));
-                return getContentResolver().update(u, waarden(new JSONObject(json), false), null, null) > 0;
+                boolean ok = getContentResolver().update(u, waarden(new JSONObject(json), false), null, null) > 0;
+                if (ok) stuurDoor(kalenderVan(id));
+                return ok;
             } catch (Exception e) {
                 return false;
             }
@@ -202,8 +268,11 @@ public class MainActivity extends BridgeActivity {
         public boolean verwijder(String id) {
             if (!heeftAgenda()) return false;
             try {
+                long kal = kalenderVan(id);
                 Uri u = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, Long.parseLong(id));
-                return getContentResolver().delete(u, null, null) > 0;
+                boolean ok = getContentResolver().delete(u, null, null) > 0;
+                if (ok && kal >= 0) stuurDoor(kal);
+                return ok;
             } catch (Exception e) {
                 return false;
             }
