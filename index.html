@@ -18,7 +18,7 @@
   var C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;   // alleen in de app, niet in de browser
   var HKEY='looplijst_update_html', VKEY='looplijst_update_versie';
   function num(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})\.(\d+)$/); return m? (+m[1])*1e8+(+m[2])*1e6+(+m[3])*1e4+(+m[4]) : 0; }
-  var BUNDEL=num('2026-11-24.23');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
+  var BUNDEL=num('2026-11-24.24');   // MOET gelijk zijn aan APP_VERSION hieronder (wordt samen aangepast)
   // 1) (Het gebruiken van een opgeslagen nieuwere versie gebeurt in loader.html, vóór deze pagina start.)
   // 2) Op de achtergrond kijken of GitHub een nieuwere versie heeft
   var ADRESSEN=['https://collinsluik956454-ship-it.github.io/Index/index.html','https://collinsluik956454-ship-it.github.io/index/index.html'];
@@ -2211,7 +2211,7 @@ window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); });
 // Handmatig ophogen bij elke release zodat "Nieuwste versie ophalen" in het
 // menu een zichtbaar versienummer toont — zo kun je checken of een update
 // echt is aangekomen, los van de PWA-cache.
-const APP_VERSION = '2026-11-24.23';
+const APP_VERSION = '2026-11-24.24';
 /* ===================== NIEUW JASJE (2026-11): tabbalk onderin + nieuwe startschermen ===================== */
 var NJ_IC = {
   mandje:'<path d="M3 5h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
@@ -7712,9 +7712,9 @@ function njKlachtKaart(){
         if(!seg){ const kand = njSegKandidaten(njStraatSleutel(k.straat)); seg = kand.length === 1 ? kand[0] : null; }
       }catch(e){}
     }
-    const adres = k.straat ? njTitel(k.straat)+(k.huisnr ? ' '+k.huisnr : '') : (k.raw ? k.raw.slice(0, 60) : 'Adres onbekend');
+    const adres = k.straat ? njTitel(k.straat)+(k.huisnr ? ' '+k.huisnr : '') : 'Adres niet te lezen';
     const sub = [k.type ? njTitel(k.type) : 'Klacht', k.product, k.datum ? njKlachtDatumKort(k.datum) : ''].filter(Boolean).join(' · ');
-    rij.innerHTML = '<span class="nj-klacht-tekst"><b>'+njEsc(adres)+'</b><span>'+njEsc(sub)+(p ? '' : ' · staat niet in je looplijst')+'</span></span>'+
+    rij.innerHTML = '<span class="nj-klacht-tekst"><b>'+njEsc(adres)+'</b><span>'+njEsc(sub)+(p ? '' : (k.straat ? ' · staat niet in je looplijst' : ' · laad de PDF opnieuw in'))+'</span></span>'+
       (seg ? '<span class="nj-klacht-seg">'+njEsc(seg)+'</span>' : '')+
       (it.klaar ? '<span class="nj-klacht-ok">'+njIco('check', 16, 3)+'</span>' : (p ? '<span class="nj-chev">'+njIco('pijl', 18, 2.2)+'</span>' : ''));
     if(p){
@@ -18703,6 +18703,65 @@ function isKlachtStartRegel(line){
   if(/^(START|STOP)\s+Abo\b/i.test(line)) return false;
   return /^[A-Z][A-Z\/ ]{1,30}?\s+(?:ma|di|wo|do|vr|za|zo)\s+\d{1,2}\s+[a-z]+\s+\d{4}\s+Abo\b/i.test(line);
 }
+// Adresregels van een klacht die boven/onder de klachtregel staan (adres over meerdere regels).
+// Alleen rijen die helemaal in de adreskolom staan (tussen het product en "m d w d v z") en vlak
+// bij de klachtregel liggen. Geeft {boven:[...], midden, onder:[...], tekst, tot}.
+function klachtWoorden(items){
+  // losse woorden met (geschatte) x-positie; pdf.js levert soms meerdere woorden in één stukje tekst
+  const uit = [];
+  (items || []).forEach(o=>{
+    const str = o.str || ''; if(!str.trim()) return;
+    const w = o.w || str.length * 5, re = /\S+/g; let m;
+    while((m = re.exec(str))){ uit.push({t:m[0], x:o.x + w * m.index / str.length, e:o.x + w * (m.index + m[0].length) / str.length, y:o.y}); }
+  });
+  return uit;
+}
+function klachtAdresUitBuren(rijen, li){
+  const leeg = {boven:[], midden:'', onder:[], tekst:'', tot:li};
+  try{
+    const ws = klachtWoorden(rijen[li].items);
+    const ai = ws.findIndex(o=>/^Abo$/i.test(o.t));
+    if(ai < 0 || ai + 2 >= ws.length) return leeg;
+    // product: "Abo TT TTOL" / "Abo NRC NRC" (altijd twee woorden na Abo)
+    const xStart = ws[ai + 2].e + 1;
+    const yRef = ws[ai].y;
+    const dag = ws.findIndex((o, i)=>i > ai + 2 && /^m$/i.test(o.t) && ws[i+1] && /^d$/i.test(ws[i+1].t));
+    const xEind = dag >= 0 ? ws[dag].x - 1 : Infinity;
+    const midden = ws.filter((o, i)=>i > ai + 2 && (dag < 0 || i < dag)).map(o=>o.t).join(' ').trim();
+    const pastInKolom = r=>{
+      if(!r || !r.items) return '';
+      const tt = klachtWoorden(r.items);
+      if(!tt.length || tt.some(o=>Math.abs(o.y - yRef) > 13)) return '';
+      // het weekdag-staartje (m d w d v z) mag erbij staan, de rest moet in de adreskolom staan
+      let n = tt.length;
+      const dg = tt.findIndex((o, i)=>/^m$/i.test(o.t) && tt[i+1] && /^d$/i.test(tt[i+1].t));
+      if(dg >= 0) n = dg;
+      const kern = tt.slice(0, n);
+      if(!kern.length || kern.some(o=>o.x < xStart - 3 || o.x >= xEind)) return '';
+      const t = kern.map(o=>o.t).join(' ');
+      if(isKlachtStartRegel(t) || /^(START|STOP)\s+Abo\b/i.test(t)) return '';
+      if(/^\d+\s*[A-Za-z]{0,3}\s+(TT ?OL|NRC|TEL|HFD|VK|AD ?NL|TR|HP)\b/i.test(t)) return '';   // looplijstregel
+      if(/^(Product|Totaal|Klachten|Mutaties|Looplijst|Bezorgwijk)\b/i.test(t) || /^\(\d+\/\d+\)$/.test(t)) return '';
+      if(/^[mdwvz](\s+[mdwvz]){0,5}$/i.test(t)) return '';
+      return t;
+    };
+    const boven = [], onder = [];
+    for(let i = li - 1; i >= 0 && i >= li - 2; i--){ const t = pastInKolom(rijen[i]); if(!t) break; boven.unshift(t); }
+    let tot = li;
+    for(let i = li + 1; i < rijen.length && i <= li + 2; i++){ const t = pastInKolom(rijen[i]); if(!t) break; onder.push(t); tot = i; }
+    if(!boven.length && !onder.length) return leeg;
+    const tekst = boven.concat(midden ? [midden] : [], onder).join(' ').replace(/\s+/g,' ').trim();
+    // alleen als het samen op een adres lijkt ("…, Straat 12, Plaats")
+    if(!/[A-Za-zÀ-ÿ]{2,}.*\s\d+\S*/.test(tekst)) return leeg;
+    return {boven:boven, midden:midden, onder:onder, tekst:tekst, tot:tot};
+  }catch(e){ return leeg; }
+}
+// zet het volledige adres op de plek van het (halve) adres in de klachtregel
+function klachtVoegAdresIn(regel, buren){
+  const m = regel.match(/^(.*?\bAbo\s+\S+\s+\S+)\s*(.*)$/i);
+  if(!m) return regel + ' ' + buren.tekst;
+  return m[1] + ' ' + buren.tekst;
+}
 async function pdfExtractLines(arrayBuffer){
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
@@ -18723,7 +18782,7 @@ async function pdfExtractLines(arrayBuffer){
     // en de klacht dus stilletjes NIET herkend werd (bv. klachten van een
     // andere dag die wél in de PDF stonden, maar nooit in de app verschenen).
     const Y_TOL = 2.5;
-    const ruweItemsFull = tc.items.map(it => ({x: it.transform[4], y: it.transform[5], str: it.str}))
+    const ruweItemsFull = tc.items.map(it => ({x: it.transform[4], y: it.transform[5], w: it.width, str: it.str}))
       .sort((a,b)=> b.y - a.y || a.x - b.x);
     const rijenFull = [];
     ruweItemsFull.forEach(it=>{
@@ -18734,17 +18793,16 @@ async function pdfExtractLines(arrayBuffer){
       }
       rij.items.push(it);
     });
-    let volleBreedteLijnen = rijenFull.map(r =>
-      r.items.sort((a,b)=>a.x-b.x).map(o=>o.str).join(' ').replace(/\s+/g,' ').trim()
-    );
+    rijenFull.forEach(r=>{ r.items.sort((a,b)=>a.x-b.x); r.tekst = r.items.map(o=>o.str).join(' ').replace(/\s+/g,' ').trim(); });
     // Extra vangnet: staat er toch nog een regel die alléén uit "!" bestaat
     // (clustering ving 'm niet), plak die dan alsnog aan de volgende regel.
-    for(let vi=volleBreedteLijnen.length-2; vi>=0; vi--){
-      if(volleBreedteLijnen[vi] === '!'){
-        volleBreedteLijnen[vi+1] = '! ' + volleBreedteLijnen[vi+1];
-        volleBreedteLijnen.splice(vi,1);
+    for(let vi=rijenFull.length-2; vi>=0; vi--){
+      if(rijenFull[vi].tekst === '!'){
+        rijenFull[vi+1].tekst = '! ' + rijenFull[vi+1].tekst;
+        rijenFull.splice(vi,1);
       }
     }
+    const volleBreedteLijnen = rijenFull.map(r=>r.tekst);
     volleBreedteLijnen.forEach(line=>{
       if(/^(START|STOP)\s+Abo\b/i.test(line)) mutatieRegels.push(line);
     });
@@ -18769,8 +18827,15 @@ async function pdfExtractLines(arrayBuffer){
         lj++;
         bijgevoegd++;
       }
+      // Een lang adres loopt in de PDF over twee (of drie) regels in de adreskolom; de rest van de
+      // klacht staat dan verticaal in het midden. Die adresregels staan net boven/onder de klachtregel.
+      const buren = klachtAdresUitBuren(rijenFull, li);
+      if(buren.tekst){
+        if(/\bm\s+d\s+w\s+d\s+v\s+z\s*$/i.test(samengevoegd)) samengevoegd = samengevoegd.replace(/\s*\bm\s+d\s+w\s+d\s+v\s+z\s*$/i, '');
+        samengevoegd = klachtVoegAdresIn(samengevoegd, buren) + ' m d w d v z';
+      }
       klachtRegels.push(samengevoegd.replace(/\s+/g,' ').trim());
-      li = lj - 1; // sla de samengevoegde vervolgregels over
+      li = Math.max(lj - 1, buren.tot); // sla de samengevoegde vervolgregels over
     }
 
     // Vaste kolomgrenzen op 0.32 en 0.62 van pagina-breedte
@@ -18988,6 +19053,11 @@ function verwerkKlachtenEnDagtotaal(klachtRegels, parsed, mutaties){
         if(isKlachtRawVerdacht(k)) return; // veiligheidsklep: nooit een verdacht lange/glued regel opslaan
         const semSleutel = klachtSemantischeSleutel(k);
         if(bekend.has(k.raw) || bekendSemantisch.has(semSleutel)) return; // zelfde klacht (evt. licht andere PDF-extractie) al bekend
+        if(k.straat){
+          // eerder zonder adres ingelezen (adres liep over twee regels)? die vervangen, niet dubbel tellen
+          const oudIdx = log.findIndex(o=>!o.straat && o.datum === k.datum && o.type === k.type && (o.product || klachtProductUitRaw(o.raw)) === k.product);
+          if(oudIdx >= 0) log.splice(oudIdx, 1);
+        }
         // Klacht van een straat die bij een als "extra" geclassificeerde wijk
         // hoort: apart houden, niet meetellen in de hoofd-bonusberekening.
         k.extraWijk = !!(k.straat && extraStraten.has(k.straat.toUpperCase()));
@@ -19123,7 +19193,7 @@ function parseKlachten(regels){
     if(delen.length >= 2){
       plaats = delen[delen.length-1];
       const straatNr = delen[delen.length-2];
-      const nrMatch = straatNr.match(/^(.*?)\s+(\d+\S*)$/);
+      const nrMatch = straatNr.match(/^(.*?)\s+(\d+\S*(?:\s+[A-Za-z]{1,3})?)$/);
       if(nrMatch){ straat = nrMatch[1].trim(); huisnr = nrMatch[2].trim(); }
       else { straat = straatNr; }
     }
